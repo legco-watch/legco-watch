@@ -1,0 +1,7 @@
+---
+database:
+  user: legcowatchdb
+  password: e8aVqxwaKVXMfBT
+  name: legcowatch
+  host: localhost
+  port: 1234

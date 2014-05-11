@@ -39,7 +39,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # config.ssh.forward_agent = true
 
   playbook_path = "devops/dev.yml"
-  inventory_path = "devops/hosts/dev_hosts"
+  inventory_path = "devops/hosts/dev"
 
   if is_windows
     # Provisioning configuration for shell script.
