@@ -38,6 +38,14 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
 )
 
+CONTRIB_APPS = (
+    'south',
+    'rest_framework',
+    'pipeline'
+)
+
+INSTALLED_APPS += CONTRIB_APPS
+
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -84,3 +92,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
