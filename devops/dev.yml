@@ -65,18 +65,15 @@
       tags:
         - database
 
-    - name: Create app user
-      user: >
-        name={{project.user}}
-        groups={{project.group}}
-        state=present
-
+#    - name: Create app user
+#      user: >
+#        name={{project.user}}
+#        groups={{project.group}}
+#        state=present
+#
     - name: Install app requirements
       sudo: true
       sudo_user: "{{project.user}}"
       pip: >
-        name={{item}}
+        requirements={{project.requirements}}
         virtualenv={{project.virtualenv}}
-      with_items:
-        - django==1.6
-

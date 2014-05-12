@@ -4,15 +4,14 @@ database:
   password: e8aVqxwaKVXMfBT
   name: legcowatch
   host: localhost
-  port: 1234
+  port: 5432
 
 project:
-  user: legcowatch
+  user: vagrant
   group: www-data
   root: /vagrant
-  virtualenv: /home/legcowatch/envs/legcowatch
+  virtualenv: /home/vagrant/envs/legcowatch
   requirements: /vagrant/requirements.txt
 
 django:
   root: "{{project.root}}/app"
-  # Problem here, virtualenv can't be in /vagrant?

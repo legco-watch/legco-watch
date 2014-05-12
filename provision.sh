@@ -32,6 +32,7 @@ if [ ! -f /vagrant/$ANSIBLE_HOSTS ]; then
 fi
 
 # Install Ansible and its dependencies if it's not installed already.
+# This testing for ansible is not reliable -- sometimes in /usr/bin/ansible
 if [ ! -f /usr/local/bin/ansible ]; then
   sudo apt-get update
   echo "Installing Ansible dependencies and Git."
