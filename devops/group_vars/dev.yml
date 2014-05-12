@@ -5,3 +5,14 @@ database:
   name: legcowatch
   host: localhost
   port: 1234
+
+project:
+  user: legcowatch
+  group: www-data
+  root: /vagrant
+  virtualenv: /home/legcowatch/envs/legcowatch
+  requirements: /vagrant/requirements.txt
+
+django:
+  root: "{{project.root}}/app"
+  # Problem here, virtualenv can't be in /vagrant?

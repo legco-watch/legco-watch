@@ -32,9 +32,10 @@ if [ ! -f /vagrant/$ANSIBLE_HOSTS ]; then
 fi
 
 # Install Ansible and its dependencies if it's not installed already.
-if [ ! -f /usr/bin/ansible ]; then
+if [ ! -f /usr/local/bin/ansible ]; then
+  sudo apt-get update
   echo "Installing Ansible dependencies and Git."
-  yum install -y git python python-devel
+  sudo apt-get -y install git python python-dev
   echo "Installing pip via easy_install."
   wget http://peak.telecommunity.com/dist/ez_setup.py
   python ez_setup.py && rm -f ez_setup.py
