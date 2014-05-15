@@ -8,6 +8,7 @@ database:
 
 project:
   user: vagrant
+  user_home: /home/vagrant
   group: www-data
   root: /vagrant
   virtualenv: /home/vagrant/envs/legcowatch
