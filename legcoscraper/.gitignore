@@ -1,0 +1,11 @@
+*~
+*.pyc
+*.pyo
+*.rej
+*.log
+*.swp
+*.swo
+.svn
+.DS_Store
+__MAXOSX/*
+datafiles/
