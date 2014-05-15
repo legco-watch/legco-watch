@@ -20,7 +20,7 @@ USER_AGENT = 'legcoscraper (+http://odhk.github.io/)'
 # Added as per 
 # https://groups.google.com/forum/print/msg/scrapy-users/kzGHFjXywuY/O6PIhoT3thsJ
 ITEM_PIPELINES = [
-    'legcoscraper.files.FilesPipeline',
+    'scrapy.contrib.pipeline.files.FilesPipeline',
 ]
 FILES_STORE = os.path.join(PROJECT_ROOT, 'datafiles')
 
