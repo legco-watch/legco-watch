@@ -1,0 +1,7 @@
+---
+- name: Ensure Celery is installed
+  sudo: true
+  sudo_user: {{project.user}}
+  pip: >
+    requirements={{celery.requirements}}
+    virtualenv={{project.virtualenv}}

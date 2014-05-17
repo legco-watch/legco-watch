@@ -2,6 +2,6 @@
   remote_user: root
   roles:
     - common
-    - appserver
+    - django
     - dbserver
     - scraper
