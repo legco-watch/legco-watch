@@ -35,6 +35,8 @@ class RawCouncilAgenda(RawModel):
 
     Should be from the Library Site: http://library.legco.gov.hk:1080/search~S10?/tAgenda+for+the+meeting+of+the+Legislative+Council/tagenda+for+the+meeting+of+the+legislative+council/1%2C670%2C670%2CB/browse
     Will need to adjust if from the LegCo site
+
+    Unclear at the moment if we will be downloading the HTML agendas or the docx version agendas
     """
     # Title of the document.  Should be "Agenda of the meeting of the Legislative Council, <date>"
     title = models.CharField(max_length=255, default='')
@@ -67,4 +69,28 @@ class RawCouncilVoteResult(RawModel):
 
 
 class RawCouncilHansard(RawModel):
-    pass
+    """
+    Storage of LegCo hansard documents
+    Sources can be Library: http://library.legco.gov.hk:1080/search~S10?/tHong+Kong+Hansard/thong+kong+hansard/1%2C3690%2C3697%2CB/browse
+    or http://www.legco.gov.hk/general/english/counmtg/yr12-16/mtg_1314.htm
+    """
+    title = models.CharField(max_length=255, default='')
+    paper_number = models.CharField(max_length=50, default='')
+    language = models.IntegerField(null=True, blank=True, choices=LANG_CHOICES)
+    url = models.URLField(default='')
+    local_filename = models.CharField(max_length=255, default='')
+
+
+class RawCouncilQuestion(RawModel):
+    """
+    Storage for Members' questions, from http://www.legco.gov.hk/yr13-14/english/counmtg/question/ques1314.htm#toptbl
+    """
+    raw_date = models.CharField(max_length=50, default='')
+    # Q. 5 <br> (Oral), for example
+    number_and_type = models.CharField(max_length=255, default='')
+    raised_by = models.CharField(max_length=255, default='')
+    subject = models.TextField(default='')
+    # Link to the agenda anchor with the text of the question
+    subject_link = models.URLField(default='')
+    reply_link = models.URLField(default='')
+    language = models.IntegerField(null=True, blank=True, choices=LANG_CHOICES)
