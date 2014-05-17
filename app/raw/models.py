@@ -21,7 +21,7 @@ class RawModel(models.Model):
     # A unique identifier for this type of item
     # We try to generate these as early as possible, but don't enforce a uniqueness constraint
     # for flexibility
-    uid = models.CharField(max_length=100, default='')
+    uid = models.CharField(max_length=100, blank=True)
     # Page from which the Item was crawled
     crawled_from = models.URLField()
 
@@ -39,15 +39,15 @@ class RawCouncilAgenda(RawModel):
     Unclear at the moment if we will be downloading the HTML agendas or the docx version agendas
     """
     # Title of the document.  Should be "Agenda of the meeting of the Legislative Council, <date>"
-    title = models.CharField(max_length=255, default='')
+    title = models.CharField(max_length=255, blank=True)
     # The LegCo paper number.  Should be "OP <number>" for pre-1997 agendas, or "A <sessionumber>" for later agendas
-    paper_number = models.CharField(max_length=50, default='')
+    paper_number = models.CharField(max_length=50, blank=True)
     language = models.IntegerField(null=True, blank=True, choices=LANG_CHOICES)
     # The URL link to the agenda document
-    url = models.URLField(default='')
+    url = models.URLField(blank=True)
     # The name of the file saved locally on disk in the scrapy download path
     # Don't use FilePathField or FileField, since those are more for user input via forms
-    local_filename = models.CharField(max_length=255, default='')
+    local_filename = models.CharField(max_length=255, blank=True)
 
 
 class RawCouncilVoteResult(RawModel):
@@ -57,15 +57,15 @@ class RawCouncilVoteResult(RawModel):
     http://www.legco.gov.hk/general/english/counmtg/yr12-16/mtg_1314.htm
     """
     # Some meetings span two days, which is why the raw date is a string
-    raw_date = models.CharField(max_length=50, default='')
+    raw_date = models.CharField(max_length=50, blank=True)
     # URL to the XML file
     xml_url = models.URLField(null=True, blank=True)
     # local filename of the saved XML in the scrapy folder
-    xml_filename = models.CharField(max_length=255, default='')
+    xml_filename = models.CharField(max_length=255, blank=True)
     # URL to the PDF file
     pdf_url = models.URLField(null=True, blank=True)
     # local filename of the saved PDF in the scrapy folder
-    pdf_filename = models.CharField(max_length=255, default='')
+    pdf_filename = models.CharField(max_length=255, blank=True)
 
 
 class RawCouncilHansard(RawModel):
@@ -74,23 +74,23 @@ class RawCouncilHansard(RawModel):
     Sources can be Library: http://library.legco.gov.hk:1080/search~S10?/tHong+Kong+Hansard/thong+kong+hansard/1%2C3690%2C3697%2CB/browse
     or http://www.legco.gov.hk/general/english/counmtg/yr12-16/mtg_1314.htm
     """
-    title = models.CharField(max_length=255, default='')
-    paper_number = models.CharField(max_length=50, default='')
+    title = models.CharField(max_length=255, blank=True)
+    paper_number = models.CharField(max_length=50, blank=True)
     language = models.IntegerField(null=True, blank=True, choices=LANG_CHOICES)
-    url = models.URLField(default='')
-    local_filename = models.CharField(max_length=255, default='')
+    url = models.URLField(blank=True)
+    local_filename = models.CharField(max_length=255, blank=True)
 
 
 class RawCouncilQuestion(RawModel):
     """
     Storage for Members' questions, from http://www.legco.gov.hk/yr13-14/english/counmtg/question/ques1314.htm#toptbl
     """
-    raw_date = models.CharField(max_length=50, default='')
+    raw_date = models.CharField(max_length=50, blank=True)
     # Q. 5 <br> (Oral), for example
-    number_and_type = models.CharField(max_length=255, default='')
-    raised_by = models.CharField(max_length=255, default='')
-    subject = models.TextField(default='')
+    number_and_type = models.CharField(max_length=255, blank=True)
+    raised_by = models.CharField(max_length=255, blank=True)
+    subject = models.TextField(blank=True)
     # Link to the agenda anchor with the text of the question
-    subject_link = models.URLField(default='')
-    reply_link = models.URLField(default='')
+    subject_link = models.URLField(blank=True)
+    reply_link = models.URLField(blank=True)
     language = models.IntegerField(null=True, blank=True, choices=LANG_CHOICES)
