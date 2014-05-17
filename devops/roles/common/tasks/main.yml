@@ -1,0 +1,25 @@
+---
+- name: Install base packages
+  sudo: yes
+  sudo_user: root
+  apt: pkg={{item}} state=installed update-cache=yes
+  with_items:
+    - build-essential
+    - python-dev
+    - python-setuptools
+    - python-psycopg2
+    - python-virtualenv
+    - python-pip
+    - vim
+    - tmux
+    - htop
+    - git
+
+- name: Install base pip packages
+  sudo: yes
+  sudo_user: root
+  pip: name={{item}}
+  with_items:
+    - virtualenv
+    - uwsgi
+

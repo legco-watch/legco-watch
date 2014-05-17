@@ -1,0 +1,15 @@
+---
+- name: Install app requirements
+  sudo: true
+  sudo_user: "{{project.user}}"
+  pip: >
+    requirements={{project.requirements}}
+    virtualenv={{project.virtualenv}}
+
+#    - name: Create app user
+#      user: >
+#        name={{project.user}}
+#        groups={{project.group}}
+#        state=present
+#
+

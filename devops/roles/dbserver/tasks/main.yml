@@ -1,0 +1,40 @@
+---
+- name: Install database package
+  sudo: yes
+  sudo_user: root
+  apt: >
+    pkg={{item}}
+    state=installed
+    update-cache=yes
+  with_items:
+    - build-essential
+    - postgresql
+    - python-dev
+    - python-setuptools
+    - python-psycopg2
+    - postgresql-9.1
+    - postgresql-contrib-9.1
+    - postgresql-doc-9.1
+    - libpq-dev
+
+- name: Create database user
+  sudo: true
+  sudo_user: postgres
+  postgresql_user: >
+    user={{database.user}}
+    password={{database.password}}
+    role_attr_flags=CREATEDB,NOSUPERUSER
+  tags: database
+
+- name: Create database
+  sudo: true
+  sudo_user: postgres
+  postgresql_db: >
+    name={{database.name}}
+    owner={{database.user}}
+    login_host=localhost
+    login_user={{database.user}}
+    login_password={{database.password}}
+  tags:
+    - database
+
