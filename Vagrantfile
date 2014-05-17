@@ -50,7 +50,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     rsync__auto: true
 
   playbook_path = "devops/dev.yml"
-  inventory_path = "devops/hosts/dev"
+  inventory_path = "devops/dev.hosts"
 
   if is_windows
     # Provisioning configuration for shell script.
