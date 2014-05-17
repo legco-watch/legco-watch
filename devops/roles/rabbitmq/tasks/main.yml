@@ -1,15 +1,18 @@
 ---
 - name: Add rabbitmq apt respository
+  sudo: true
   apt_repository: >
-    repo=deb http://www.rabbitmq.com/debian/ testing main
+    repo="deb http://www.rabbitmq.com/debian/ testing main"
     state=present
 
 - name: Add rabbitmq apt repository key
+  sudo: true
   apt_key: >
-    url=wget http://www.rabbitmq.com/rabbitmq-signing-key-public.asc
+    url=http://www.rabbitmq.com/rabbitmq-signing-key-public.asc
     state=present
 
 - name: Ensure rabbitmq is installed
+  sudo: true
   apt: >
     name={{item}}
     state=present

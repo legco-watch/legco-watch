@@ -1,8 +1,9 @@
+# Requirements for celery nodes
 celery==3.1.11
 django-celery==3.1.10
 kombu==3.0.16
 anyjson==0.3.3
-ampq==1.4.5
+amqp==1.4.5
 pytz==2014.3
 billiard==3.3.0.1
 librabbitmq==1.5.1

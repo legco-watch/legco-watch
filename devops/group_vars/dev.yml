@@ -12,10 +12,13 @@ project:
   group: www-data
   root: /vagrant
   virtualenv: /home/vagrant/envs/legcowatch
-  requirements: /vagrant/requirements/requirements.txt
+  requirements: /vagrant/requirements/base_reqs.txt
 
 django:
   root: "{{project.root}}/app"
 
 celery:
-  requirements: /vagrant/celery_reqs.txt
+  requirements: /vagrant/requirements/celery_reqs.txt
+
+scrapy:
+  requirements: /vagrant/requirements/scrapy_reqs.txt

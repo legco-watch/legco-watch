@@ -4,4 +4,6 @@
     - common
     - django
     - dbserver
-    - scraper
+    - celery
+    - rabbitmq
+    - scrapy
