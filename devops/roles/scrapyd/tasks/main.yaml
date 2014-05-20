@@ -1,0 +1,18 @@
+---
+- name: Ensure Scrapy APT repo is present
+  sudo: true
+  apt_repository: >
+    repo="deb http://archive.scrapy.org/ubuntu scrapy main"
+    state=present
+
+- name: ensure Scrapy APT repo key is present
+  sudo: true
+  apt_key: >
+    keyserver=hkp://keyserver.ubuntu.com:80
+    id=627220E7
+    state=present
+
+- name: Install Scrapyd
+  sudo: true
+  sudo_user: root
+  apt: pkg=scrapyd state=installed update-cache=yes

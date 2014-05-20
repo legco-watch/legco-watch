@@ -23,3 +23,7 @@ celery:
 scrapy:
   requirements: /vagrant/requirements/scrapy_reqs.txt
 
+scrapyd:
+  eggs_dir: eggs
+  logs_dir: logs
+  items_dir: items

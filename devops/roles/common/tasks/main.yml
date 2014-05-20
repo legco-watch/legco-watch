@@ -14,6 +14,9 @@
     - tmux
     - htop
     - git
+    - libffi-dev
+    - libxml2-dev
+    - libxslt1-dev
 
 - name: Install base pip packages
   sudo: yes

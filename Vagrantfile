@@ -4,67 +4,78 @@
 require 'rbconfig'
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
-is_windows = (RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/)
+$is_windows = (RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/)
 
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  # All Vagrant configuration is done here. The most common configuration
-  # options are documented and commented below. For a complete reference,
-  # please see the online documentation at vagrantup.com.
+def provision(box, playbook, hosts)
+  # Run the shell provisioner with a specified playbook and inventory
 
-  # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box = "hashicorp/precise32"
-  config.vm.hostname = "dev"
-
-  # Disable automatic box update checking. If you disable this, then
-  # boxes will only be checked for updates when the user runs
-  # `vagrant box outdated`. This is not recommended.
-  # config.vm.box_check_update = false
-
-  # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine. In the example below,
-  # accessing "localhost:8080" will access port 80 on the guest machine.
-  # config.vm.network "forwarded_port", guest: 80, host: 8080
-
-  # Create a private network, which allows host-only access to the machine
-  # using a specific IP.
-  config.vm.network "private_network", ip: "192.168.221.3"
-
-  # Create a public network, which generally matched to bridged network.
-  # Bridged networks make the machine appear as another physical device on
-  # your network.
-  # config.vm.network "public_network"
-
-  # If true, then any SSH connections made will enable agent forwarding.
-  # Default value: false
-  # config.ssh.forward_agent = true
-
-  config.vm.provider "virtualbox" do |v|
-    v.memory = 1024
-    v.cpus = 2
-    v.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"]
-  end
-
-  config.vm.synced_folder ".", "/vagrant",
+  box.vm.synced_folder ".", "/vagrant",
     type: "rsync",
     rsync__exclude: [".git/", ".idea/"],
     rsync__auto: true
 
-  playbook_path = "devops/dev.yml"
-  inventory_path = "devops/dev.hosts"
+  playbook_path = "devops/" + playbook
+  inventory_path = "devops/" + hosts
 
-  if is_windows
+  if $is_windows
     # Provisioning configuration for shell script.
-    config.vm.provision "shell" do |sh|
+    box.vm.provision "shell" do |sh|
       sh.path = "provision.sh"
       sh.args = playbook_path + " " + inventory_path
     end
   else
     # Provisioning configuration for Ansible (for Mac/Linux hosts).
-    config.vm.provision "ansible" do |ansible|
+    box.vm.provision "ansible" do |ansible|
       ansible.playbook = playbook_path
       ansible.inventory_path = inventory_path
       ansible.sudo = true
     end
+  end
+end
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  config.vm.define "default" do |dev|
+    # Dev box
+    dev.vm.box = "hashicorp/precise32"
+    dev.vm.hostname = "dev"
+
+    dev.vm.network "private_network", ip: "192.168.221.3"
+
+    dev.vm.provider "virtualbox" do |v|
+      v.memory = 1024
+      v.cpus = 2
+      v.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"]
+    end
+
+    dev.vm.synced_folder ".", "/vagrant",
+      type: "rsync",
+      rsync__exclude: [".git/", ".idea/"],
+      rsync__auto: true
+
+    provision(dev, "dev.yml", "dev.hosts")
+  end
+
+  config.vm.define "stage", autostart: false do |stage|
+    # Staging environment
+    
+    stage.vm.box = "hashicorp/precise32"
+    stage.vm.hostname = "stage"
+
+    stage.vm.network "private_network", ip: "192.168.221.4"
+
+    stage.vm.provider "virtualbox" do |v|
+      v.memory = 1024
+      v.cpus = 2
+      v.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"]
+    end
+
+    stage.vm.synced_folder ".", "/vagrant",
+      type: "rsync",
+      rsync__exclude: [".git/", ".idea/"],
+      rsync__auto: true
+
+    provision(stage, "stage.yml", "stage.hosts")
   end
 
 end

@@ -1,0 +1,9 @@
+- hosts: stage
+  remote_user: root
+  roles:
+    - common
+    - django
+    - dbserver
+    - celery
+    - rabbitmq
+    - scrapyd
