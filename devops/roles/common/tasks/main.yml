@@ -10,6 +10,7 @@
     - python-psycopg2
     - python-virtualenv
     - python-pip
+    - libpq-dev
     - vim
     - tmux
     - htop
