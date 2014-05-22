@@ -1,7 +1,7 @@
 from scrapy.spider import Spider, Request
 from scrapy.selector import Selector
 
-from legcoscraper.items import QuestionRecordQuestion
+from legcoscraper.items import QuestionRecordQuestion, LibraryAgenda
 from legcoscraper.items import HansardAgenda, HansardMinutes, HansardRecord
 
 import urlparse
@@ -46,4 +46,3 @@ class LegcoSiteSpider(Spider, HansardMixin):
         #     req = Request(absolute_url, callback = self.parse_questions_page)
         #     yield req
 
-        

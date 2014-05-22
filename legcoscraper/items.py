@@ -86,3 +86,17 @@ class HansardRecord(TypedItem):
     file_urls = Field()
     files = Field()
 
+
+class LibraryAgenda(TypedItem):
+    """
+    Library record for Council Meeting agendas
+    """
+    type_name = "LibraryAgenda"
+    title_en = Field()
+    title_cn = Field()
+    link_title_en = Field()
+    link_title_cn = Field()
+    link_en = Field()
+    link_cn = Field()
+    file_urls = Field()
+    files = Field()
