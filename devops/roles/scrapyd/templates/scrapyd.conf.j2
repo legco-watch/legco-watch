@@ -2,14 +2,14 @@
 eggs_dir    = {{ scrapyd.eggs_dir }}
 logs_dir    = {{ scrapyd.logs_dir }}
 items_dir   = {{ scrapyd.items_dir }}
-jobs_to_keep = 5
-dbs_dir     = dbsdenv
+jobs_to_keep = 20
+dbs_dir     = dbs
 max_proc    = 0
 max_proc_per_cpu = 4
 finished_to_keep = 100
 poll_interval = 5
 http_port   = 6800
-debug       = off
+debug       = {{ scrapyd.debug }}
 runner      = scrapyd.runner
 application = scrapyd.app.application
 launcher    = scrapyd.launcher.Launcher

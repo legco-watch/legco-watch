@@ -63,6 +63,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     stage.vm.hostname = "stage"
 
     stage.vm.network "private_network", ip: "192.168.221.4"
+    stage.vm.network "forwarded_port", guest:22, host: 2224
 
     stage.vm.provider "virtualbox" do |v|
       v.memory = 1024

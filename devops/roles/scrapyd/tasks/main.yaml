@@ -16,3 +16,9 @@
   sudo: true
   sudo_user: root
   apt: pkg=scrapyd state=installed update-cache=yes
+
+- name: Copy over scrapyd config
+  template: >
+    src=scrapyd.conf.j2
+    dest=/etc/scrapyd/scrapyd.conf
+    mode=0644

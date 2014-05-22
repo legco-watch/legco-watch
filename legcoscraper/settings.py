@@ -22,9 +22,11 @@ USER_AGENT = 'legcoscraper (+http://odhk.github.io/)'
 ITEM_PIPELINES = [
     'scrapy.contrib.pipeline.files.FilesPipeline',
 ]
+
 FILES_STORE = os.path.join(PROJECT_ROOT, 'datafiles')
 
 DOWNLOADER_MIDDLEWARES = {
     # 100 is for the ordering of the middleware pipeline, not for timeout
     'scrapy.contrib.downloadermiddleware.httpcache.HttpCacheMiddleware': 100,
+    'scrapy.contrib.downloadermiddleware.stats.DownloaderStats': 101,
 }

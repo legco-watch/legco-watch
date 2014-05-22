@@ -24,6 +24,8 @@ scrapy:
   requirements: /vagrant/requirements/scrapy_reqs.txt
 
 scrapyd:
+  address: http://192.168.221.4:6800/
   eggs_dir: eggs
   logs_dir: logs
   items_dir: items
+  debug: on

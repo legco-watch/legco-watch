@@ -23,3 +23,9 @@ celery:
 scrapy:
   requirements: /vagrant/requirements/scrapy_reqs.txt
 
+scrapyd:
+  address: http://localhost:6800/
+  eggs_dir: eggs
+  logs_dir: logs
+  items_dir: items
+  debug: on

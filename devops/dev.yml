@@ -7,3 +7,4 @@
     - celery
     - rabbitmq
     - scrapy
+    - scrapyd
