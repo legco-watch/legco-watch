@@ -25,7 +25,7 @@ scrapy:
 
 scrapyd:
   address: http://192.168.221.4:6800/
-  eggs_dir: eggs
-  logs_dir: logs
-  items_dir: items
+  eggs_dir: /var/lib/scrapyd/eggs
+  logs_dir: /var/lib/scrapyd/dbs
+  items_dir: /var/lib/scrapyd/items
   debug: on

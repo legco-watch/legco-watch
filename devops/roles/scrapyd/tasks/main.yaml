@@ -20,5 +20,5 @@
 - name: Copy over scrapyd config
   template: >
     src=scrapyd.conf.j2
-    dest=/etc/scrapyd/scrapyd.conf
+    dest=/etc/scrapyd/conf.d/scrapyd.conf
     mode=0644
