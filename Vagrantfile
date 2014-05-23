@@ -63,7 +63,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     stage.vm.hostname = "stage"
 
     stage.vm.network "private_network", ip: "192.168.221.4"
-    stage.vm.network "forwarded_port", guest:22, host: 2224
+
+    # must disable default ssh first
+    # https://github.com/mitchellh/vagrant/issues/3232
+    stage.vm.network "forwarded_port", guest:22, host: 2222, auto_correct: true, id: "ssh", disabled: true
+    stage.vm.network "forwarded_port", guest:22, host: 2224, auto_correct: true
 
     stage.vm.provider "virtualbox" do |v|
       v.memory = 1024
@@ -71,12 +75,18 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       v.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"]
     end
 
+    stage.vm.synced_folder ".", "/vagrant", disabled: true
+=begin
+    # Don't provision and sync folders on the stage machine
+    # do the provisioning from the dev environment to simulate cloud deploy
     stage.vm.synced_folder ".", "/vagrant",
       type: "rsync",
       rsync__exclude: [".git/", ".idea/"],
       rsync__auto: true
 
     provision(stage, "stage.yml", "stage.hosts")
+=end
+
   end
 
 end

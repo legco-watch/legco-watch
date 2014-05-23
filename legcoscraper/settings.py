@@ -23,7 +23,8 @@ ITEM_PIPELINES = [
     'scrapy.contrib.pipeline.files.FilesPipeline',
 ]
 
-FILES_STORE = os.path.join(PROJECT_ROOT, 'datafiles')
+# Needs to be absolute for deployment to scrapyd
+FILES_STORE = '/var/scraper/files'
 
 DOWNLOADER_MIDDLEWARES = {
     # 100 is for the ordering of the middleware pipeline, not for timeout

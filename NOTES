@@ -1,0 +1,4 @@
+
+Use this command to provision the stage machine with Ansible
+
+ansible-playbook --private-key=devops/certs/insecure_private_key -i devops/stage.hosts devops/stage.yml -v

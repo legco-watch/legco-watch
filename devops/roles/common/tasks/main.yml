@@ -18,6 +18,7 @@
     - libffi-dev
     - libxml2-dev
     - libxslt1-dev
+    - curl
 
 - name: Install base pip packages
   sudo: yes
@@ -27,3 +28,55 @@
     - virtualenv
     - uwsgi
 
+- name: Ensure project user exists
+  sudo: yes
+  user: >
+    name={{project.user}}
+    group={{project.group}}
+  when: not is_vagrant
+
+- name: Add Github remote host public key
+  sudo: yes
+  sudo_user: root
+  shell: >
+    ssh-keyscan -H github.com >> /etc/ssh/ssh_known_hosts
+    creates=/etc/ssh/ssh_known_hosts
+
+# Make sure to copy over deploy keys
+- name: Copy over github deploy keys
+  sudo: yes
+  copy: >
+    src=legco_github
+    dest={{project.user_home}}/legco_github
+    mode=600
+    owner={{project.user}}
+    group={{project.group}}
+  when: not is_vagrant
+
+- name: Ensure project folder exists
+  sudo: yes
+  file: >
+    path={{project.root}}
+    owner={{project.user}}
+    state=directory
+  when: not is_vagrant
+
+- name: Clone git repo
+  sudo: yes
+  git: >
+    dest={{project.root}}
+    repo=git@github.com:legco-watch/legco-watch.git
+    key_file={{project.user_home}}/legco_github
+  when: not is_vagrant
+
+# Can't just clone as project user because of some issue with ansible tmp
+# folder write permissions, I think
+- name: Transfer repo directory to project user
+  sudo: yes
+  file: >
+    path={{project.root}}
+    owner={{project.user}}
+    group={{project.group}}
+    state=directory
+    recurse=yes
+  when: not is_vagrant

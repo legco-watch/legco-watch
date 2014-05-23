@@ -1,4 +1,6 @@
 ---
+is_vagrant: false
+
 database:
   user: legcowatchdb
   password: e8aVqxwaKVXMfBT
@@ -7,25 +9,26 @@ database:
   port: 5432
 
 project:
-  user: vagrant
-  user_home: /home/vagrant
+  user: legco-watch
+  user_home: /home/legco-watch
   group: www-data
-  root: /vagrant
-  virtualenv: /home/vagrant/envs/legcowatch
-  requirements: /vagrant/requirements/base_reqs.txt
+  root: /var/www
+  virtualenv: /home/legco-watch/envs/legcowatch
+  requirements: /var/www/requirements/base_reqs.txt
 
 django:
   root: "{{project.root}}/app"
 
 celery:
-  requirements: /vagrant/requirements/celery_reqs.txt
+  requirements: "{{project.root}}/requirements/celery_reqs.txt"
 
 scrapy:
-  requirements: /vagrant/requirements/scrapy_reqs.txt
+  requirements: "{{project.root}}/requirements/scrapy_reqs.txt"
 
 scrapyd:
   address: http://192.168.221.4:6800/
   eggs_dir: /var/lib/scrapyd/eggs
-  logs_dir: /var/lib/scrapyd/dbs
+  logs_dir: /var/lib/scrapyd/logs
   items_dir: /var/lib/scrapyd/items
   debug: on
+  files_dir: /var/scraper/files

@@ -17,8 +17,27 @@
   sudo_user: root
   apt: pkg=scrapyd state=installed update-cache=yes
 
+- name: Ensure scrapy daemon is in www-data group
+  sudo: true
+  user: >
+    name=scrapy
+    group={{project.group}}
+
 - name: Copy over scrapyd config
+  sudo: true
   template: >
     src=scrapyd.conf.j2
     dest=/etc/scrapyd/conf.d/scrapyd.conf
     mode=0644
+  notify:
+    - Restart scrapyd
+
+# This is the file that the FilesPipeline will try to write the downloads to
+- name: Ensure files directory exists
+  sudo: true
+  file: >
+    path={{scrapyd.files_dir}}/full
+    owner={{project.user}}
+    group={{project.group}}
+    state=directory
+    mode=775

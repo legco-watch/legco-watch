@@ -1,4 +1,6 @@
 ---
+is_vagrant: true
+
 database:
   user: legcowatchdb
   password: e8aVqxwaKVXMfBT
@@ -26,6 +28,6 @@ scrapy:
 scrapyd:
   address: http://localhost:6800/
   eggs_dir: /var/lib/scrapyd/eggs
-  logs_dir: /var/lib/scrapyd/dbs
+  logs_dir: /var/lib/scrapyd/logs
   items_dir: /var/lib/scrapyd/items
   debug: on

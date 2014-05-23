@@ -34,3 +34,9 @@ want to work on, then submit a pull request when you're ready.  Be sure to commu
 mailing list so that we can coordinate our work.  We also have a Vagrantfile set up for the local development
 environment that you can use.  Learn more about Vagrant from
 [their docs](http://docs.vagrantup.com/v2/getting-started/index.html)
+
+Deploying
+=========
+
+Certificates and private keys are not stored in this repo.  You'll need to copy them into `devops/certs`
+or `devops/roles/common/files` before some of the Ansible deployment scripts will work.

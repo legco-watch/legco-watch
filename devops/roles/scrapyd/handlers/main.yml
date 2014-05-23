@@ -1,0 +1,6 @@
+---
+- name: Restart scrapyd
+  sudo: true
+  service: >
+    name=scrapyd
+    state=restarted
