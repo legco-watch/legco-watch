@@ -86,6 +86,24 @@ class HansardRecord(TypedItem):
     file_urls = Field()
     files = Field()
 
+#####
+# Library related items
+#####
+
+
+class LibraryResultPage(TypedItem):
+    """
+    Stores individual results pages, for debugging
+    """
+    type_name = "LibraryResultPage"
+    # Title of the link
+    title = Field()
+    link = Field()
+    # Page the link was found on
+    browse_url = Field()
+    # The type of document this page should be fore
+    document_type = Field()
+
 
 class LibraryAgenda(TypedItem):
     """
@@ -94,9 +112,7 @@ class LibraryAgenda(TypedItem):
     type_name = "LibraryAgenda"
     title_en = Field()
     title_cn = Field()
-    link_title_en = Field()
-    link_title_cn = Field()
-    link_en = Field()
-    link_cn = Field()
+    # List of (title, link) pairs
+    links = Field()
     file_urls = Field()
     files = Field()

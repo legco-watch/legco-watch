@@ -5,14 +5,13 @@
 #
 #     http://doc.scrapy.org/en/latest/topics/settings.html
 #
+import os
+
 
 BOT_NAME = 'legcoscraper'
 
 SPIDER_MODULES = ['legcoscraper.spiders']
 NEWSPIDER_MODULE = 'legcoscraper.spiders'
-
-import os.path
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENT = 'legcoscraper (+http://odhk.github.io/)'
@@ -24,10 +23,14 @@ ITEM_PIPELINES = [
 ]
 
 # Needs to be absolute for deployment to scrapyd
-FILES_STORE = '/var/scraper/files'
+# FILES_STORE = '/var/scraper/files'
+# Local config for testing
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+FILES_STORE = os.path.join(PROJECT_ROOT, 'datafiles')
 
 DOWNLOADER_MIDDLEWARES = {
     # 100 is for the ordering of the middleware pipeline, not for timeout
     'scrapy.contrib.downloadermiddleware.httpcache.HttpCacheMiddleware': 100,
     'scrapy.contrib.downloadermiddleware.stats.DownloaderStats': 101,
 }
+
