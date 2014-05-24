@@ -17,11 +17,33 @@
   sudo_user: root
   apt: pkg=scrapyd state=installed update-cache=yes
 
+- name: Copy over scrapyd upstart job
+  sudo: true
+  sudo_user: root
+  template: >
+    src=upstart-scrapyd.conf.j2
+    dest=/etc/init/scrapyd.conf
+    mode=0644
+  notify:
+    - Restart scrapyd
+
 - name: Ensure scrapy daemon is in www-data group
   sudo: true
   user: >
     name=scrapy
     group={{project.group}}
+
+- name: Ensure scrapy folder exists
+  sudo: yes
+  file: >
+    path={{item}}
+    owner=scrapy
+    group={{project.group}}
+    state=directory
+    mode=0775
+  with_items:
+    - "{{scrapyd.dir}}"
+  when: not is_vagrant
 
 - name: Copy over scrapyd config
   sudo: true

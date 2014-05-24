@@ -44,7 +44,6 @@ scrapyd:
 
 uwsgi:
   logs_dir: "{{common.logs_dir}}/uwsgi"
-  password: legco-watch-uwsgi
 
 nginx:
   logs_dir: "{{common.logs_dir}}/nginx"

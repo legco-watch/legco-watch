@@ -7,23 +7,27 @@
     - uwsgi
 
 - name: Install uWSGI server ini
+  sudo: yes
   template: >
     src=legco-watch.ini.j2
     dest={{project.root}}/legco-watch.ini
     owner={{project.user}}
     group={{project.group}}
     mode=0644
+  notify: Restart uWSGI
 
 - name: Install uWSGI upstart job
-  notify: Restart uWSGI
+  sudo: yes
   template: >
     src=uwsgi.conf.j2
     dest=/etc/init/legco-watch-uwsgi.conf
     owner=root
     group=root
     mode=0644
+  notify: Restart uWSGI
 
 - name: Start uWSGI daemon and enable for startup
+  sudo: yes
   service: >
     name=legco-watch-uwsgi
     state=started

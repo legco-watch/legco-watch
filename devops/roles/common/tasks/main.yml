@@ -59,10 +59,10 @@
     owner={{project.user}}
     group={{project.group}}
     state=directory
+    mode=0775
   with_items:
     - "{{project.root}}"
     - "{{common.logs_dir}}"
-    - "{{scrapyd.dir}}"
     - "{{uwsgi.logs_dir}}"
     - "{{nginx.logs_dir}}"
   when: not is_vagrant
