@@ -13,11 +13,19 @@ project:
   user_home: /home/vagrant
   group: www-data
   root: /vagrant
+
+common:
   virtualenv: /home/vagrant/envs/legcowatch
   requirements: /vagrant/requirements/base_reqs.txt
+  logs_dir: "/var/logs"
+
+git:
+  root: /vagrant
 
 django:
-  root: "{{project.root}}/app"
+  root: "{{git.root}}/app"
+  static_dir: "{{git.root}}/app/.static"
+  media_dir: "{{git.root}}/app/.media"
 
 celery:
   requirements: /vagrant/requirements/celery_reqs.txt
@@ -26,8 +34,17 @@ scrapy:
   requirements: /vagrant/requirements/scrapy_reqs.txt
 
 scrapyd:
+  dir: "{{project.root}}/scrapyd"
   address: http://localhost:6800/
   eggs_dir: /var/lib/scrapyd/eggs
   logs_dir: /var/lib/scrapyd/logs
   items_dir: /var/lib/scrapyd/items
   debug: on
+  files_dir: /var/lib/scrapyd/files
+
+uwsgi:
+  logs_dir: "{{common.logs_dir}}/uwsgi"
+  password: legco-watch-uwsgi
+
+nginx:
+  logs_dir: "{{common.logs_dir}}/nginx"

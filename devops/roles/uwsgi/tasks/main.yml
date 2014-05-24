@@ -1,0 +1,30 @@
+---
+- name: Install uWSGI pip packages
+  sudo: yes
+  sudo_user: root
+  pip: name={{item}}
+  with_items:
+    - uwsgi
+
+- name: Install uWSGI server ini
+  template: >
+    src=legco-watch.ini.j2
+    dest={{project.root}}/legco-watch.ini
+    owner={{project.user}}
+    group={{project.group}}
+    mode=0644
+
+- name: Install uWSGI upstart job
+  notify: Restart uWSGI
+  template: >
+    src=uwsgi.conf.j2
+    dest=/etc/init/legco-watch-uwsgi.conf
+    owner=root
+    group=root
+    mode=0644
+
+- name: Start uWSGI daemon and enable for startup
+  service: >
+    name=legco-watch-uwsgi
+    state=started
+    enabled=yes

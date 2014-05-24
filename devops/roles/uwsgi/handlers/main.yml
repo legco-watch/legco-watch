@@ -1,0 +1,6 @@
+---
+- name: Restart uWSGI
+  sudo: yes
+  service: >
+    name=legco-watch-uwsgi
+    state=restarted

@@ -4,6 +4,8 @@
     - common
     - django
     - dbserver
+    - nginx
+    - uwsgi
     - celery
     - rabbitmq
     - scrapyd

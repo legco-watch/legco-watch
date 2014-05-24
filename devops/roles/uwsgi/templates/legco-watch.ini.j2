@@ -1,0 +1,10 @@
+[uwsgi]
+chdir={{ django.root }}
+module=legcowatch.wsgi:application
+home={{ common.virtualenv }}
+master=True
+pidfile=/tmp/legcowatch-master.pid
+vacuum=True
+max-requests=1000
+daemonize={{ uwsgi.logs_dir }}/legcowatch-uwsgi.log
+http-socket=:8001

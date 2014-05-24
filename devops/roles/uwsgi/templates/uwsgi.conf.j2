@@ -1,0 +1,7 @@
+description "Legco-Watch uWSGI server"
+
+start on runlevel [2345]
+stop on runlevel [06]
+respawn
+
+exec /usr/local/bin/uwsgi --ini {{ project.root }}/legco-watch.ini

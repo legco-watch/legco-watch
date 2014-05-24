@@ -1,0 +1,34 @@
+---
+- name: Ensure nginx APT repo is present
+  sudo: true
+  apt-repository: >
+    repo='ppa:nginx/stable'
+    state=present
+
+- name: Ensure nginx is installed
+  apt: >
+    pkg={{item}}
+    state=installed
+    update-cache=yes
+  with_items:
+    - build-essential
+    - nginx
+
+- name: Remove default nginx site
+  notify: Restart nginx
+  file: >
+    path=/etc/nginx/sites-enabled/default
+    state=absent
+
+- name: Install nginx configuration file
+  notify: Restart nginx
+  template: >
+    src=legco-watch_nginx.conf.j2
+    dest=/etc/nginx/sites-available/legco-watch
+
+- name: Symlink site config
+  notify: Restart nginx
+  file: >
+    src=/etc/nginx/sites-available/legco-watch
+    dest=/etc/nginx/sites-enabled/legco-watch
+    state=link

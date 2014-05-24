@@ -4,4 +4,4 @@
   sudo_user: "{{project.user}}"
   pip: >
     requirements={{celery.requirements}}
-    virtualenv={{project.virtualenv}}
+    virtualenv={{common.virtualenv}}

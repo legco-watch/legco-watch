@@ -26,7 +26,6 @@
   pip: name={{item}}
   with_items:
     - virtualenv
-    - uwsgi
 
 - name: Ensure project user exists
   sudo: yes
@@ -53,18 +52,25 @@
     group={{project.group}}
   when: not is_vagrant
 
-- name: Ensure project folder exists
+- name: Ensure project folders exists
   sudo: yes
   file: >
-    path={{project.root}}
+    path={{item}}
     owner={{project.user}}
+    group={{project.group}}
     state=directory
+  with_items:
+    - "{{project.root}}"
+    - "{{common.logs_dir}}"
+    - "{{scrapyd.dir}}"
+    - "{{uwsgi.logs_dir}}"
+    - "{{nginx.logs_dir}}"
   when: not is_vagrant
 
 - name: Clone git repo
   sudo: yes
   git: >
-    dest={{project.root}}
+    dest={{git.root}}
     repo=git@github.com:legco-watch/legco-watch.git
     key_file={{project.user_home}}/legco_github
   when: not is_vagrant
@@ -74,7 +80,7 @@
 - name: Transfer repo directory to project user
   sudo: yes
   file: >
-    path={{project.root}}
+    path={{git.root}}
     owner={{project.user}}
     group={{project.group}}
     state=directory

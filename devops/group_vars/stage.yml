@@ -12,23 +12,39 @@ project:
   user: legco-watch
   user_home: /home/legco-watch
   group: www-data
-  root: /var/www
-  virtualenv: /home/legco-watch/envs/legcowatch
-  requirements: /var/www/requirements/base_reqs.txt
+  root: /var/legco-watch
+
+common:
+  virtualenv: "{{project.root}}/envs/legcowatch"
+  requirements: "{{git.root}}/requirements/base_reqs.txt"
+  logs_dir: "{{project.root}}/logs"
+
+git:
+  root: "{{project.root}}/www"
 
 django:
-  root: "{{project.root}}/app"
+  root: "{{git.root}}/app"
+  static_dir: "{{project.root}}/static"
+  media_dir: "{{project.root}}/media"
 
 celery:
-  requirements: "{{project.root}}/requirements/celery_reqs.txt"
+  requirements: "{{git.root}}/requirements/celery_reqs.txt"
 
 scrapy:
-  requirements: "{{project.root}}/requirements/scrapy_reqs.txt"
+  requirements: "{{git.root}}/requirements/scrapy_reqs.txt"
 
 scrapyd:
+  dir: "{{project.root}}/scrapyd"
   address: http://192.168.221.4:6800/
-  eggs_dir: /var/lib/scrapyd/eggs
-  logs_dir: /var/lib/scrapyd/logs
-  items_dir: /var/lib/scrapyd/items
+  eggs_dir: "{{project.root}}/scrapyd/eggs"
+  logs_dir: "{{project.root}}/scrapyd/logs"
+  items_dir: "{{project.root}}/scrapyd/items"
   debug: on
-  files_dir: /var/scraper/files
+  files_dir: "{{project.root/scrapyd/files"
+
+uwsgi:
+  logs_dir: "{{common.logs_dir}}/uwsgi"
+  password: legco-watch-uwsgi
+
+nginx:
+  logs_dir: "{{common.logs_dir}}/nginx"
