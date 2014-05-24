@@ -35,7 +35,12 @@ CONTRIB_APPS = (
     'pipeline'
 )
 
+APPS = (
+    'raw',
+)
+
 INSTALLED_APPS += CONTRIB_APPS
+INSTALLED_APPS += APPS
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',

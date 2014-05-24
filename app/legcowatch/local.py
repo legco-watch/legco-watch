@@ -31,3 +31,5 @@ DATABASES = {
 STATIC_URL = '/static/'
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
+
+SCRAPYD_SERVER = 'http://192.168.221.4:6800'

@@ -23,10 +23,10 @@ ITEM_PIPELINES = [
 ]
 
 # Needs to be absolute for deployment to scrapyd
-# FILES_STORE = '/var/scraper/files'
+FILES_STORE = '/var/scraper/files'
 # Local config for testing
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
-FILES_STORE = os.path.join(PROJECT_ROOT, 'datafiles')
+# PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+# FILES_STORE = os.path.join(PROJECT_ROOT, 'datafiles')
 
 DOWNLOADER_MIDDLEWARES = {
     # 100 is for the ordering of the middleware pipeline, not for timeout

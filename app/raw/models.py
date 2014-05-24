@@ -9,6 +9,20 @@ LANG_CHOICES = (
 )
 
 
+class ScrapeJob(models.Model):
+    """
+    A call to the Scrapyd server for a job
+    """
+    spider = models.CharField(max_length=100)
+    scheduled = models.DateTimeField()
+    job_id = models.CharField(max_length=100)
+    raw_response = models.TextField()
+    last_fetched = models.DateTimeField(null=True, blank=True)
+
+    def __unicode__(self):
+        return "{}: {}".format(self.spider, self.job_id)
+
+
 class RawModel(models.Model):
     """
     Abstract base class for all raw models
@@ -34,9 +48,6 @@ class RawCouncilAgenda(RawModel):
     Storage of Scrapy items relating to LegCo agenda items
 
     Should be from the Library Site: http://library.legco.gov.hk:1080/search~S10?/tAgenda+for+the+meeting+of+the+Legislative+Council/tagenda+for+the+meeting+of+the+legislative+council/1%2C670%2C670%2CB/browse
-    Will need to adjust if from the LegCo site
-
-    Unclear at the moment if we will be downloading the HTML agendas or the docx version agendas
     """
     # Title of the document.  Should be "Agenda of the meeting of the Legislative Council, <date>"
     title = models.CharField(max_length=255, blank=True)

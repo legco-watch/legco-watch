@@ -6,14 +6,30 @@ import urlparse
 from legcoscraper.items import LibraryAgenda, LibraryResultPage
 
 
-class LegcoLibraryAgendaSpider(Spider):
+class LegcoLibrarySpider(Spider):
+    """
+    Common methods for library archive pages
+    """
+    def pagination_links(self, response):
+        # Get the pagination links
+        # There are two pagination sections, so use only the first one
+        sel = Selector(response)
+        more_pages = sel.xpath('//td[@class="browsePager"]')[0]
+        page_links = more_pages.xpath('./a[@href]/@href').extract()
+        for link in page_links:
+            absolute_url = urlparse.urljoin(response.url, link.strip())
+            # Expects self.parse to be the main parsing loop for browse index pages
+            req = Request(absolute_url, callback=self.parse)
+            yield req
+
+
+class LibraryAgendaSpider(LegcoLibrarySpider):
     name = "legco_library_agenda"
     # allowed_domains = ["library.legco.gov.hk"]
     start_urls = [
         # Older agendas are in HTML
-        # "http://library.legco.gov.hk:1080/search~S10?/tAgenda+for+the+meeting+of+the+Legislative+Council/tagenda+for+the+meeting+of+the+legislative+council/1%2C670%2C670%2CB/browse",
         # Newer agendas are in doc format.  Not sure where the break happens
-        "http://library.legco.gov.hk:1080/search~S10?/tAgenda+for+the+meeting+of+the+Legislative+Council/tagenda+for+the+meeting+of+the+legislative+council/565%2C670%2C670%2CB/browse",
+        "http://library.legco.gov.hk:1080/search~S10?/tAgenda+for+the+meeting+of+the+Legislative+Council/tagenda+for+the+meeting+of+the+legislative+council/1%2C670%2C670%2CB/browse",
     ]
 
     def parse(self, response):
@@ -40,14 +56,8 @@ class LegcoLibraryAgendaSpider(Spider):
             req = Request(absolute_url, callback=self.parse_agenda_page)
             yield req
 
-        # Get the pagination links
-        # There are two pagination sections, so use only the first one
-        more_pages = sel.xpath('//td[@class="browsePager"]')[0]
-        page_links = more_pages.xpath('./a[@href]/@href').extract()
-        for link in page_links:
-            absolute_url = urlparse.urljoin(response.url, link.strip())
-            req = Request(absolute_url, callback=self.parse)
-            yield req
+        for link in self.pagination_links(response):
+            yield link
 
     def parse_agenda_page(self, response):
         sel = Selector(response)
