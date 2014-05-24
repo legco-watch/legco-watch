@@ -26,6 +26,7 @@ django:
   root: "{{git.root}}/app"
   static_dir: "{{project.root}}/static"
   media_dir: "{{project.root}}/media"
+  debug: True
 
 celery:
   requirements: "{{git.root}}/requirements/celery_reqs.txt"

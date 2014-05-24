@@ -1,3 +1,29 @@
 """
 Settings local to the machine.
 """
+SECRET_KEY = ')2_rz^&37bs42f_ygj2wg%3!q*50h)!_*&qmm@xj3yh^+p0=wc'
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = {{ django.debug }}
+TEMPLATE_DEBUG = {{ django.debug }}
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': '{{ database.name }}',
+        'USER': '{{ database.user }}',
+        'PASSWORD': '{{ database.password }}',
+        'HOST': '{{ database.host }}',
+        'PORT': '{{ database.port }}'
+    }
+}
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/1.6/howto/static-files/
+
+STATIC_URL = '{{ django.static_dir }}'
+
+STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
+
+SCRAPYD_SERVER = '{{ scrapyd.address }}'

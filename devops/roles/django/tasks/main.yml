@@ -6,10 +6,14 @@
     requirements={{common.requirements}}
     virtualenv={{common.virtualenv}}
 
-#    - name: Create app user
-#      user: >
-#        name={{project.user}}
-#        groups={{project.group}}
-#        state=present
-#
-
+- name: Copy over local settings
+  sudo: true
+  sudo_user: "{{project.user}}"
+  template: >
+    src=local.py.j2
+    dest={{django.root}}/legco-watch/local.py
+    owner={{project.user}}
+    group={{project.group}}
+    mode=0664
+  notify: Restart uWSGI
+  when: not is_vagrant

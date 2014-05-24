@@ -10,7 +10,6 @@ SECRET_KEY = ')2_rz^&37bs42f_ygj2wg%3!q*50h)!_*&qmm@xj3yh^+p0=wc'
 DEBUG = True
 TEMPLATE_DEBUG = True
 
-
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 

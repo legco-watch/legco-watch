@@ -1,0 +1,24 @@
+---
+- name: Django collectstatic
+  sudo: yes
+  sudo_user: "{{project.user}}"
+  django_manage: >
+    app_path={{django.root}}
+    virtualenv={{common.virtualenv}}
+    command=collectstatic
+
+- name: Django syncdb
+  sudo: yes
+  sudo_user: "{{project.user}}"
+  django_manage: >
+    app_path={{django.root}}
+    virtualenv={{common.virtualenv}}
+    command=syncdb
+
+- name: Django migrate
+  sudo: yes
+  sudo_user: "{{project.user}}"
+  django_manage: >
+    app_path={{django.root}}
+    virtualenv={{common.virtualenv}}
+    command=migrate
