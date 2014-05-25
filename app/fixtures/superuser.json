@@ -1,0 +1,20 @@
+[
+{
+  "pk": 1,
+  "model": "auth.user",
+  "fields": {
+    "username": "legcowatch",
+    "first_name": "",
+    "last_name": "",
+    "is_active": true,
+    "is_superuser": true,
+    "is_staff": true,
+    "last_login": "2014-05-24T09:47:59.585Z",
+    "groups": [],
+    "user_permissions": [],
+    "password": "pbkdf2_sha256$12000$reayNsa8XNyk$dm32bqcl04qWoVJ2poctBXt7NcFsXXdnaSw5S3+90Ow=",
+    "email": "foo@bar.com",
+    "date_joined": "2014-05-12T14:02:59.965Z"
+  }
+}
+]

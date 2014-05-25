@@ -24,3 +24,17 @@
 
 # Collectstatic, syncdb, and migrate
 - include: ../handlers/main.yml tags=deploy
+
+# This will create a user named 'legcowatch' with password 'changeme'
+# Should only be run on provisions, otherwise
+# it'll wipe out the first user every time it's run
+- name: Create first superuser
+  sudo: yes
+  sudo_user: "{{project.user}}"
+  django_manage: >
+    app_path={{django.root}}
+    virtualenv={{common.virtualenv}}
+    command=loaddata
+    fixtures=fixtures/superuser.json
+  tags:
+    - provision
