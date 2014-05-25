@@ -13,11 +13,15 @@
   sudo_user: "{{project.user}}"
   template: >
     src=local.py.j2
-    dest={{django.root}}/legco-watch/local.py
+    dest={{django.root}}/legcowatch/local.py
     owner={{project.user}}
     group={{project.group}}
     mode=0664
-  notify: Restart uWSGI
+  notify:
+    - Restart uWSGI
   when: not is_vagrant
   tags:
     - deploy
+
+# Collectstatic, syncdb, and migrate
+- include: ../handlers/main.yml tags=deploy

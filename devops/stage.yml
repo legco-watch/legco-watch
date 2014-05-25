@@ -2,10 +2,10 @@
   remote_user: root
   roles:
     - common
-    - django
     - dbserver
-    - nginx
+    - django
     - uwsgi
-    - celery
+    - nginx
     - rabbitmq
+    - celery
     - scrapyd
