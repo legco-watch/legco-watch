@@ -41,7 +41,7 @@ scrapyd:
   logs_dir: "{{project.root}}/scrapyd/logs"
   items_dir: "{{project.root}}/scrapyd/items"
   debug: on
-  files_dir: "{{project.root/scrapyd/files"
+  files_dir: "{{project.root}}/scrapyd/files"
 
 uwsgi:
   logs_dir: "{{common.logs_dir}}/uwsgi"
