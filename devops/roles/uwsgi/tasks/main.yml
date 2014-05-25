@@ -5,6 +5,8 @@
   pip: name={{item}}
   with_items:
     - uwsgi
+  tags:
+    - provision
 
 - name: Install uWSGI server ini
   sudo: yes
@@ -15,6 +17,8 @@
     group={{project.group}}
     mode=0644
   notify: Restart uWSGI
+  tags:
+    - deploy
 
 - name: Install uWSGI upstart job
   sudo: yes
@@ -25,6 +29,8 @@
     group=root
     mode=0644
   notify: Restart uWSGI
+  tags:
+    - provision
 
 - name: Start uWSGI daemon and enable for startup
   sudo: yes
@@ -32,3 +38,5 @@
     name=legco-watch-uwsgi
     state=started
     enabled=yes
+  tags:
+    - provision

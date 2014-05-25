@@ -1,0 +1,8 @@
+Ansible provisioning and deployment
+===================================
+
+Tags
+----
+
+ - `provision` - Tasks related to the initial set up of a machine.  Should only need to be run once
+ - `deploy` - Tasks related to pulling code, updating configs, and restarting services.

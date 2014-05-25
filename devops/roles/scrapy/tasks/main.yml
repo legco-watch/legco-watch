@@ -5,3 +5,5 @@
   pip: >
     requirements={{scrapy.requirements}}
     virtualenv={{project.virtualenv}}
+  tags:
+    - provision

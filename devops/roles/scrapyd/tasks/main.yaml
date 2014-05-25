@@ -4,6 +4,8 @@
   apt_repository: >
     repo="deb http://archive.scrapy.org/ubuntu scrapy main"
     state=present
+  tags:
+    - provision
 
 - name: ensure Scrapy APT repo key is present
   sudo: true
@@ -11,11 +13,15 @@
     keyserver=hkp://keyserver.ubuntu.com:80
     id=627220E7
     state=present
+  tags:
+    - provision
 
 - name: Install Scrapyd
   sudo: true
   sudo_user: root
   apt: pkg=scrapyd state=installed update-cache=yes
+  tags:
+    - provision
 
 - name: Copy over scrapyd upstart job
   sudo: true
@@ -26,12 +32,16 @@
     mode=0644
   notify:
     - Restart scrapyd
+  tags:
+    - provision
 
 - name: Ensure scrapy daemon is in www-data group
   sudo: true
   user: >
     name=scrapy
     group={{project.group}}
+  tags:
+    - provision
 
 - name: Ensure scrapy folder exists
   sudo: yes
@@ -44,6 +54,8 @@
   with_items:
     - "{{scrapyd.dir}}"
   when: not is_vagrant
+  tags:
+    - provision
 
 - name: Copy over scrapyd config
   sudo: true
@@ -53,6 +65,8 @@
     mode=0644
   notify:
     - Restart scrapyd
+  tags:
+    - deploy
 
 # This is the file that the FilesPipeline will try to write the downloads to
 - name: Ensure files directory exists
@@ -63,3 +77,5 @@
     group={{project.group}}
     state=directory
     mode=775
+  tags:
+    - provision

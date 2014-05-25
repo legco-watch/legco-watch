@@ -5,3 +5,5 @@
   pip: >
     requirements={{celery.requirements}}
     virtualenv={{common.virtualenv}}
+  tags:
+    - provision

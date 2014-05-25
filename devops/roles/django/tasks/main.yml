@@ -5,6 +5,8 @@
   pip: >
     requirements={{common.requirements}}
     virtualenv={{common.virtualenv}}
+  tags:
+    - provision
 
 - name: Copy over local settings
   sudo: true
@@ -17,3 +19,5 @@
     mode=0664
   notify: Restart uWSGI
   when: not is_vagrant
+  tags:
+    - deploy

@@ -19,6 +19,8 @@
     - libxml2-dev
     - libxslt1-dev
     - curl
+  tags:
+    - provision
 
 - name: Install base pip packages
   sudo: yes
@@ -26,6 +28,8 @@
   pip: name={{item}}
   with_items:
     - virtualenv
+  tags:
+    - provision
 
 - name: Ensure project user exists
   sudo: yes
@@ -33,6 +37,8 @@
     name={{project.user}}
     group={{project.group}}
   when: not is_vagrant
+  tags:
+    - provision
 
 - name: Add Github remote host public key
   sudo: yes
@@ -40,6 +46,8 @@
   shell: >
     ssh-keyscan -H github.com >> /etc/ssh/ssh_known_hosts
     creates=/etc/ssh/ssh_known_hosts
+  tags:
+    - provision
 
 # Make sure to copy over deploy keys
 - name: Copy over github deploy keys
@@ -51,6 +59,8 @@
     owner={{project.user}}
     group={{project.group}}
   when: not is_vagrant
+  tags:
+    - provision
 
 - name: Ensure project folders exists
   sudo: yes
@@ -66,6 +76,8 @@
     - "{{uwsgi.logs_dir}}"
     - "{{nginx.logs_dir}}"
   when: not is_vagrant
+  tags:
+    - provision
 
 - name: Clone git repo
   sudo: yes
@@ -74,6 +86,8 @@
     repo=git@github.com:legco-watch/legco-watch.git
     key_file={{project.user_home}}/legco_github
   when: not is_vagrant
+  tags:
+    - deploy
 
 # Can't just clone as project user because of some issue with ansible tmp
 # folder write permissions, I think
@@ -86,3 +100,5 @@
     state=directory
     recurse=yes
   when: not is_vagrant
+  tags:
+    - provision

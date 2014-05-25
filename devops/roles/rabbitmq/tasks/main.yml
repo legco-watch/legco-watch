@@ -4,12 +4,16 @@
   apt_repository: >
     repo="deb http://www.rabbitmq.com/debian/ testing main"
     state=present
+  tags:
+    - provision
 
 - name: Add rabbitmq apt repository key
   sudo: true
   apt_key: >
     url=http://www.rabbitmq.com/rabbitmq-signing-key-public.asc
     state=present
+  tags:
+    - provision
 
 - name: Ensure rabbitmq is installed
   sudo: true
@@ -19,3 +23,5 @@
     update_cache=yes
   with_items:
     - rabbitmq-server
+  tags:
+    - provision

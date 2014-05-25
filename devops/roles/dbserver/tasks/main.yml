@@ -16,6 +16,8 @@
     - postgresql-contrib-9.1
     - postgresql-doc-9.1
     - libpq-dev
+  tags:
+    - provision
 
 - name: Create database user
   sudo: true
@@ -24,7 +26,8 @@
     user={{database.user}}
     password={{database.password}}
     role_attr_flags=CREATEDB,NOSUPERUSER
-  tags: database
+  tags:
+    - provision
 
 - name: Create database
   sudo: true
@@ -36,5 +39,5 @@
     login_user={{database.user}}
     login_password={{database.password}}
   tags:
-    - database
+    - provision
 
