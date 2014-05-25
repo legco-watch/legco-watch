@@ -55,6 +55,9 @@ ROOT_URLCONF = 'legcowatch.urls'
 
 WSGI_APPLICATION = 'legcowatch.wsgi.application'
 
+TEMPLATE_DIRS = (
+    os.path.abspath('.') + "/templates",
+)
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/

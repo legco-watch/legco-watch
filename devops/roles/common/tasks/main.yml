@@ -101,4 +101,4 @@
     recurse=yes
   when: not is_vagrant
   tags:
-    - provision
+    - deploy

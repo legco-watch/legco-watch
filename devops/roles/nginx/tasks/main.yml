@@ -24,7 +24,8 @@
   file: >
     path=/etc/nginx/sites-enabled/default
     state=absent
-  notify: Restart nginx
+  notify:
+    - Restart nginx
   tags:
     - provision
 
@@ -33,7 +34,8 @@
   template: >
     src=legco-watch_nginx.conf.j2
     dest=/etc/nginx/sites-available/legco-watch
-  notify: Restart nginx
+  notify:
+    - Restart nginx
   tags:
     - deploy
 
@@ -43,6 +45,7 @@
     src=/etc/nginx/sites-available/legco-watch
     dest=/etc/nginx/sites-enabled/legco-watch
     state=link
-  notify: Restart nginx
+  notify:
+    - Restart nginx
   tags:
     - deploy

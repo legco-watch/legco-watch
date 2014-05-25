@@ -10,7 +10,6 @@
 
 - name: Copy over local settings
   sudo: true
-  sudo_user: "{{project.user}}"
   template: >
     src=local.py.j2
     dest={{django.root}}/legcowatch/local.py
