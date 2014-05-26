@@ -33,8 +33,7 @@ class Command(BaseCommand):
             if finished_data is None:
                 self.stdout.write("Job {} still pending".format(job.job_id))
 
-            completed_time = datetime.strptime(finished_data['end_time'], '%Y-%m-%d %H:%M:%S.%f')
-            completed_time.replace(tzinfo=pytz.UTC)
+            completed_time = datetime.strptime(finished_data['end_time'], '%Y-%m-%d %H:%M:%S.%f').replace(tzinfo=pytz.UTC)
             self.stdout.write("Job {} completed at {}".format(job.job_id, completed_time))
             job.completed = completed_time
             job.save()
