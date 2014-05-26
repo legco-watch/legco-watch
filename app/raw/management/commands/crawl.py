@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.management import BaseCommand
 import json
 import urllib2
+import urlparse
 from raw.models import ScrapeJob
 
 
@@ -14,7 +15,7 @@ class Command(BaseCommand):
     help = 'Trigger a crawl on the scrapyd server, and store the JobId for retrieval later'
 
     def handle(self, *args, **options):
-        schedule_url = '{}/schedule.json'.format(settings.SCRAPYD_SERVER)
+        schedule_url = urlparse.urljoin(settings.SCRAPYD_SERVER, 'schedule.json')
         for spider in args:
             self.stdout.write("Scheduling spider: {}".format(spider))
             res = urllib2.urlopen(schedule_url, "project=legcoscraper&spider={}".format(spider))
