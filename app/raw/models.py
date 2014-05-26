@@ -9,6 +9,11 @@ LANG_CHOICES = (
 )
 
 
+class ScrapeJobManager(models.Manager):
+    def pending_jobs(self):
+        return self.filter(completed=None)
+
+
 class ScrapeJob(models.Model):
     """
     A call to the Scrapyd server for a job
@@ -19,6 +24,8 @@ class ScrapeJob(models.Model):
     raw_response = models.TextField()
     completed = models.DateTimeField(null=True, blank=True)
     last_fetched = models.DateTimeField(null=True, blank=True)
+
+    objects = ScrapeJobManager()
 
     def __unicode__(self):
         return "{}: {}".format(self.spider, self.job_id)

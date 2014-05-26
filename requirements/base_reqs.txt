@@ -19,6 +19,8 @@ psycopg2==2.5.2
 pyasn1==0.1.7
 pyasn1-modules==0.0.5
 pycparser==2.10
+python-dateutil==2.2
+pytz==2014.3
 service-identity==0.2
 sqlparse==0.1.11
 wsgiref==0.1.2
