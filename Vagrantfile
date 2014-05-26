@@ -66,8 +66,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     # must disable default ssh first
     # https://github.com/mitchellh/vagrant/issues/3232
-    stage.vm.network "forwarded_port", guest:22, host: 2222, auto_correct: true, id: "ssh", disabled: true
-    stage.vm.network "forwarded_port", guest:22, host: 2224, auto_correct: true
+    stage.vm.network "forwarded_port", guest:22, host: 2224, auto_correct: false, id: "ssh"
+    # stage.vm.network "forwarded_port", guest:22, host: 2224, auto_correct: true
 
     stage.vm.provider "virtualbox" do |v|
       v.memory = 1024
