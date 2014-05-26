@@ -23,6 +23,13 @@ class ScrapeJobManager(models.Manager):
         """
         return self.exclude(completed=None).filter(last_fetched=None).order_by('-completed')
 
+    def orphaned_jobs(self):
+        """
+        Returns jobs that are somehow malformed.  This includes jobs:
+          - That are marked as completed but do not have a corresponding items file on disk
+        """
+        pass
+
 
 class ScrapeJob(models.Model):
     """

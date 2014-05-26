@@ -11,6 +11,9 @@ def file_wrapper(fp):
     """
     Yields parsed JSON objects from a line separated JSON file
     """
+    if isinstance(fp, basestring):
+        fp = open(fp, 'rb')
+
     for line in fp:
         yield json.loads(line)
 
@@ -19,7 +22,7 @@ def get_items_file(spider, job_id):
     """
     Return the absolute path for an Items file output by scrapy
     """
-    items_folder = settings.get('SCRAPY_ITEMS_PATH', None)
+    items_folder = getattr(settings, 'SCRAPYD_ITEMS_PATH', None)
     if items_folder is None:
         raise ImproperlyConfigured("No SCRAPY_ITEMS_PATH defined")
 
@@ -37,7 +40,7 @@ def get_file_path(rel_path):
     """
     Given a relative path for a file downloaded by scrapy, get the absolute path
     """
-    files_folder = settings.get('SCRAPY_FILES_PATH', None)
+    files_folder = getattr(settings, 'SCRAPYD_FILES_PATH', None)
     if files_folder is None:
         raise ImproperlyConfigured("No SCRAPY_FILES_PATH defined")
 

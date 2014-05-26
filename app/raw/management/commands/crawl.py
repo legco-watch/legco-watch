@@ -10,6 +10,8 @@ import urlparse
 from raw.models import ScrapeJob
 
 
+# Note that it is possible to trigger a crawl on a spider that doesn't exist.
+# This will cause an error on the scrapyd server, but we otherwise have no way of knowing
 class Command(BaseCommand):
     args = '<spider_name spider_name ...>'
     help = 'Trigger a crawl on the scrapyd server, and store the JobId for retrieval later'
