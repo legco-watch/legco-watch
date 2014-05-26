@@ -11,7 +11,17 @@ LANG_CHOICES = (
 
 class ScrapeJobManager(models.Manager):
     def pending_jobs(self):
+        """
+        Returns the jobs that are still at the scraper
+        """
         return self.filter(completed=None)
+
+    def unprocessed_jobs(self):
+        """
+        Returns jobs that have been completed by the scraper, but have not yet been loaded
+        into the raw models.  There may be more than one job per spider
+        """
+        return self.exclude(completed=None).filter(last_fetched=None).order_by('-completed')
 
 
 class ScrapeJob(models.Model):

@@ -24,7 +24,7 @@ class LegcoLibrarySpider(Spider):
 
 
 class LibraryAgendaSpider(LegcoLibrarySpider):
-    name = "legco_library_agenda"
+    name = "library_agenda"
     # allowed_domains = ["library.legco.gov.hk"]
     start_urls = [
         # Older agendas are in HTML
