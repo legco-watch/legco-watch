@@ -9,11 +9,6 @@ $is_windows = (RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/)
 def provision(box, playbook, hosts)
   # Run the shell provisioner with a specified playbook and inventory
 
-  box.vm.synced_folder ".", "/vagrant",
-    type: "rsync",
-    rsync__exclude: [".git/", ".idea/"],
-    rsync__auto: true
-
   playbook_path = "devops/" + playbook
   inventory_path = "devops/" + hosts
 
@@ -50,8 +45,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     dev.vm.synced_folder ".", "/vagrant",
       type: "rsync",
-      rsync__exclude: [".git/", ".idea/"],
-      rsync__auto: true
+      rsync__exclude: [".idea/"],
+      rsync__auto: true,
+      rsync__args: ["--verbose", "--archive", "-z", "--chmod=0664"]
 
     provision(dev, "dev.yml", "dev.hosts")
   end
@@ -81,7 +77,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # do the provisioning from the dev environment to simulate cloud deploy
     stage.vm.synced_folder ".", "/vagrant",
       type: "rsync",
-      rsync__exclude: [".git/", ".idea/"],
+      rsync__exclude: [".idea/"],
       rsync__auto: true
 
     provision(stage, "stage.yml", "stage.hosts")

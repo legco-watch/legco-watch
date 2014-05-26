@@ -8,6 +8,7 @@
   tags:
     - provision
 
+# This will always be changed, since the repo has a different version of local.py
 - name: Copy over local settings
   sudo: true
   template: >

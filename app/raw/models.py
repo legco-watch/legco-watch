@@ -17,6 +17,7 @@ class ScrapeJob(models.Model):
     scheduled = models.DateTimeField()
     job_id = models.CharField(max_length=100)
     raw_response = models.TextField()
+    completed = models.DateTimeField(null=True, blank=True)
     last_fetched = models.DateTimeField(null=True, blank=True)
 
     def __unicode__(self):
