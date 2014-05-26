@@ -31,4 +31,9 @@ STATIC_URL = '/static/'
 
 STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
 
-SCRAPYD_SERVER = 'http://192.168.221.4:6800'
+SCRAPYD_SERVER = 'http://localhost:6800'
+# Path to the JSONLines files with scraped items
+SCRAPYD_ITEMS_PATH = '/var/legco-watch/scrapyd/items'
+# Path to the folder where files are downloaded
+SCRAPYD_FILES_PATH = '/var/legco-watch/scrapyd/files'
+

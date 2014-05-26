@@ -23,6 +23,7 @@ ITEM_PIPELINES = [
 ]
 
 # Needs to be absolute for deployment to scrapyd
+# This is overridden in scrapy_local.py in the parent directory
 FILES_STORE = '/var/legco-watch/scrapyd/files'
 
 DOWNLOADER_MIDDLEWARES = {

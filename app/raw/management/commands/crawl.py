@@ -20,7 +20,13 @@ class Command(BaseCommand):
             self.stdout.write("Scheduling spider: {}".format(spider))
             res = urllib2.urlopen(schedule_url, "project=legcoscraper&spider={}".format(spider))
             res = res.read()
-            resp = json.loads(res)
+            try:
+                resp = json.loads(res)
+            except ValueError:
+                self.stdout.write("Error on scrapyd server:")
+                self.stdout.write(res)
+                return
+
             job = ScrapeJob.objects.create(
                 spider=spider,
                 scheduled=now(),
