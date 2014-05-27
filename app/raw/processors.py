@@ -14,10 +14,12 @@ def file_wrapper(fp):
     Yields parsed JSON objects from a line separated JSON file
     """
     if isinstance(fp, basestring):
-        fp = open(fp, 'rb')
-
-    for line in fp:
-        yield json.loads(line)
+        with open(fp, 'rb') as fp:
+            for line in fp:
+                yield json.loads(line)
+    else:
+        for line in fp:
+            yield json.loads(line)
 
 
 def get_items_file(spider, job_id):
@@ -97,24 +99,27 @@ class LibraryAgendaProcessor(object):
 
     def _filter_links(self, links_array):
         """
-        Given an array of links, return the Chinese and English links
+        Given an array of links, return a tuple of the English and Chinese urls
         """
         res = []
         # Filter out titles with "Appendix", "Annex" and "fu jian"
         # Sometimes there are (Internet) versions.  Not sure what these mean
         # Sometimes there are additional document with ID number beginning "CB"
-        filter = [u'App', u'Annex', u'CB', u'Internet',
-                  u'\u9644\u9304', u'\u9644\u4ef6', u'\u7db2\u4e0a\u7248']
+        filters = [u'App', u'Annex', u'CB', u'Internet',
+                   u'\u9644\u9304', u'\u9644\u4ef6', u'\u7db2\u4e0a\u7248']
         for l in links_array:
-            for f in filter:
+            for f in filters:
                 if f in l[0]:
                     continue
             res.append(l)
 
         if len(res) != 2:
             # Still couldn't get down to two URLs
-            pass
-        return res
+            return None, None
+        if 'English' in res[0][0]:
+            return res[0][1], res[1][1]
+        else:
+            return res[1][1], res[0][1]
 
     def _generate_base_agenda_uid(self, item):
         """
@@ -140,4 +145,20 @@ class LibraryAgendaProcessor(object):
         link_title = item['links'][0][0]
         # Each paper number is followed by " (<lang>)", but can also have
         # other parenthesis, so we have to filter for parenthesis with non-digit contents
-        return re.split(ur'\([\D]', link_title, 0, re.UNICODE).strip()
+        return re.split(ur'\([\D]', link_title, 0, re.UNICODE)[0].strip()
+
+
+"""
+Some scripts for testing
+
+from raw import processors, models
+a = models.ScrapeJob.objects.latest_complete_job('library_agenda')
+fp = processors.file_wrapper(processors.get_items_file(a.spider, a.job_id))
+items = [xx for xx in fp if xx['type'] == 'LibraryAgenda' and 'Ombudsman' not in xx['title_en']]
+multi = [xx for xx in items if len(xx['links']) != 2]
+foo = processors.LibraryAgendaProcessor('foo')
+
+[foo._get_paper_number(xx) for xx in items]
+[foo._filter_links(xx) for xx in multi]
+
+"""
