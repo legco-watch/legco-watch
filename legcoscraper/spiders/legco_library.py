@@ -77,6 +77,7 @@ class LibraryAgendaSpider(LegcoLibrarySpider):
             title_en=title_en,
             title_cn=title_cn,
             links=links,
-            file_urls=file_urls
+            file_urls=file_urls,
+            source_url=response.url
         )
         yield item

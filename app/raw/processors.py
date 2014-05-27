@@ -58,3 +58,55 @@ def get_processor_for_spider(spider):
     Not sure what the best way to store the mapping is.
     """
     pass
+
+
+class LibraryAgendaProcessor(object):
+    """
+    Class that handles the loading of Library Agenda scraped items into the RawCouncilAgenda table
+    """
+    def __init__(self, items_file_path, job=None):
+        self.items_file_path = items_file_path
+        self.job = job # The ScrapeJob, if available
+
+    def process(self, *args, **kwargs):
+        for item in file_wrapper(self.items_file_path):
+            if item['type'] == 'LibraryResultPage':
+                # Ignore these entries
+                pass
+            if item['type'] == 'LibraryAgenda':
+                # Filter out ombudsman agendas
+                if 'Ombudsman' not in item['title_en']:
+                    self._process_agenda_item(item)
+
+    def _process_agenda_item(self, item):
+        # Should generate two items, one for Chinese and one for English
+        uid = self._generate_agenda_uid(item)
+        paper_number = self._get_paper_number(item)
+        if len(item['links']) != 2:
+            # If there ar exactly two links, then one is English and the other Chinese
+            pass
+        else:
+            # Otherwise, there are appendices, and we have ot try to filter these out
+            pass
+
+    def _generate_base_agenda_uid(self, item):
+        """
+        Try to generate a unique id for an agenda item
+        ex: council_agenda-19950110-e
+        Basically council_agenda-<date: YYYYMMDD>-<lang>
+        e for English, c for Chinese
+
+        We leave out the language prefix, since each item has both languages
+        """
+        date = item['title_en'][-11:].replace('.', '')
+        return 'council_agenda-{}'.format(date)
+
+    def _get_paper_number(self, item):
+        """
+        Extracts the LegCo paper number from the item
+
+        Seems like there are some inconsistencies in the paper number.  Missing spaces, etc.
+        A single date, 1996.05.22 has the Chinese document listed first, instead of second
+        """
+        link_title = item['links'][0][0]
+        pass

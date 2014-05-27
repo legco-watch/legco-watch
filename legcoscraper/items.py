@@ -116,3 +116,5 @@ class LibraryAgenda(TypedItem):
     links = Field()
     file_urls = Field()
     files = Field()
+    # The URL to the source page
+    source_url = Field()
