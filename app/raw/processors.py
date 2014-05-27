@@ -1,10 +1,12 @@
 """
 Helpers to load the Scrapy JSON output into RawModels
 """
+import copy
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 import json
 import os
+import re
 
 
 def file_wrapper(fp):
@@ -66,7 +68,7 @@ class LibraryAgendaProcessor(object):
     """
     def __init__(self, items_file_path, job=None):
         self.items_file_path = items_file_path
-        self.job = job # The ScrapeJob, if available
+        self.job = job  # The ScrapeJob, if available
 
     def process(self, *args, **kwargs):
         for item in file_wrapper(self.items_file_path):
@@ -84,10 +86,35 @@ class LibraryAgendaProcessor(object):
         paper_number = self._get_paper_number(item)
         if len(item['links']) != 2:
             # If there ar exactly two links, then one is English and the other Chinese
-            pass
+            if 'English' in item['links'][0]:
+                url_en = item['links'][0][1]
+                url_cn = item['links'][1][1]
+            else:
+                url_en = item['links'][1][1]
+                url_cn = item['links'][0][1]
         else:
-            # Otherwise, there are appendices, and we have ot try to filter these out
+            url_en, url_cn = self._filter_links(item['links'])
+
+    def _filter_links(self, links_array):
+        """
+        Given an array of links, return the Chinese and English links
+        """
+        res = []
+        # Filter out titles with "Appendix", "Annex" and "fu jian"
+        # Sometimes there are (Internet) versions.  Not sure what these mean
+        # Sometimes there are additional document with ID number beginning "CB"
+        filter = [u'App', u'Annex', u'CB', u'Internet',
+                  u'\u9644\u9304', u'\u9644\u4ef6', u'\u7db2\u4e0a\u7248']
+        for l in links_array:
+            for f in filter:
+                if f in l[0]:
+                    continue
+            res.append(l)
+
+        if len(res) != 2:
+            # Still couldn't get down to two URLs
             pass
+        return res
 
     def _generate_base_agenda_uid(self, item):
         """
@@ -107,6 +134,10 @@ class LibraryAgendaProcessor(object):
 
         Seems like there are some inconsistencies in the paper number.  Missing spaces, etc.
         A single date, 1996.05.22 has the Chinese document listed first, instead of second
+
         """
+        # Even if there are appendices, they are never the first link (at the moment)
         link_title = item['links'][0][0]
-        pass
+        # Each paper number is followed by " (<lang>)", but can also have
+        # other parenthesis, so we have to filter for parenthesis with non-digit contents
+        return re.split(ur'\([\D]', link_title, 0, re.UNICODE).strip()
