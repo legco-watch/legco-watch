@@ -49,3 +49,12 @@ def get_file_path(rel_path):
         raise RuntimeError("Could not find file at {}".format(file_path))
 
     return file_path
+
+
+def get_processor_for_spider(spider):
+    """
+    Returns the function that processes the results of a spider crawl
+
+    Not sure what the best way to store the mapping is.
+    """
+    pass

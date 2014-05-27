@@ -16,12 +16,30 @@ class ScrapeJobManager(models.Manager):
         """
         return self.filter(completed=None)
 
+    def complete_jobs(self):
+        """
+        Jobs that have been completed
+        """
+        return self.exclude(completed=None)
+
+    def latest_complete_job(self, spider):
+        """
+        Latest complete job for a single spider
+        """
+        return self.filter(spider=spider).exclude(completed=None).latest('completed')
+
     def unprocessed_jobs(self):
         """
         Returns jobs that have been completed by the scraper, but have not yet been loaded
         into the raw models.  There may be more than one job per spider
         """
         return self.exclude(completed=None).filter(last_fetched=None).order_by('-completed')
+
+    def latest_unprocessed_job(self, spider):
+        """
+        Gets the latest unprocessed job for a single spider
+        """
+        return self.filter(spider=spider).exclude(completed=None).filter(last_fetched=None).latest('completed')
 
     def orphaned_jobs(self):
         """
