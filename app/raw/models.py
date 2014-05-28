@@ -63,7 +63,7 @@ class ScrapeJob(models.Model):
     objects = ScrapeJobManager()
 
     def __unicode__(self):
-        return "{}: {}".format(self.spider, self.job_id)
+        return u"{}: {}".format(self.spider, self.job_id)
 
 
 class RawModel(models.Model):
@@ -80,7 +80,7 @@ class RawModel(models.Model):
     # for flexibility
     uid = models.CharField(max_length=100, blank=True)
     # Page from which the Item was crawled
-    crawled_from = models.URLField()
+    crawled_from = models.TextField(blank=True)
 
     class Meta:
         abstract = True
@@ -98,10 +98,13 @@ class RawCouncilAgenda(RawModel):
     paper_number = models.CharField(max_length=50, blank=True)
     language = models.IntegerField(null=True, blank=True, choices=LANG_CHOICES)
     # The URL link to the agenda document
-    url = models.URLField(blank=True)
+    url = models.TextField(blank=True)
     # The name of the file saved locally on disk in the scrapy download path
     # Don't use FilePathField or FileField, since those are more for user input via forms
     local_filename = models.CharField(max_length=255, blank=True)
+
+    def __unicode__(self):
+        return unicode(self.uid)
 
 
 class RawCouncilVoteResult(RawModel):
