@@ -6,6 +6,12 @@ from scrapy.utils.project import get_project_settings
 import magic
 
 
+HTML = 1
+DOC = 2
+DOCX = 3
+PDF = 4
+
+
 def list_spiders():
     settings = get_project_settings()
     crawler = Crawler(settings)
@@ -15,12 +21,22 @@ def list_spiders():
 def check_file_type(filepath):
     filetype = magic.from_file(filepath)
     if not filetype:
-        return 'Filetype Could Not Be Determined'
+        # Filetype Could Not Be Determined
+        return None
     elif filetype == 'empty':
-        return 'Filetype Could Not Be Determined (file looks empty)'
+        # Filetype Could Not Be Determined (file looks empty)
+        return None
     elif filetype == 'very short file (no magic)':
-        return 'Filetype Could Not Be Determined (very short file)'
+        # Filetype Could Not Be Determined (very short file)
+        return None
     elif "Microsoft Office Word" in filetype:
-        return 'Microsoft Word Doc'
+        return DOC
+    elif filetype[0:4] == 'HTML':
+        return HTML
+    elif filetype == 'Microsoft Word 2007+':
+        return DOCX
+    elif 'PDF' in filetype:
+        return PDF
     else:
-        return filetype
+        # some other filetype that we don't account for
+        return None

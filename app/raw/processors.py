@@ -236,4 +236,9 @@ items_file = processors.get_items_file(job.spider, job.job_id)
 proc = processors.LibraryAgendaProcessor(items_file, job)
 proc.process()
 
+from raw import models, processors, utils
+objs = models.RawCouncilAgenda.objects.all()
+full_files = [processors.get_file_path(xx.local_filename) for xx in objs]
+[utils.check_file_type(xx) for xx in full_files]
+
 """
