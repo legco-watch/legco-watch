@@ -64,12 +64,16 @@ def get_processor_for_spider(spider):
 
     Not sure what the best way to store the mapping is.
     """
-    pass
+    proc = PROCESS_MAP.get(spider, None)
+    if proc is None:
+        raise RuntimeError("Invalid spider {}".format(spider))
+
+    return proc
 
 
-class LibraryAgendaProcessor(object):
+class BaseProcessor(object):
     """
-    Class that handles the loading of Library Agenda scraped items into the RawCouncilAgenda table
+    Base clase for processing lists of scraped Items and inserting them into the database
     """
     def __init__(self, items_file_path, job=None):
         self.items_file_path = items_file_path
@@ -77,6 +81,11 @@ class LibraryAgendaProcessor(object):
         self._count_created = 0
         self._count_updated = 0
 
+
+class LibraryAgendaProcessor(BaseProcessor):
+    """
+    Class that handles the loading of Library Agenda scraped items into the RawCouncilAgenda table
+    """
     def process(self, *args, **kwargs):
         print "Processing file {}".format(self.items_file_path)
         counter = 0
@@ -215,6 +224,10 @@ class LibraryAgendaProcessor(object):
         # other parenthesis, so we have to filter for parenthesis with non-digit contents
         return re.split(ur'\([\D]', link_title, 0, re.UNICODE)[0].strip()
 
+
+PROCESS_MAP = {
+    'library_agenda': LibraryAgendaProcessor
+}
 
 """
 Some scripts for testing
