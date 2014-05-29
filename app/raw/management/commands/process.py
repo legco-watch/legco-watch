@@ -4,6 +4,7 @@ processing.
 """
 from django.core.management import BaseCommand
 from optparse import make_option
+import os
 from raw import processors
 from raw.models import ScrapeJob
 
@@ -27,6 +28,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         items_file = options.get('items_file', None)
         if items_file is not None:
+            if not os.path.exists(items_file):
+                raise RuntimeError("The file {} does not seem to exist".format(items_file))
             self._process_items_file(args[0], items_file)
         else:
             for spider in args:

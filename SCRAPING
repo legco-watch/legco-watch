@@ -1,0 +1,47 @@
+Scraping
+========
+
+Our scraping infrastructure utilizes Scrapy, with scrapy project files located in `./legcosscraper/`.  We use Django
+to keep track of scrape jobs in the `raw.ScrapeJob` model.
+
+Scraping in production
+----------------------
+
+In production, scrape jobs are kicked off automatically by Celery tasks on a set schedule.  Celery instructs our
+scrapyd instance to run a crawl job using the JSON API, and then stores the job id into the `raw.ScrapeJob` model.
+As the crawler runs, it saves a JSONLines file with each of the items it scrapes to disk.  Additionally, it may save
+file attachments to disk in the process of the crawl.
+
+After Celery initiates a scrape job, it polls the scrapyd server periodically to check on the status of running
+crawl jobs.  When it detects that a crawl job has completed, it queues the next processing step.
+
+Processors are classes that are responsible for reading the results of a scrapy crawl and loading them from text files
+into the raw database models.  These processors are defined in `raw.Processors`.  Because scrapy saves crawl results
+with a predictable naming scheme, the Processor just has to know the spider name and the job id in order to
+find the results file.  Processors should also be idempotent, so re-running the processor should produce the exact
+same objects in the database.
+
+Once objects are loaded in to the raw databases, they're ready for parsing and loading into their final cleaned forms.
+
+In production, these services should all run automatically, but the can also be triggered by the following Django
+management commands:
+
+  - `manage.py crawl` - triggers a crawl and creates a `ScrapeJob` object.
+  - `manage.py crawl_status` - checks for the status of pending `ScrapeJobs`.
+  - `manage.py process` - triggers the processing stage for a completed `ScrapeJob`.
+
+Scraping in development
+-----------------------
+
+In a development environment, it can be cumbersome to set up a scrapyd instance just to perform crawls and
+to test processors on the results of crawls.  If you need to test a crawler, you probably want to run the crawls
+directly with the `scrapy crawl` command.  When you do this, it'll save the files in the paths defined in `scrapy_local.py`.
+
+Django looks for the results of crawls in the settings `SCRAPYD_ITEMS_PATH` and `SCRAPYD_FILES_PATH`.  You may need
+to move the files created by the `scrapy crawl` command to this path, since the settings checked into the repo
+actually assume that you do run the full scrapyd infrastructure locally (this is for testing the communication between
+Django and scrapyd).
+
+Additionally, the management commands won't work if you initiate crawls manually since Django will have no knowledge
+of the scrape jobs.  Some management commands may let you override the job finding logic with direct paths to
+the results files.
