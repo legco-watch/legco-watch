@@ -19,6 +19,7 @@
     - libxml2-dev
     - libxslt1-dev
     - curl
+    - antiword
   tags:
     - provision
 

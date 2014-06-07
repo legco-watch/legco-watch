@@ -47,7 +47,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       type: "rsync",
       rsync__exclude: [".idea/"],
       rsync__auto: true,
-      rsync__args: ["--verbose", "--archive", "-z", "--chmod=0664"]
+      rsync__args: ["--verbose", "--archive", "-z", "--perms"]
 
     provision(dev, "dev.yml", "dev.hosts")
   end

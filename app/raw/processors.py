@@ -250,8 +250,13 @@ proc = processors.LibraryAgendaProcessor(items_file, job)
 proc.process()
 
 from raw import models, processors, utils
-objs = models.RawCouncilAgenda.objects.all()
+import subprocess
+# Gets agendas since Jan 2013
+objs = models.RawCouncilAgenda.objects.order_by('-uid').all()
 full_files = [processors.get_file_path(xx.local_filename) for xx in objs]
-[utils.check_file_type(xx) for xx in full_files]
-
+foo = [utils.check_file_type(xx, as_string=True) for xx in full_files]
+bar = zip(objs, foo, full_files)
+doc_e = bar[60]
+doc_c = bar[61]
+res = subprocess.check_output(cmd)
 """

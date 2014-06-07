@@ -15,11 +15,14 @@ djangorestframework==2.3.13
 futures==2.1.6
 ipdb==0.8
 ipython==1.0.0
+lxml==3.3.5
+openxmllib==1.0.7
 psycopg2==2.5.2
 pyasn1==0.1.7
 pyasn1-modules==0.0.5
 pycparser==2.10
 python-dateutil==2.2
+python-docx==0.5.3
 python-magic==0.4.6
 pytz==2014.3
 service-identity==0.2
