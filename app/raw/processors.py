@@ -106,7 +106,7 @@ class LibraryAgendaProcessor(BaseProcessor):
         paper_number = self._get_paper_number(item)
         if len(item['links']) == 2:
             # If there ar exactly two links, then one is English and the other Chinese
-            if 'English' in item['links'][0]:
+            if 'English' in item['links'][0][0]:
                 title_en, url_en = item['links'][0]
                 title_cn, url_cn = item['links'][1]
             else:
@@ -258,5 +258,6 @@ foo = [utils.check_file_type(xx, as_string=True) for xx in full_files]
 bar = zip(objs, foo, full_files)
 doc_e = bar[60]
 doc_c = bar[61]
-res = subprocess.check_output(cmd)
+res = utils.doc_to_xml(doc_e[2])
+
 """
