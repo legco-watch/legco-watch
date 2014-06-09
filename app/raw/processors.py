@@ -260,4 +260,18 @@ doc_e = bar[60]
 doc_c = bar[61]
 res = utils.doc_to_xml(doc_e[2])
 
+import zipfile
+import openxmllib
+import docx
+docx_e = bar[0]
+docx_c = bar[1]
+res = docx.Document(docx_e[2])
+
+res = openxmllib.openXmlDocument(path=docx_e[2], mime_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+
+
+res = zipfile.ZipFile(docx_e[2])
+content = res.read('word/document.xml')
+
 """
+import openxmllib

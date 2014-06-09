@@ -44,10 +44,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
 
     dev.vm.synced_folder ".", "/vagrant",
-      type: "rsync",
-      rsync__exclude: [".idea/"],
-      rsync__auto: true,
-      rsync__args: ["--verbose", "--archive", "-z", "--perms"]
+      type: "nfs"
+      # type: "rsync",
+      # rsync__exclude: [".idea/"],
+      # rsync__auto: true,
+      # rsync__args: ["--verbose", "--archive", "-z", "--perms"]
 
     provision(dev, "dev.yml", "dev.hosts")
   end
