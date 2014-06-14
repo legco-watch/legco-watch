@@ -258,7 +258,7 @@ foo = [utils.check_file_type(xx, as_string=True) for xx in full_files]
 bar = zip(objs, foo, full_files)
 doc_e = bar[60]
 doc_c = bar[61]
-res = utils.doc_to_xml(doc_e[2])
+res = utils.doc_to_html(doc_e[2])
 
 import zipfile
 import openxmllib

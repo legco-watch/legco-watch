@@ -44,17 +44,6 @@ def check_file_type(filepath, as_string=False):
         return None
 
 
-def doc_to_xml(filepath):
-    """
-    Converts a doc file into an in-memory xml (docbook schema) string
-
-    :param filepath: full filepath to the file to convert
-    :return: unicode string
-    """
-    cmd = ['antiword', '-x', 'db', filepath]
-    return subprocess.check_output(cmd).decode('utf-8')
-
-
 def doc_to_html(filepath):
     """
     Converts a doc file into an in-memory xml (docbook schema) string
@@ -62,7 +51,8 @@ def doc_to_html(filepath):
     :param filepath: full filepath to the file to convert
     :return: unicode string
     """
-    pass
+    cmd = ['abiword', '--to=html', '--to-name=fd://1', filepath]
+    return subprocess.check_output(cmd).decode('utf-8')
 
 
 def docx_to_html(filepath):
