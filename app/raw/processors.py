@@ -248,30 +248,4 @@ job = models.ScrapeJob.objects.latest_complete_job('library_agenda')
 items_file = processors.get_items_file(job.spider, job.job_id)
 proc = processors.LibraryAgendaProcessor(items_file, job)
 proc.process()
-
-from raw import models, processors, utils
-import subprocess
-# Gets agendas since Jan 2013
-objs = models.RawCouncilAgenda.objects.order_by('-uid').all()
-full_files = [processors.get_file_path(xx.local_filename) for xx in objs]
-foo = [utils.check_file_type(xx, as_string=True) for xx in full_files]
-bar = zip(objs, foo, full_files)
-doc_e = bar[60]
-doc_c = bar[61]
-res = utils.doc_to_html(doc_e[2])
-
-import zipfile
-import openxmllib
-import docx
-docx_e = bar[0]
-docx_c = bar[1]
-res = pydocx.docx2html(docx_e[2])
-
-res = docx.Document(docx_e[2])
-res = openxmllib.openXmlDocument(path=docx_e[2], mime_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-
-
-res = zipfile.ZipFile(docx_e[2])
-content = res.read('word/document.xml')
-
 """

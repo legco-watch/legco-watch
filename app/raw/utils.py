@@ -46,7 +46,7 @@ def check_file_type(filepath, as_string=False):
 
 def doc_to_html(filepath):
     """
-    Converts a doc file into an in-memory xml (docbook schema) string
+    Converts a doc file to in-memory html string
 
     :param filepath: full filepath to the file to convert
     :return: unicode string
@@ -58,6 +58,7 @@ def doc_to_html(filepath):
 def docx_to_html(filepath):
     """
     Converts docx file to in-memory html string
+
     :param filepath: full path to the file to convert
     :return: unicode string
     """
