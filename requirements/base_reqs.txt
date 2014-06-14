@@ -1,5 +1,6 @@
 Django==1.6.4
 Markdown==2.4
+PyDocX==0.3.23
 South==0.8.4
 argparse==1.2.1
 cffi==0.8.2

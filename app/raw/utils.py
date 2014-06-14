@@ -5,6 +5,7 @@ from scrapy.crawler import Crawler
 from scrapy.utils.project import get_project_settings
 import magic
 import subprocess
+import pydocx
 
 
 HTML = 1
@@ -52,3 +53,22 @@ def doc_to_xml(filepath):
     """
     cmd = ['antiword', '-x', 'db', filepath]
     return subprocess.check_output(cmd).decode('utf-8')
+
+
+def doc_to_html(filepath):
+    """
+    Converts a doc file into an in-memory xml (docbook schema) string
+
+    :param filepath: full filepath to the file to convert
+    :return: unicode string
+    """
+    pass
+
+
+def docx_to_html(filepath):
+    """
+    Converts docx file to in-memory html string
+    :param filepath: full path to the file to convert
+    :return: unicode string
+    """
+    return pydocx.docx2html(filepath)
