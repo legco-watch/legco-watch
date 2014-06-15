@@ -1,6 +1,10 @@
+#!/usr/local/bin/python
+# -*- coding: utf-8 -*-
+
 """
 Document wrappers for LegCo Agendas
 """
+from collections import OrderedDict
 from django.utils.functional import cached_property
 import logging
 import lxml
@@ -20,7 +24,7 @@ class CouncilAgenda(object):
         self.tabled_papers = None
         self.questions = None
         self.motions = None
-        self.members_motions_on_legislation = None
+        self.bills = None
         self.members_bills = None
         self.members_motions = None
         self._load()
@@ -63,7 +67,6 @@ class CouncilAgenda(object):
         """
         Parse the source document and populate this object's properties
         """
-        headers = self.get_headers()
         pattern = ur'^[IV]+\.'
         current_section = None
         # Iterate over the elements in self.tree.iter()
@@ -71,9 +74,9 @@ class CouncilAgenda(object):
             # When we encounter a header element, figure out what section it is a header for
             if elem.text and re.search(pattern, elem.text):
                 logging.info(u"Found header: {}".format(elem.text))
-                section_list = self._identify_section(elem.text)
-                if section_list is not None:
-                    pass
+                section_name = self._identify_section(elem.text)
+                if section_name is not None:
+                    logging.info(u'Identified header {} as {}'.format(elem.text, section_name))
                 else:
                     logging.warn(u"Could not identify section from header {}".format(elem.text))
             else:
@@ -87,6 +90,19 @@ class CouncilAgenda(object):
         Try to identify what section the header delineates
         Returns None if it can't identify the section, otherwise it returns the property
         """
+        # Need to keep order of the map because we need to check for members' bills before
+        # we check for bills
+        section_map = OrderedDict(
+            ('tabled_papers', [u'Tabling of Paper', u'提交文件']),
+            ('members_bills', [u"Members' Bill", u"Member's Bill", u'議員法案']),
+            ('members_motions', [u"Members' Motion", u"Member's Motion", u'議員議案']),
+            ('questions', [u'Question', u'質詢']),
+            ('bills', [u'Bill', u'法案']),
+            ('motions', [u'Motion', u'議案']),
+        )
+        for prop_name, check_strings in section_map.items():
+            if any_in(check_strings, header):
+                return prop_name
         return None
 
     def get_headers(self):
@@ -100,6 +116,16 @@ class CouncilAgenda(object):
             if re.search(pattern, p):
                 res.append(p)
         return res
+
+
+def any_in(arr, iterable):
+    """
+    Checks if any value in arr is in an iterable
+    """
+    for elem in arr:
+        if elem in iterable:
+            return True
+    return False
 
 
 def get_all_agendas():
@@ -147,6 +173,8 @@ flat_headers = list(itertools.chain.from_iterable(headers))
 flat_headers = [re.sub(pattern, u'', xx) for xx in flat_headers]
 unique_headers = set(flat_headers)
 unique_headers = sorted(list(unique_headers))
+# there are some headers that get the roman numerals, but miss the title, possibly because of some
+# wayward tag
 
 Address by the Chief Executive
 Addresses
