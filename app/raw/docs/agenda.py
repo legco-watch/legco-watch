@@ -2,9 +2,11 @@
 Document wrappers for LegCo Agendas
 """
 from django.utils.functional import cached_property
+import logging
 import lxml
 from lxml import etree
 import re
+from raw import models, processors, utils
 
 
 class CouncilAgenda(object):
@@ -16,7 +18,6 @@ class CouncilAgenda(object):
         self.source = source
         self.tree = None
         self.tabled_papers = None
-        self.other_papers = None
         self.questions = None
         self.motions = None
         self.members_motions_on_legislation = None
@@ -38,11 +39,17 @@ class CouncilAgenda(object):
         self.source = re.sub(double_quotes, u'"', self.source)
         single_quotes = ur'[\u2019\u2018]'
         self.source = re.sub(single_quotes, u"'", self.source)
-        # There are also some crazy "zero width joiners" in random places
-        # in the text
-        # &#8205, &#160 (nbsp)
+        # There are also some "zero width joiners" in random places
+        # in the text.  Doesn't seem to cause any harm, though, so leave for now
+        # these are the codeS: &#8205, &#160 (nbsp), \xa0 (nbsp)
 
-        self.tree = lxml.html.fromstring(self.source)
+        # Finally, load the cleaned string to an ElementTree
+        try:
+            self.tree = lxml.html.fromstring(self.source)
+        except ValueError:
+            # This can throw an error if the source declares an encoding,
+            # so give lxml the encoded string
+            self.tree = lxml.html.fromstring(self.source.encode('utf-8'))
 
     def _clean(self):
         """
@@ -56,7 +63,31 @@ class CouncilAgenda(object):
         """
         Parse the source document and populate this object's properties
         """
-        pass
+        headers = self.get_headers()
+        pattern = ur'^[IV]+\.'
+        current_section = None
+        # Iterate over the elements in self.tree.iter()
+        for elem in self.tree.iter():
+            # When we encounter a header element, figure out what section it is a header for
+            if elem.text and re.search(pattern, elem.text):
+                logging.info(u"Found header: {}".format(elem.text))
+                section_list = self._identify_section(elem.text)
+                if section_list is not None:
+                    pass
+                else:
+                    logging.warn(u"Could not identify section from header {}".format(elem.text))
+            else:
+                # Add all the elements we encounter to the list for the current section until
+                # we encounter another header element, or the end of the document
+                if current_section is not None:
+                    pass
+
+    def _identify_section(self, header):
+        """
+        Try to identify what section the header delineates
+        Returns None if it can't identify the section, otherwise it returns the property
+        """
+        return None
 
     def get_headers(self):
         """
@@ -71,13 +102,17 @@ class CouncilAgenda(object):
         return res
 
 
-def load():
-    from raw import models, processors, utils
-    # Gets agendas since Jan 2013
+def get_all_agendas():
     objs = models.RawCouncilAgenda.objects.order_by('-uid').all()
     full_files = [processors.get_file_path(xx.local_filename) for xx in objs]
-    foo = [utils.check_file_type(xx, as_string=True) for xx in full_files]
-    bar = zip(objs, foo, full_files)
+    file_types = [utils.check_file_type(xx, as_string=True) for xx in full_files]
+    zipped = zip(objs, file_types, full_files)
+    return zipped
+
+
+def load():
+    # Gets agendas since Jan 2013
+    bar = get_all_agendas()
     doc_e = bar[60]
     doc_c = bar[61]
     docx_e = bar[0]
@@ -89,15 +124,74 @@ def load():
 
 """
 
-text = root.xpath('//text()')
-pattern = r'^[IV]+\.'
-res = []
-for p in text:
-    if re.search(pattern, p):
-        res.append(p)
-# res now contains the text of the headers, use getparent() to get elements
-headers = [xx.getparent() for xx in res]
-# to find the location in the document, we can use iter()
+# Try to figure out all of the strings that we need to account for
+import logging
+from raw.docs.agenda import get_all_agendas, CouncilAgenda
+from raw import utils
+agendas = get_all_agendas()
+headers = []
+for ag in agendas:
+    logging.info(ag)
+    if ag[1] == "DOCX":
+        src = utils.docx_to_html(ag[2])
+    elif ag[1] == "DOC":
+        src = utils.doc_to_html(ag[2])
+    else:
+        continue
+    res = CouncilAgenda(src)
+    headers.append(res.get_headers())
+import itertools
+import re
+pattern = ur'^[IV]+\.\s?'
+flat_headers = list(itertools.chain.from_iterable(headers))
+flat_headers = [re.sub(pattern, u'', xx) for xx in flat_headers]
+unique_headers = set(flat_headers)
+unique_headers = sorted(list(unique_headers))
+
+Address by the Chief Executive
+Addresses
+Bill
+Bills
+Election of President
+Member's Bill
+Member's Motion
+Members' Bills
+Members' Motion
+Members' Motions
+Members' Motions on Subsidiary Legislation and Other Instruments
+Motion
+Motions
+Question under Rule 24(4) of the Rules of Procedure
+Questions
+Questions for Written Replies
+Questions under Rule 24(4) of the Rules of Procedure
+Special Motions
+Statements
+Tabling of Paper
+Tabling of Papers
+Taking of Legislative Council Oath
+The Chief Executive of the Hong Kong Special Administrative Region   presents the Policy Address
+The Chief Executive of the Hong Kong Special Administrative Region  presents the Policy Address
+The Chief Executive of the Hong Kong Special Administrative Region  presents the Policy Address to the Council
+The Chief Executive's Question and Answer Session
+ Motions
+以書面答覆的質詢
+作出立法會誓言
+提交文件
+根據《議事規則》第24(4)條提出的質詢
+法案
+發言
+聲明
+行政長官發言
+行政長官答問會
+議員就附屬法例及其他文書提出的議案
+議員法案
+議員議案
+議案
+質詢
+選舉主席
+香港特別行政區行政長官向本會發表施政報告
+香港特別行政區行政長官發表施政報告
 
 # clean the html
 from lxml.html.clean import clean_html
