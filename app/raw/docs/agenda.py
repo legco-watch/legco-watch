@@ -13,6 +13,9 @@ import re
 from raw import models, processors, utils
 
 
+logger = logging.getLogger('legcowatch')
+
+
 class CouncilAgenda(object):
     """
     Object representing the Council Agenda document.  This class
@@ -84,12 +87,12 @@ class CouncilAgenda(object):
         for elem in self.tree.iter():
             # When we encounter a header element, figure out what section it is a header for
             if elem.text and re.search(pattern, elem.text):
-                logging.info(u"Found header: {}".format(elem.text))
+                logger.info(u"Found header: {}".format(elem.text))
                 section_name = self._identify_section(elem.text)
                 if section_name is not None:
-                    logging.info(u'Identified header {} as {}'.format(elem.text, section_name))
+                    logger.info(u'Identified header {} as {}'.format(elem.text, section_name))
                 else:
-                    logging.warn(u"Could not identify section from header {}".format(elem.text))
+                    logger.warn(u"Could not identify section from header {}".format(elem.text))
             else:
                 # Add all the elements we encounter to the list for the current section until
                 # we encounter another header element, or the end of the document
@@ -226,7 +229,6 @@ The Chief Executive's Question and Answer Session
 香港特別行政區行政長官發表施政報告
 
 
-import logging
 from raw.docs.agenda import get_all_agendas, CouncilAgenda
 from raw import utils
 agendas = get_all_agendas()

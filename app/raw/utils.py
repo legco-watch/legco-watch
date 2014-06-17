@@ -73,12 +73,10 @@ def docx_to_html(filepath, overwrite=False):
     """
     html_file = '{}.html'.format(filepath)
     if not os.path.exists(html_file) or overwrite:
-        print 'Writing to disk'
         res = pydocx.docx2html(filepath)
         with open(html_file, 'wb') as tmp:
             tmp.write(res.encode('utf-8'))
     else:
-        print 'loading from disk'
         with open(html_file, 'rb') as tmp:
             res = tmp.read().decode('utf-8')
     return res
