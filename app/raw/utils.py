@@ -6,6 +6,7 @@ from scrapy.utils.project import get_project_settings
 import magic
 import subprocess
 import pydocx
+import os
 
 
 HTML = 1
@@ -44,22 +45,40 @@ def check_file_type(filepath, as_string=False):
         return None
 
 
-def doc_to_html(filepath):
+def doc_to_html(filepath, overwrite=False):
     """
-    Converts a doc file to in-memory html string
+    Converts a doc file to in-memory html string.
 
     :param filepath: full filepath to the file to convert
     :return: unicode string
     """
-    cmd = ['abiword', '--to=html', '--to-name=fd://1', filepath]
-    return subprocess.check_output(cmd).decode('utf-8')
+    html_file = '{}.html'.format(filepath)
+    if not os.path.exists(html_file) or overwrite:
+        cmd = ['abiword', '--to=html', '--to-name=fd://1', filepath]
+        res = subprocess.check_output(cmd)
+        with open(html_file, 'wb') as tmp:
+            tmp.write(res)
+    else:
+        with open(html_file, 'rb') as tmp:
+            res = tmp.read()
+    return res.decode('utf-8')
 
 
-def docx_to_html(filepath):
+def docx_to_html(filepath, overwrite=False):
     """
     Converts docx file to in-memory html string
 
     :param filepath: full path to the file to convert
     :return: unicode string
     """
-    return pydocx.docx2html(filepath)
+    html_file = '{}.html'.format(filepath)
+    if not os.path.exists(html_file) or overwrite:
+        print 'Writing to disk'
+        res = pydocx.docx2html(filepath)
+        with open(html_file, 'wb') as tmp:
+            tmp.write(res.encode('utf-8'))
+    else:
+        print 'loading from disk'
+        with open(html_file, 'rb') as tmp:
+            res = tmp.read().decode('utf-8')
+    return res

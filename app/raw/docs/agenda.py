@@ -18,6 +18,17 @@ class CouncilAgenda(object):
     Object representing the Council Agenda document.  This class
     parses the document source and makes all of the individual elements easily accessible
     """
+    SECTION_MAP = OrderedDict(
+        (
+            ('tabled_papers', [u'Tabling of Paper', u'提交文件']),
+            ('members_bills', [u"Members' Bill", u"Member's Bill", u'議員法案']),
+            ('members_motions', [u"Members' Motion", u"Member's Motion", u'議員議案']),
+            ('questions', [u'Question', u'質詢']),
+            ('bills', [u'Bill', u'法案']),
+            ('motions', [u'Motion', u'議案']),
+        )
+    )
+
     def __init__(self, source, *args, **kwargs):
         self.source = source
         self.tree = None
@@ -92,15 +103,8 @@ class CouncilAgenda(object):
         """
         # Need to keep order of the map because we need to check for members' bills before
         # we check for bills
-        section_map = OrderedDict(
-            ('tabled_papers', [u'Tabling of Paper', u'提交文件']),
-            ('members_bills', [u"Members' Bill", u"Member's Bill", u'議員法案']),
-            ('members_motions', [u"Members' Motion", u"Member's Motion", u'議員議案']),
-            ('questions', [u'Question', u'質詢']),
-            ('bills', [u'Bill', u'法案']),
-            ('motions', [u'Motion', u'議案']),
-        )
-        for prop_name, check_strings in section_map.items():
+
+        for prop_name, check_strings in CouncilAgenda.SECTION_MAP.items():
             if any_in(check_strings, header):
                 return prop_name
         return None
@@ -220,6 +224,21 @@ The Chief Executive's Question and Answer Session
 選舉主席
 香港特別行政區行政長官向本會發表施政報告
 香港特別行政區行政長官發表施政報告
+
+
+import logging
+from raw.docs.agenda import get_all_agendas, CouncilAgenda
+from raw import utils
+agendas = get_all_agendas()
+objs = []
+for ag in agendas[0:20]:
+    if ag[1] == "DOCX":
+        src = utils.docx_to_html(ag[2])
+    elif ag[1] == "DOC":
+        src = utils.doc_to_html(ag[2])
+    obj = CouncilAgenda(src)
+    objs.append(obj)
+
 
 # clean the html
 from lxml.html.clean import clean_html
