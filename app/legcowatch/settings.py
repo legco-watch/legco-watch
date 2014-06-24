@@ -32,7 +32,8 @@ INSTALLED_APPS = (
 CONTRIB_APPS = (
     'south',
     'rest_framework',
-    'pipeline'
+    'pipeline',
+    'djangobower'
 )
 
 APPS = (
@@ -72,6 +73,13 @@ USE_L10N = True
 
 USE_TZ = True
 
+STATICFILES_FINDERS = (
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    "djangobower.finders.BowerFinder"
+)
+
+BOWER_COMPONENTS_ROOT = os.path.abspath('.') + "/bower_components"
 
 LOGGING = {
     'version': 1,
