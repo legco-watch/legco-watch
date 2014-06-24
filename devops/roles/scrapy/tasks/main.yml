@@ -4,7 +4,7 @@
   sudo_user: "{{project.user}}"
   pip: >
     requirements={{scrapy.requirements}}
-    virtualenv={{project.virtualenv}}
+    virtualenv={{common.virtualenv}}
   tags:
     - provision
     - deploy

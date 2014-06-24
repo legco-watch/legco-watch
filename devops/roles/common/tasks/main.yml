@@ -103,3 +103,27 @@
   when: not is_vagrant
   tags:
     - deploy
+
+- name: Install nvm
+  sudo: yes
+  sudo_user: "{{project.user}}"
+  shell: >
+    curl https://raw.githubusercontent.com/creationix/nvm/v0.8.0/install.sh | sh
+    creates=/home/{{project.user}}/.nvm
+  tags:
+    - provision
+
+# Will use .nvmrc in the project folder
+- name: Install node
+  sudo: yes
+  sudo_user: "{{project.user}}"
+  shell: >
+    source ~/.nvm/nvm.sh && nvm install
+    chdir={{git.root}}
+    executable=/bin/bash
+
+- name: Install bower
+  npm: >
+    name=bower
+    state=present
+    global=yes

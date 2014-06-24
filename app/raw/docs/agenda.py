@@ -41,6 +41,7 @@ class CouncilAgenda(object):
         self.bills = None
         self.members_bills = None
         self.members_motions = None
+        self.other = None
         self._load()
         self._clean()
         self._parse()
@@ -87,7 +88,6 @@ class CouncilAgenda(object):
         for elem in self.tree.iter():
             # When we encounter a header element, figure out what section it is a header for
             if elem.text and re.search(pattern, elem.text):
-                logger.info(u"Found header: {}".format(elem.text))
                 section_name = self._identify_section(elem.text)
                 if section_name is not None:
                     logger.info(u'Identified header {} as {}'.format(elem.text, section_name))
