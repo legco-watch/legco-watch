@@ -1,6 +1,8 @@
 """
 Some utilities for working with spiders
 """
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from scrapy.crawler import Crawler
 from scrapy.utils.project import get_project_settings
 import magic
@@ -80,3 +82,18 @@ def docx_to_html(filepath, overwrite=False):
         with open(html_file, 'rb') as tmp:
             res = tmp.read().decode('utf-8')
     return res
+
+
+def get_file_path(rel_path):
+    """
+    Given a relative path for a file downloaded by scrapy, get the absolute path
+    """
+    files_folder = getattr(settings, 'SCRAPYD_FILES_PATH', None)
+    if files_folder is None:
+        raise ImproperlyConfigured("No SCRAPY_FILES_PATH defined")
+
+    file_path = os.path.join(files_folder, rel_path)
+    if not os.path.exists(file_path):
+        raise RuntimeError("Could not find file at {}".format(file_path))
+
+    return file_path

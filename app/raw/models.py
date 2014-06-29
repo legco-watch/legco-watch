@@ -1,4 +1,6 @@
 from django.db import models
+from raw import utils
+from raw.docs.agenda import CouncilAgenda
 
 
 LANG_CN = 1
@@ -105,6 +107,30 @@ class RawCouncilAgenda(RawModel):
 
     def __unicode__(self):
         return unicode(self.uid)
+
+    def full_local_filename(self):
+        return utils.get_file_path(self.local_filename)
+
+    def get_parser(self):
+        """
+        Returns the parser for this RawCouncilAgenda object
+        """
+        full_file = self.full_local_filename()
+        filetype = utils.check_file_type(full_file)
+        if filetype == utils.DOCX:
+            src = utils.docx_to_html(full_file)
+        elif filetype == utils.DOC:
+            src = utils.doc_to_html(full_file)
+        else:
+            raise NotImplementedError("Unexpected filetype.")
+        return CouncilAgenda(self.uid, src)
+
+    @classmethod
+    def get_from_parser(cls, parser):
+        """
+        Get a model object from a CouncilAgenda parser object
+        """
+        return cls.objects.get(uid=parser.uid)
 
 
 class RawCouncilVoteResult(RawModel):

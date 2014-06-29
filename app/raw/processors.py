@@ -1,7 +1,6 @@
 """
 Helpers to load the Scrapy JSON output into RawModels
 """
-import copy
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.timezone import now
@@ -9,6 +8,7 @@ import json
 import os
 import re
 import warnings
+
 from raw.models import RawCouncilAgenda, LANG_EN, LANG_CN
 
 
@@ -40,21 +40,6 @@ def get_items_file(spider, job_id):
         file_path = os.path.join(spider_folder, job_id + '.json')
         if not os.path.exists(file_path):
             raise RuntimeError("Could not find items file at {}".format(file_path))
-    return file_path
-
-
-def get_file_path(rel_path):
-    """
-    Given a relative path for a file downloaded by scrapy, get the absolute path
-    """
-    files_folder = getattr(settings, 'SCRAPYD_FILES_PATH', None)
-    if files_folder is None:
-        raise ImproperlyConfigured("No SCRAPY_FILES_PATH defined")
-
-    file_path = os.path.join(files_folder, rel_path)
-    if not os.path.exists(file_path):
-        raise RuntimeError("Could not find file at {}".format(file_path))
-
     return file_path
 
 

@@ -5,12 +5,10 @@
 Document wrappers for LegCo Agendas
 """
 from collections import OrderedDict
-from django.utils.functional import cached_property
 import logging
 import lxml
 from lxml import etree
 import re
-from raw import models, processors, utils
 
 
 logger = logging.getLogger('legcowatch')
@@ -32,7 +30,8 @@ class CouncilAgenda(object):
         )
     )
 
-    def __init__(self, source, *args, **kwargs):
+    def __init__(self, uid, source, *args, **kwargs):
+        self.uid = uid
         self.source = source
         self.tree = None
         self.tabled_papers = None
@@ -47,7 +46,7 @@ class CouncilAgenda(object):
         self._parse()
 
     def __repr__(self):
-        return '<CouncilAgenda>'
+        return u'<CouncilAgenda: {}>'.format(self.uid)
 
     def _load(self):
         """
@@ -136,11 +135,9 @@ def any_in(arr, iterable):
 
 
 def get_all_agendas():
+    from raw import models, utils
     objs = models.RawCouncilAgenda.objects.order_by('-uid').all()
-    full_files = [processors.get_file_path(xx.local_filename) for xx in objs]
-    file_types = [utils.check_file_type(xx, as_string=True) for xx in full_files]
-    zipped = zip(objs, file_types, full_files)
-    return zipped
+    return objs
 
 
 def load():
@@ -171,7 +168,7 @@ for ag in agendas:
         src = utils.doc_to_html(ag[2])
     else:
         continue
-    res = CouncilAgenda(src)
+    res = CouncilAgenda(ag[0].uid, src)
     headers.append(res.get_headers())
 import itertools
 import re
@@ -234,12 +231,7 @@ from raw import utils
 agendas = get_all_agendas()
 objs = []
 for ag in agendas[0:20]:
-    if ag[1] == "DOCX":
-        src = utils.docx_to_html(ag[2])
-    elif ag[1] == "DOC":
-        src = utils.doc_to_html(ag[2])
-    obj = CouncilAgenda(src)
-    objs.append(obj)
+    objs.append(ag.get_parser())
 
 
 # clean the html
@@ -268,3 +260,5 @@ shutil.copyfile(docx_e[2], './docx_e.docx')
 shutil.copyfile(docx_c[2], './docx_c.docx')
 
 """
+
+
