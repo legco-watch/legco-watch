@@ -105,7 +105,31 @@ class CouncilAgenda(object):
                 # we encounter another header element, or the end of the document
                 if current_section is not None:
                     arr = getattr(self, current_section)
-                    arr.append(etree.tostring(elem))
+                    arr.append(elem)
+
+        # Once all of the sections are split up, parse each of them separately
+        for section in CouncilAgenda.SECTION_MAP.keys():
+            if getattr(self, section) is not None:
+                getattr(self, "_parse_{}".format(section))()
+        # We won't parse others, since we don't know what those are
+
+    def _parse_tabled_papers(self):
+        pass
+
+    def _parse_members_bills(self):
+        pass
+
+    def _parse_members_motions(self):
+        pass
+
+    def _parse_questions(self):
+        pass
+
+    def _parse_bills(self):
+        pass
+
+    def _parse_motions(self):
+        pass
 
     def _identify_section(self, header):
         """
@@ -133,6 +157,39 @@ class CouncilAgenda(object):
         return res
 
 
+class AgendaQuestion(object):
+    """
+    Object for questions listed in the CouncilAgenda
+
+    Instantiate with the list of lxml elements that comprise
+    the question, and this object will parse out the sections
+    """
+    def __init__(self, elements):
+        self.asker = None
+        self.replier = None
+        self.body = None
+
+
+class AgendaMotion(object):
+    """
+    Object for Members' Motions.
+    """
+    def __init__(self, elements):
+        self.mover = None
+        self.body = None
+        self.amendments = None
+
+
+class MotionAmendment(object):
+    """
+    Amendments to motions.
+    """
+    def __init__(self, parent, elements):
+        self.motion = parent
+        self.amender = None
+        self.body = None
+
+
 def any_in(arr, iterable):
     """
     Checks if any value in arr is in an iterable
@@ -147,18 +204,6 @@ def get_all_agendas():
     from raw import models, utils
     objs = models.RawCouncilAgenda.objects.order_by('-uid').all()
     return objs
-
-
-def load():
-    # Gets agendas since Jan 2013
-    bar = get_all_agendas()
-    doc_e = bar[60]
-    doc_c = bar[61]
-    docx_e = bar[0]
-    docx_c = bar[1]
-    source = utils.docx_to_html(docx_e[2])
-    agenda = CouncilAgenda(source)
-    return agenda
 
 
 """
