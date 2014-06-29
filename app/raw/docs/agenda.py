@@ -84,19 +84,28 @@ class CouncilAgenda(object):
         pattern = ur'^[IV]+\.'
         current_section = None
         # Iterate over the elements in self.tree.iter()
-        for elem in self.tree.iter():
+        # We only want paragraphs and table, since these appear to be the main top level elements
+        # ie. we don't want to go fully down the tree
+        for elem in self.tree.iter('table', 'p'):
             # When we encounter a header element, figure out what section it is a header for
-            if elem.text and re.search(pattern, elem.text):
-                section_name = self._identify_section(elem.text)
+            text = elem.text_content()
+            if text and re.search(pattern, text):
+                section_name = self._identify_section(text)
                 if section_name is not None:
-                    logger.info(u'Identified header {} as {}'.format(elem.text, section_name))
+                    logger.info(u'Identified header {} as {}'.format(text, section_name))
+                    current_section = section_name
                 else:
-                    logger.warn(u"Could not identify section from header {}".format(elem.text))
+                    logger.warn(u"Could not identify section from header {}".format(text))
+                    current_section = "other"
+                # If this is the first time in this section, initailize the array for storing stuff
+                if getattr(self, current_section) is None:
+                    setattr(self, current_section, [])
             else:
                 # Add all the elements we encounter to the list for the current section until
                 # we encounter another header element, or the end of the document
                 if current_section is not None:
-                    pass
+                    arr = getattr(self, current_section)
+                    arr.append(etree.tostring(elem))
 
     def _identify_section(self, header):
         """
@@ -230,7 +239,8 @@ from raw.docs.agenda import get_all_agendas, CouncilAgenda
 from raw import utils
 agendas = get_all_agendas()
 objs = []
-for ag in agendas[0:20]:
+
+for ag in agendas:
     objs.append(ag.get_parser())
 
 

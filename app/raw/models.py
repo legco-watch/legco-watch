@@ -122,7 +122,7 @@ class RawCouncilAgenda(RawModel):
         elif filetype == utils.DOC:
             src = utils.doc_to_html(full_file)
         else:
-            raise NotImplementedError("Unexpected filetype.")
+            raise NotImplementedError(u"Unexpected filetype for uid {}".format(self.uid))
         return CouncilAgenda(self.uid, src)
 
     @classmethod
