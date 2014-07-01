@@ -8,10 +8,12 @@ from collections import OrderedDict
 import logging
 import lxml
 from lxml import etree
+from lxml.html.clean import clean_html
 import re
 
 
 logger = logging.getLogger('legcowatch')
+QUESTION_PATTERN = ur'^[0-9]+..*?Hon\s(.*?)\sto ask:'
 
 
 class CouncilAgenda(object):
@@ -32,6 +34,7 @@ class CouncilAgenda(object):
 
     def __init__(self, uid, source, *args, **kwargs):
         self.uid = uid
+        # Raw html string
         self.source = source
         self.tree = None
         self.tabled_papers = None
@@ -41,6 +44,7 @@ class CouncilAgenda(object):
         self.members_bills = None
         self.members_motions = None
         self.other = None
+        self._headers = []
         self._load()
         self._clean()
         self._parse()
@@ -61,6 +65,8 @@ class CouncilAgenda(object):
         # in the text.  Doesn't seem to cause any harm, though, so leave for now
         # these are the codeS: &#8205, &#160 (nbsp), \xa0 (nbsp)
 
+        # Use the lxml cleaner
+        self.source = clean_html(self.source)
         # Finally, load the cleaned string to an ElementTree
         try:
             self.tree = lxml.html.fromstring(self.source)
@@ -100,6 +106,7 @@ class CouncilAgenda(object):
                 # If this is the first time in this section, initailize the array for storing stuff
                 if getattr(self, current_section) is None:
                     setattr(self, current_section, [])
+                self._headers.append((current_section, elem))
             else:
                 # Add all the elements we encounter to the list for the current section until
                 # we encounter another header element, or the end of the document
@@ -123,7 +130,36 @@ class CouncilAgenda(object):
         pass
 
     def _parse_questions(self):
-        pass
+        """
+        Parse question lxml elements into AgendaQuestions.
+
+        When this is run, self.questions is a list of lxml elements.  This will
+        scan through the list, and give groups of elements that constitute a question
+        to the AgendaQuestion constructor.
+        """
+        if self.questions is not None:
+            logger.info(u"Parsing questions from {} elements".format(len(self.questions)))
+            parsed_questions = []
+            pattern = QUESTION_PATTERN
+            parts = []
+            for q in self.questions:
+                match = re.match(pattern, q.text_content())
+                if match is not None:
+                    # Found a match for a new question start
+                    logger.debug(u"Found question {}".format(q.text_content()))
+                    # If we've accumulated parts for a prior question, clear those out
+                    if len(parts) > 0:
+                        ag = AgendaQuestion(parts)
+                        parsed_questions.append(ag)
+                        parts = []
+                # Continue to accumulate parts
+                parts.append(q)
+
+            # Make sure to parse the last question
+            ag = AgendaQuestion(parts)
+            parsed_questions.append(ag)
+            self.questions = parsed_questions
+            logger.info(u"Parsed {} questions".format(len(self.questions)))
 
     def _parse_bills(self):
         pass
@@ -164,10 +200,34 @@ class AgendaQuestion(object):
     Instantiate with the list of lxml elements that comprise
     the question, and this object will parse out the sections
     """
+    RESPONDER_PATTERN = ur':\s?(.+)$'
+
     def __init__(self, elements):
-        self.asker = None
-        self.replier = None
-        self.body = None
+        self._elements = elements
+
+        # Get the asker
+        text = elements[0].text_content()
+        match = re.match(QUESTION_PATTERN, text)
+        if match is not None:
+            self.asker = match.group(1)
+        else:
+            logger.warn(u'Could not find asker of question in element: {}'.format(text))
+            self.asker = None
+
+        # Get the responder
+        text = elements[-1].text_content()
+        match = re.search(AgendaQuestion.RESPONDER_PATTERN, text)
+        if match is not None:
+            self.replier = match.group(1)
+        else:
+            logger.warn(u'Could not find responder of question in element: {}'.format(text))
+            self.replier = None
+
+        # Store the rest of the elements into the body as html
+        self.body = ''.join([etree.tounicode(xx, method='html') for xx in elements[1:-1]])
+
+    def __repr__(self):
+        return u'<Question by {}>'.format(self.asker)
 
 
 class AgendaMotion(object):
