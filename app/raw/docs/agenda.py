@@ -13,7 +13,8 @@ import re
 
 
 logger = logging.getLogger('legcowatch')
-QUESTION_PATTERN = ur'^[0-9]+..*?Hon\s(.*?)\sto ask:'
+QUESTION_PATTERN_E = ur'^[0-9]+\..*?Hon\s(.*?)\sto ask:'
+QUESTION_PATTERN_C = ur'^[0-9]+\.\s*(.*?)議員問:'
 
 
 class CouncilAgenda(object):
@@ -34,6 +35,10 @@ class CouncilAgenda(object):
 
     def __init__(self, uid, source, *args, **kwargs):
         self.uid = uid
+        if uid[-1] == 'e':
+            self.english = True
+        else:
+            self.english = False
         # Raw html string
         self.source = source
         self.tree = None
@@ -61,6 +66,8 @@ class CouncilAgenda(object):
         self.source = re.sub(double_quotes, u'"', self.source)
         single_quotes = ur'[\u2019\u2018]'
         self.source = re.sub(single_quotes, u"'", self.source)
+        # Convert colons
+        self.source = self.source.replace(u'\uff1a', u':')
         # There are also some "zero width joiners" in random places
         # in the text.  Doesn't seem to cause any harm, though, so leave for now
         # these are the codeS: &#8205, &#160 (nbsp), \xa0 (nbsp)
@@ -140,23 +147,28 @@ class CouncilAgenda(object):
         if self.questions is not None:
             logger.info(u"Parsing questions from {} elements".format(len(self.questions)))
             parsed_questions = []
-            pattern = QUESTION_PATTERN
+            pattern = QUESTION_PATTERN_E if self.english else QUESTION_PATTERN_C
             parts = []
             for q in self.questions:
-                match = re.match(pattern, q.text_content())
+                content = q.text_content().strip()
+                # Discard empty elements
+                if content == '':
+                    continue
+                # Match for question starts
+                match = re.match(pattern, content)
                 if match is not None:
                     # Found a match for a new question start
-                    logger.debug(u"Found question {}".format(q.text_content()))
                     # If we've accumulated parts for a prior question, clear those out
                     if len(parts) > 0:
-                        ag = AgendaQuestion(parts)
+                        ag = AgendaQuestion(parts, english=self.english)
                         parsed_questions.append(ag)
                         parts = []
+                    logger.debug(u"Found question {}".format(content))
                 # Continue to accumulate parts
                 parts.append(q)
 
             # Make sure to parse the last question
-            ag = AgendaQuestion(parts)
+            ag = AgendaQuestion(parts, english=self.english)
             parsed_questions.append(ag)
             self.questions = parsed_questions
             logger.info(u"Parsed {} questions".format(len(self.questions)))
@@ -202,12 +214,13 @@ class AgendaQuestion(object):
     """
     RESPONDER_PATTERN = ur':\s?(.+)$'
 
-    def __init__(self, elements):
+    def __init__(self, elements, english=True):
         self._elements = elements
 
         # Get the asker
         text = elements[0].text_content()
-        match = re.match(QUESTION_PATTERN, text)
+        pattern = QUESTION_PATTERN_E if english else QUESTION_PATTERN_C
+        match = re.match(pattern, text)
         if match is not None:
             self.asker = match.group(1)
         else:
@@ -227,7 +240,7 @@ class AgendaQuestion(object):
         self.body = ''.join([etree.tounicode(xx, method='html') for xx in elements[1:-1]])
 
     def __repr__(self):
-        return u'<Question by {}>'.format(self.asker)
+        return u'<Question by {}>'.format(self.asker).encode('utf-8')
 
 
 class AgendaMotion(object):
