@@ -1,4 +1,3 @@
-from scrapy.contrib.spiders import CrawlSpider
 from scrapy.http import Request
 from scrapy.selector import Selector
 from scrapy.spider import Spider
