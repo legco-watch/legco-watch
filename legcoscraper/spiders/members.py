@@ -14,7 +14,15 @@ from legcoscraper.items import TypedItem
 class MemberBio(TypedItem):
     type_name = 'LibraryMemberBio'
     language = Field()
+    source_url = Field()
+    title = Field()
     name = Field()
+    honorifics = Field()
+    gender = Field()
+    year_of_birth = Field()
+    place_of_birth = Field()
+    education = Field()
+    occupation = Field()
     file_urls = Field()
     files = Field()
 
@@ -40,5 +48,7 @@ class LibraryMemberSpider(Spider):
         """
         Parsing for individual member page, like
         http://app.legco.gov.hk/member_front/english/library/member_detail.aspx?id=602
+        This may kick you back to the search index unless you execute a search
+        but the scraper should handle it correctly since it'll keep track of the session cookies
         """
         pass
