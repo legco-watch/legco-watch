@@ -26,6 +26,7 @@ class MemberBio(TypedItem):
     gender = Field()
     year_of_birth = Field()
     place_of_birth = Field()
+    homepage = Field()
     education = Field()
     occupation = Field()
     file_urls = Field()
@@ -39,7 +40,12 @@ class LibraryMemberSpider(Spider):
     ]
     KEYWORDS_E = {
         'basic_title': u'Basic information',
-        'service_title': u'Period of LegCo service'
+        'service_title': u'Period of LegCo service',
+        'field_map': {
+            u'Title': 'title',
+            u'Name': 'name',
+            u'Gender' : 'gender'
+        }
     }
     KEYWORDS_C = {
         'basic_title': u'基本資料',
@@ -67,7 +73,7 @@ class LibraryMemberSpider(Spider):
         res = {}
         sel = Selector(response)
         # Determine in Chinese or English
-        header = u''.join(sel.xpath('//td[@id="pageheader"//text()').extract()).strip()
+        header = u''.join(sel.xpath('//td[@id="pageheader"]//text()').extract()).strip()
         if u'Database' in header:
             res['language'] = 'e'
             kws = self.KEYWORDS_E
