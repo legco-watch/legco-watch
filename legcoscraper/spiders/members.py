@@ -13,9 +13,6 @@ from legcoscraper.items import TypedItem
 import logging
 
 
-logger = logging.getLogger('legcowatch')
-
-
 class MemberBio(TypedItem):
     type_name = 'LibraryMemberBio'
     language = Field()
@@ -56,7 +53,18 @@ class LibraryMemberSpider(Spider):
     }
     KEYWORDS_C = {
         'basic_title': u'基本資料',
-        'service_title': u'在立法局／立法會服務期間'
+        'service_title': u'在立法局／立法會服務期間',
+        'education_title': u'學歷及專業資格',
+        'occupation_title': u'職業',
+        'field_map': {
+            u'稱謂': 'title',
+            u'姓名': 'name',
+            u'勳銜': 'honours',
+            u'性別': 'gender',
+            u'出生年份': 'year_of_birth',
+            u'出生地點': 'place_of_birth',
+            u'個人網頁': 'homepage'
+        }
     }
 
     def parse(self, response):
@@ -88,8 +96,8 @@ class LibraryMemberSpider(Spider):
             res['language'] = 'c'
             kws = self.KEYWORDS_C
         else:
-            logger.warn(u'Could not infer language from header: {}'.format(header))
-            logger.warn(u'Failed parsing of {}'.format(response.url))
+            logging.warn(u'Could not infer language from header: {}'.format(header))
+            logging.warn(u'Failed parsing of {}'.format(response.url))
             return
         # Content is in a series of nested tables, first row is section header
         tables = sel.xpath('//form[@name="FormSearch"]/table/*/*/table')
@@ -102,8 +110,8 @@ class LibraryMemberSpider(Spider):
 
         # Process basic info
         if not tables[0].xpath('./tr[1]/td/text()').extract()[0] == kws['basic_title']:
-            logger.warn(u'First table not basic information')
-            logger.warn(u'Failed parsing of {}'.format(response.url))
+            logging.warn(u'First table not basic information')
+            logging.warn(u'Failed parsing of {}'.format(response.url))
             return
 
         fields = tables[0].xpath('.//table/tr')
@@ -111,9 +119,9 @@ class LibraryMemberSpider(Spider):
         field_values = fields.xpath('./td[2]/text()').extract()
         # Copy over basic informtaion
         for k, v in zip(field_names, field_values):
-            to_field = kws['field_name'].get(k, None)
+            to_field = kws['field_map'].get(k, None)
             if to_field is None:
-                logger.warn(u'Got unknown field {}'.format(k))
+                logging.warn(u'Got unknown field {}'.format(k))
                 continue
             res[to_field] = v
 
@@ -122,8 +130,8 @@ class LibraryMemberSpider(Spider):
 
         # Process service
         if not tables[1].xpath('./tr[1]/td/text()').extract()[0] == kws['service_title']:
-            logger.warn(u'Second table not LegCo service')
-            logger.warn(u'Failed parsing of {}'.format(response.url))
+            logging.warn(u'Second table not LegCo service')
+            logging.warn(u'Failed parsing of {}'.format(response.url))
             return
 
         services = tables[1].xpath('./tr[position() > 1]')
@@ -143,17 +151,17 @@ class LibraryMemberSpider(Spider):
             elif next_table_title == kws['occupation_title']:
                 occupation_table = tables[2]
             else:
-                logger.warn(u'Could not identify table: {}'.format(next_table_title))
+                logging.warn(u'Could not identify table: {}'.format(next_table_title))
         if len(tables) == 4:
             # If four tables, then should be education then occupation
             third_table = tables[2].xpath('./tr[1]/td/text()').extract()[0]
             if not third_table == kws['education_title']:
-                logger.warn(u'Third table was not education: {}'.format(third_table))
+                logging.warn(u'Third table was not education: {}'.format(third_table))
             else:
                 education_table = tables[2]
             fourth_table = tables[3].xpath('./tr[1]/td/text()').extract()[0]
             if not fourth_table == kws['occupation_title']:
-                logger.warn(u'Fourth table was not occupation: {}'.format(fourth_table))
+                logging.warn(u'Fourth table was not occupation: {}'.format(fourth_table))
             else:
                 occupation_table = tables[3]
 
@@ -164,8 +172,6 @@ class LibraryMemberSpider(Spider):
 
         if occupation_table is not None:
             occupation = occupation_table.xpath('./tr[position() > 1]/td/text()').extract()
-            if len(occupation) > 1:
-                logger.warn(u'More than one occupation found: {}'.format(occupation))
-            res['occupation'] = occupation[0].strip()
+            res['occupation'] = [xx.strip() for xx in occupation]
 
         yield MemberBio(**res)
