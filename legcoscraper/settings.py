@@ -7,6 +7,7 @@
 #
 import os
 
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 BOT_NAME = 'legcoscraper'
 
@@ -30,7 +31,23 @@ DOWNLOADER_MIDDLEWARES = {
     # 100 is for the ordering of the middleware pipeline, not for timeout
     'scrapy.contrib.downloadermiddleware.httpcache.HttpCacheMiddleware': 100,
     'scrapy.contrib.downloadermiddleware.stats.DownloaderStats': 101,
+    'scrapy.contrib.spidermiddleware.referer.RefererMiddleware': 102,
 }
+
+# Overriding this. If we do not send Connection: keep-alive, the legco-site will not
+# respond to our requests. This is despite it calling Conneciton: close in the response
+# Not quite sure why scrapy doesn't send this by default though?
+DEFAULT_REQUEST_HEADERS = {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'en',
+    'Connection' : 'keep-alive',
+}
+
+# HTTP Caching
+# We really do not want to overload the legco server, and it's far faster in development
+# to cache results. This turns on file based cache of all HTTP Requests
+HTTPCACHE_ENABLED = True
+HTTPCACHE_DIR = os.path.join(PROJECT_ROOT, 'httpcache')
 
 # load local dev settings
 try:
