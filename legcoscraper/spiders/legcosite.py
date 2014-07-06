@@ -21,28 +21,30 @@ class LegcoSiteSpider(Spider, HansardMixin):
         "http://www.legco.gov.hk/general/english/counmtg/cm0004.htm",           # 2000-2004
         "http://www.legco.gov.hk/yr99-00/english/counmtg/general/counmtg.htm",  # 1998-2000
         # These two entries have significantly different structure. 
-        #"http://www.legco.gov.hk/yr97-98/english/counmtg/general/yr9798.htm",   # 1997 - 1998 
-        #"http://www.legco.gov.hk/yr97-98/english/former/lc_sitg.htm",           # 1858 - 1997
+#        "http://www.legco.gov.hk/yr97-98/english/counmtg/general/yr9798.htm",   # 1997 - 1998 
+#        Not yet implemented
+        "http://www.legco.gov.hk/yr97-98/english/former/lc_sitg.htm",           # 1858 - 1997
     ]
 
     def parse(self, response):
-        # Parse a set of records for a the lifetime of a council
-        # These normally cover around a 2-6 year period
-
         sel = Selector(response)    
 
+        # Pages from 1998 onwards, new format
+        # These normally cover around a 2-6 year period
         proceedings_menu = sel.xpath('//a[starts-with(text(),"Official Record of Proceedings")]/@href')
-        for url in proceedings_menu.extract():
-            absolute_url = urlparse.urljoin(response.url, url.strip())
-            req = Request(absolute_url, callback = self.parse_hansard_index_page)
-            yield req
-
-
-        # Placeholder until the Questions Mixin is completed
-    
-        # questions_menu = sel.xpath('//a[starts-with(text(),"Questions")]/@href')
-        # for url in questions_menu.extract():
-        #     absolute_url = urlparse.urljoin(response.url, url.strip())
-        #     req = Request(absolute_url, callback = self.parse_questions_page)
-        #     yield req
-
+        if proceedings_menu:
+            for url in proceedings_menu.extract():
+                absolute_url = urlparse.urljoin(response.url, url.strip())
+                req = Request(absolute_url, callback = self.parse_hansard_index_page)
+                yield req
+        
+        # Former Legislative Council (before 7/1997)
+        table = sel.xpath("//h3[contains(text(),'Former Legislative Council (before 7/1997)')]/following::table[1]")
+        if table:
+            links = table[0].xpath(".//td/a[contains(text(),'Session')]/@href").extract()
+            if links:
+                for url in links:
+                    absolute_url = urlparse.urljoin(response.url, url.strip())
+                    req = Request(absolute_url, callback = self.parse_hansard_index_page)
+                    yield req
+            
