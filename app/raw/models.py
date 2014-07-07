@@ -177,3 +177,8 @@ class RawCouncilQuestion(RawModel):
     subject_link = models.URLField(blank=True)
     reply_link = models.URLField(blank=True)
     language = models.IntegerField(null=True, blank=True, choices=LANG_CHOICES)
+
+
+class RawMember(RawModel):
+    name_e = models.CharField(max_length=100, blank=True)
+    name_c = models.CharField(max_length=100, blank=True)

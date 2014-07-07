@@ -5,11 +5,14 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.timezone import now
 import json
+import logging
 import os
 import re
 import warnings
+from raw.models import RawCouncilAgenda, LANG_EN, LANG_CN, RawMember
 
-from raw.models import RawCouncilAgenda, LANG_EN, LANG_CN
+
+logger = logging.getLogger('legcowatch')
 
 
 def file_wrapper(fp):
@@ -59,6 +62,8 @@ def get_processor_for_spider(spider):
 class BaseProcessor(object):
     """
     Base clase for processing lists of scraped Items and inserting them into the database
+
+    Subclasses should implement a process method
     """
     def __init__(self, items_file_path, job=None):
         self.items_file_path = items_file_path
@@ -72,7 +77,7 @@ class LibraryAgendaProcessor(BaseProcessor):
     Class that handles the loading of Library Agenda scraped items into the RawCouncilAgenda table
     """
     def process(self, *args, **kwargs):
-        print "Processing file {}".format(self.items_file_path)
+        logger.info("Processing file {}".format(self.items_file_path))
         counter = 0
         for item in file_wrapper(self.items_file_path):
             counter += 1
@@ -83,7 +88,7 @@ class LibraryAgendaProcessor(BaseProcessor):
                 # Filter out ombudsman agendas
                 if 'Ombudsman' not in item['title_en']:
                     self._process_agenda_item(item)
-        print "{} items processed, {} created, {} updated".format(counter, self._count_created, self._count_updated)
+        logger.info("{} items processed, {} created, {} updated".format(counter, self._count_created, self._count_updated))
 
     def _process_agenda_item(self, item):
         # Should generate two items, one for Chinese and one for English
@@ -108,12 +113,14 @@ class LibraryAgendaProcessor(BaseProcessor):
 
         # Try to get an existing record
         obj_en = self._get_agenda_record(uid, 'e')
-        obj_en = self._build_obj(obj_en, title_en, paper_number, LANG_EN, url_en, local_en, item)
-        obj_en.save()
+        if obj_en is not None:
+            obj_en = self._build_obj(obj_en, title_en, paper_number, LANG_EN, url_en, local_en, item)
+            obj_en.save()
 
         obj_cn = self._get_agenda_record(uid, 'c')
-        obj_cn = self._build_obj(obj_cn, title_cn, paper_number, LANG_CN, url_cn, local_cn, item)
-        obj_cn.save()
+        if obj_cn is not None:
+            obj_cn = self._build_obj(obj_cn, title_cn, paper_number, LANG_CN, url_cn, local_cn, item)
+            obj_cn.save()
 
     def _build_obj(self, obj, title, paper_number, language, url, local_file, item):
         obj.title = title
@@ -210,8 +217,62 @@ class LibraryAgendaProcessor(BaseProcessor):
         return re.split(ur'\([\D]', link_title, 0, re.UNICODE)[0].strip()
 
 
+class LibraryMemberProcessor(BaseProcessor):
+    """
+    Processes the results of a library_member spider crawl.
+    The crawl results in an item for each member/language bio combination, so each member
+    will have two items, one for English, one for Chinese.
+    This will create RawMember items for each member and combine these records
+    """
+    def process(self, *args, **kwargs):
+        logger.info("Processing file {}".format(self.items_file_path))
+        counter = 0
+        for item in file_wrapper(self.items_file_path):
+            counter += 1
+            self._process_member(item)
+        logger.info("{} items processed, {} created, {} updated".format(counter, self._count_created, self._count_updated))
+
+    def _process_member(self, item):
+        uid = self._generate_uid(item)
+        obj = self._get_member_object(uid)
+        if obj is None:
+            logger.warn(u'Could not process member item: {}'.format(item))
+            return
+
+    def _get_member_object(self, uid):
+        try:
+            obj = RawMember.objects.get(uid=uid)
+            self._count_updated += 1
+        except RawMember.DoesNotExist:
+            obj = RawMember(uid=uid)
+            self._count_created += 1
+        except RawMember.MultipleObjectsReturned:
+            warnings.warn("Found more than one item with raw id {}".format(uid), RuntimeWarning)
+            obj = None
+
+        return obj
+
+    def _generate_uid(self, item):
+        """
+        Generate a uid for members
+        The library database already has an internal ID for each member
+        We can use these for now, until we can think of a better one
+        ex: member-<library_id>
+        """
+        pattern = ur'member_detail.aspx\?id=(\d+)'
+        url = item.get('source_url', None)
+        if url is None:
+            logger.warn('Could not generate uid, no source url')
+        match = re.search(pattern, url)
+        if match is None:
+            logger.warn('Could not generate uid, url did not match: {}'.format(url))
+        uid = match.group(1)
+        return 'member-{}'.format(uid)
+
+
 PROCESS_MAP = {
-    'library_agenda': LibraryAgendaProcessor
+    'library_agenda': LibraryAgendaProcessor,
+    'library_member': LibraryMemberProcessor
 }
 
 """

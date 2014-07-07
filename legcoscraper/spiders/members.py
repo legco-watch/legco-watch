@@ -17,6 +17,7 @@ class MemberBio(TypedItem):
     type_name = 'LibraryMemberBio'
     language = Field()
     source_url = Field()
+    # Basic info
     title = Field()
     name = Field()
     honours = Field()
@@ -24,9 +25,14 @@ class MemberBio(TypedItem):
     year_of_birth = Field()
     place_of_birth = Field()
     homepage = Field()
+    # Service, as a list of lists
+    # [[period, position], [period, position], etc]
     service = Field()
+    # Education, as a lists of lists
     education = Field()
+    # Occupation as a lists of lists
     occupation = Field()
+    # For the headshot
     file_urls = Field()
     files = Field()
 
@@ -85,7 +91,7 @@ class LibraryMemberSpider(Spider):
         This may kick you back to the search index unless you execute a search
         but the scraper should handle it correctly since it'll keep track of the session cookies
         """
-        res = {}
+        res = {'source_url': response.url}
         sel = Selector(response)
         # Determine in Chinese or English
         header = u''.join(sel.xpath('//td[@id="pageheader"]//text()').extract()).strip()
@@ -152,7 +158,7 @@ class LibraryMemberSpider(Spider):
                 occupation_table = tables[2]
             else:
                 logging.warn(u'Could not identify table: {}'.format(next_table_title))
-        if len(tables) == 4:
+        elif len(tables) == 4:
             # If four tables, then should be education then occupation
             third_table = tables[2].xpath('./tr[1]/td/text()').extract()[0]
             if not third_table == kws['education_title']:
@@ -164,6 +170,8 @@ class LibraryMemberSpider(Spider):
                 logging.warn(u'Fourth table was not occupation: {}'.format(fourth_table))
             else:
                 occupation_table = tables[3]
+        elif len(tables) > 4:
+            logging.warn(u'More than four tables present')
 
         # Now process the optional tables if they're there
         if education_table is not None:
@@ -174,4 +182,5 @@ class LibraryMemberSpider(Spider):
             occupation = occupation_table.xpath('./tr[position() > 1]/td/text()').extract()
             res['occupation'] = [xx.strip() for xx in occupation]
 
+        logging.info(u"Finished scraping member {}".format(res['name']))
         yield MemberBio(**res)
