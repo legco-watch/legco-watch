@@ -260,16 +260,17 @@ class LibraryMemberProcessor(BaseProcessor):
         # All other items
         keys_to_copy = [u'name', u'title', u'honours']
         for k in keys_to_copy:
-            target = k + '_e'
+            target = u'{}_{}'.format(k, lang)
             val = item.get(k, None)
             if val is not None:
                 setattr(obj, target, val.strip())
 
         json_objects_to_copy = [u'service', u'education', u'occupation']
         for k in json_objects_to_copy:
+            target = u'{}_{}'.format(k, lang)
             val = item.get(k, None)
             if val is not None:
-                setattr(obj, k, json.dumps(val))
+                setattr(obj, target, json.dumps(val))
 
         obj.save()
 

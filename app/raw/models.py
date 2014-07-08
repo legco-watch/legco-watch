@@ -209,3 +209,6 @@ class RawMember(RawModel):
     education_c = models.TextField(blank=True)
     occupation_e = models.TextField(blank=True)
     occupation_c = models.TextField(blank=True)
+
+    def __unicode__(self):
+        return u"{} {}".format(unicode(self.name_e), unicode(self.name_c))
