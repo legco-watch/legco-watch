@@ -9,6 +9,12 @@ LANG_CHOICES = (
     (LANG_CN, 'Chinese'),
     (LANG_EN, 'English')
 )
+GENDER_M = 1
+GENDER_F = 2
+GENDER_CHOICES = (
+    (GENDER_M, 'Male'),
+    (GENDER_F, 'Female')
+)
 
 
 class ScrapeJobManager(models.Manager):
@@ -182,3 +188,24 @@ class RawCouncilQuestion(RawModel):
 class RawMember(RawModel):
     name_e = models.CharField(max_length=100, blank=True)
     name_c = models.CharField(max_length=100, blank=True)
+    title_e = models.CharField(max_length=100, blank=True)
+    title_c = models.CharField(max_length=100, blank=True)
+    # In most cases, it looks like the honours are the same
+    # in both E and C versions, but there are a few exceptions
+    # So save both for now and combine them later
+    honours_e = models.CharField(max_length=50, blank=True)
+    honours_c = models.CharField(max_length=50, blank=True)
+    # For these, we'll assume that Chinese and English
+    # contain the same information, so just keep one
+    gender = models.IntegerField(null=True, blank=True, choices=GENDER_CHOICES)
+    year_of_birth = models.IntegerField(null=True, blank=True)
+    place_of_birth = models.CharField(max_length=50, blank=True)
+    homepage = models.TextField(blank=True)
+    photo_file = models.TextField(blank=True)
+    # Below are stored as JSON objects
+    service_e = models.TextField(blank=True)
+    service_c = models.TextField(blank=True)
+    education_e = models.TextField(blank=True)
+    education_c = models.TextField(blank=True)
+    occupation_e = models.TextField(blank=True)
+    occupation_c = models.TextField(blank=True)

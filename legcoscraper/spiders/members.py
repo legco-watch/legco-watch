@@ -125,11 +125,11 @@ class LibraryMemberSpider(Spider):
         field_values = fields.xpath('./td[2]/text()').extract()
         # Copy over basic informtaion
         for k, v in zip(field_names, field_values):
-            to_field = kws['field_map'].get(k, None)
+            to_field = kws['field_map'].get(k.strip(), None)
             if to_field is None:
                 logging.warn(u'Got unknown field {}'.format(k))
                 continue
-            res[to_field] = v
+            res[to_field] = v.strip()
 
         # Get the image
         res['file_urls'] = tables[0].xpath('.//img/@src').extract()

@@ -9,7 +9,7 @@ import logging
 import os
 import re
 import warnings
-from raw.models import RawCouncilAgenda, LANG_EN, LANG_CN, RawMember
+from raw.models import RawCouncilAgenda, LANG_EN, LANG_CN, RawMember, GENDER_M, GENDER_F
 
 
 logger = logging.getLogger('legcowatch')
@@ -238,6 +238,40 @@ class LibraryMemberProcessor(BaseProcessor):
         if obj is None:
             logger.warn(u'Could not process member item: {}'.format(item))
             return
+        obj.last_parsed = now()
+
+        lang = item[u'language']
+        if lang == 'e':
+            # English only items
+            keys_to_copy = [u'year_of_birth', u'place_of_birth', u'homepage']
+            for k in keys_to_copy:
+                val = item.get(k, None)
+                if val is not None:
+                    setattr(obj, k, val.strip())
+            if item[u'gender'] == u'M':
+                obj.gender = GENDER_M
+            else:
+                obj.gender = GENDER_F
+            obj.photo_file = item[u'files'][0][u'path']
+            obj.crawled_from = item[u'source_url']
+            if self.job:
+                obj.last_crawled = self.job.completed
+
+        # All other items
+        keys_to_copy = [u'name', u'title', u'honours']
+        for k in keys_to_copy:
+            target = k + '_e'
+            val = item.get(k, None)
+            if val is not None:
+                setattr(obj, target, val.strip())
+
+        json_objects_to_copy = [u'service', u'education', u'occupation']
+        for k in json_objects_to_copy:
+            val = item.get(k, None)
+            if val is not None:
+                setattr(obj, k, json.dumps(val))
+
+        obj.save()
 
     def _get_member_object(self, uid):
         try:
@@ -294,4 +328,10 @@ job = models.ScrapeJob.objects.latest_complete_job('library_agenda')
 items_file = processors.get_items_file(job.spider, job.job_id)
 proc = processors.LibraryAgendaProcessor(items_file, job)
 proc.process()
+
+from raw import processors, models
+items_file = processors.file_wrapper('members.jl')
+items = [xx for xx in items_file]
+proc = processors.LibraryMemberProcessor('members.jl')
+uids = [proc._generate_uid(xx) for xx in items]
 """
