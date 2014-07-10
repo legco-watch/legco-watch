@@ -4,7 +4,7 @@
   <h1>Raw Council meeting agendas</h1>
   <ul>
   {% for agenda in object_list %}
-    <li>{{ agenda.uid }}</li>
+    <li><a href="{% url 'raw_agenda' agenda.id %}">{{ agenda.uid }}</li>
   {% endfor %}
   </ul>
   Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}

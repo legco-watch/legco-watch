@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Council Agenda - {{ parser.uid }}</h1>
+  {% if parser.questions %}
+    <h2>Questions</h2>
+    <ol>
+      {% for question in parser.questions %}
+        <li>
+          <p><strong>{{ question.asker }} asks {{ question.replier }}:</strong></p>
+        <p>{{ question.body|safe }}</p>
+        </li>
+      {% endfor %}
+    </ol>
+  {% endif %}
+{% endblock content %}
