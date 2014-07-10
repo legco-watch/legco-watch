@@ -33,7 +33,7 @@ CONTRIB_APPS = (
     'south',
     'rest_framework',
     'pipeline',
-    'djangobower'
+    'debug_toolbar'
 )
 
 APPS = (
@@ -44,6 +44,7 @@ INSTALLED_APPS += CONTRIB_APPS
 INSTALLED_APPS += APPS
 
 MIDDLEWARE_CLASSES = (
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -76,7 +77,6 @@ USE_TZ = True
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    "djangobower.finders.BowerFinder"
 )
 
 BOWER_COMPONENTS_ROOT = os.path.abspath('.') + "/bower_components"

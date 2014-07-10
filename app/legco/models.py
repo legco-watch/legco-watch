@@ -2,8 +2,6 @@ from django.db import models
 
 """
 Core LegCo models
-
-Not quite sure how to handle panels and committees yet
 """
 
 

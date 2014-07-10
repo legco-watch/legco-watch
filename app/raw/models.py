@@ -111,6 +111,9 @@ class RawCouncilAgenda(RawModel):
     # Don't use FilePathField or FileField, since those are more for user input via forms
     local_filename = models.CharField(max_length=255, blank=True)
 
+    class Meta:
+        ordering = ['-uid']
+
     def __unicode__(self):
         return unicode(self.uid)
 

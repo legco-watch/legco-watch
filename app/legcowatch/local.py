@@ -3,6 +3,11 @@ Local Django project settings.  On deploy, this is overwritten by Ansible.
 These are dev machine settings
 """
 
+INTERNAL_IPS = (
+    '127.0.0.1',
+    '192.168.221.1'
+)
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = ')2_rz^&37bs42f_ygj2wg%3!q*50h)!_*&qmm@xj3yh^+p0=wc'
 
