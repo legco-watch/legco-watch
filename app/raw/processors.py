@@ -8,8 +8,10 @@ import json
 import logging
 import os
 import re
+import shutil
 import warnings
 from raw.models import RawCouncilAgenda, LANG_EN, LANG_CN, RawMember, GENDER_M, GENDER_F
+from raw import utils
 
 
 logger = logging.getLogger('legcowatch')
@@ -252,7 +254,18 @@ class LibraryMemberProcessor(BaseProcessor):
                 obj.gender = GENDER_M
             else:
                 obj.gender = GENDER_F
-            obj.photo_file = item[u'files'][0][u'path']
+            # Copy and rename the photo to the app
+            # Unless it is the generic photo
+            if 'photo.jpg' not in item[u'files'][0][u'url']:
+                try:
+                    source_photo_path = utils.get_file_path(item[u'files'][0][u'path'])
+                    new_photo_path = os.path.abspath(os.path.join('.', 'raw', 'static', 'member_photos', '{}.jpg'.format(uid)))
+                    if not os.path.exists(new_photo_path) and os.path.exists(source_photo_path):
+                        shutil.copyfile(source_photo_path, new_photo_path)
+                    obj.photo_file = new_photo_path
+                except RuntimeError:
+                    # Photo didn't download for some reason
+                    logger.warn(u'Photo for {} did not download properly to path'.format(uid, item[u'files'][0][u'path']))
             obj.crawled_from = item[u'source_url']
             if self.job:
                 obj.last_crawled = self.job.completed
