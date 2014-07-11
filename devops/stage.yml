@@ -1,3 +1,4 @@
+---
 - hosts: stage
   remote_user: root
   roles:

@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>{{ object.name_e }} {% if object.name_c != object.name_e %}{{ object.name_c }}{% endif %} - {{ object.uid }}</h1>
+{% endblock content %}

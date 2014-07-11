@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Raw members</h1>
+  <ul>
+  {% for member in object_list %}
+    <li><a href="{% url 'raw_member' member.id %}">{{ member.name_e }} {% if member.name_c != member.name_e %}{{ member.name_c }}{% endif %} - {{ member.uid }}</a></li>
+  {% endfor %}
+  </ul>
+  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+  {% if page_obj.has_previous %}
+    <a href="{% url 'raw_member_list' %}?page={{ page_obj.previous_page_number }}">Prev</a>
+  {% endif %}
+  {% if page_obj.has_next %}
+    <a href="{% url 'raw_member_list' %}?page={{ page_obj.next_page_number }}">Next</a>
+  {% endif %}
+
+{% endblock content %}
