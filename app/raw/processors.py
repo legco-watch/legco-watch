@@ -259,13 +259,17 @@ class LibraryMemberProcessor(BaseProcessor):
             if 'photo.jpg' not in item[u'files'][0][u'url']:
                 try:
                     source_photo_path = utils.get_file_path(item[u'files'][0][u'path'])
-                    new_photo_path = os.path.abspath(os.path.join('.', 'raw', 'static', 'member_photos', '{}.jpg'.format(uid)))
+                    new_photo_path = 'member_photos/{}.jpg'.format(uid)
+                    new_photo_abspath = os.path.abspath(os.path.join('.', 'raw', 'static', 'member_photos', '{}.jpg'.format(uid)))
                     if not os.path.exists(new_photo_path) and os.path.exists(source_photo_path):
-                        shutil.copyfile(source_photo_path, new_photo_path)
+                        shutil.copyfile(source_photo_path, new_photo_abspath)
                     obj.photo_file = new_photo_path
                 except RuntimeError:
                     # Photo didn't download for some reason
                     logger.warn(u'Photo for {} did not download properly to path'.format(uid, item[u'files'][0][u'path']))
+            else:
+                # Clear old photos
+                obj.photo_file = ''
             obj.crawled_from = item[u'source_url']
             if self.job:
                 obj.last_crawled = self.job.completed

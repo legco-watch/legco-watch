@@ -30,3 +30,12 @@ class RawMemberListView(ListView):
 class RawMemberDetailView(DetailView):
     model = RawMember
     template_name = 'raw/member_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(RawMemberDetailView, self).get_context_data(**kwargs)
+        fields = ['gender', 'year_of_birth', 'place_of_birth', 'homepage']
+        context['fields'] = []
+        for f in fields:
+            res = {'label': f, 'value': getattr(self.object, f, '')}
+            context['fields'].append(res)
+        return context

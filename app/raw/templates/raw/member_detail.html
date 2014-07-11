@@ -1,5 +1,42 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
   <h1>{{ object.name_e }} {% if object.name_c != object.name_e %}{{ object.name_c }}{% endif %} - {{ object.uid }}</h1>
+  <p>
+    <a href="{{ object.crawled_from }}">Original source</a>
+    <br />
+    If it redirects you to the database search page, execute a search, then try clicking the link again
+  </p>
+  {% if object.photo_file %}
+    <p>
+      <img src="{% static object.photo_file %}" />
+    </p>
+  {% endif %}
+  <table>
+    <tr>
+      <td>English name</td>
+      <td>{{ object.name_e }}</td>
+    </tr>
+    <tr>
+      <td>Chinese name</td>
+      <td>{{ object.name_c }}</td>
+    </tr>
+    <tr>
+      <td>Title</td>
+      <td>{{ object.title_e }}; {{ object.title_c }}</td>
+    </tr>
+  {% for f in fields %}
+    <tr>
+    <td>{{ f.label }}</td>
+    <td>{{ f.value }}</td>
+    </tr>
+  {% endfor %}
+    {% if object.honours_e %}
+      <tr>
+        <td>Honours</td>
+        <td>{{ object.honours_e }}</td>
+      </tr>
+    {% endif %}
+  </table>
 {% endblock content %}
