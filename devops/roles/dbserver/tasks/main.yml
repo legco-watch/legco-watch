@@ -12,10 +12,37 @@
     - python-dev
     - python-setuptools
     - python-psycopg2
+    - libpq-dev
+  tags:
+    - provision
+
+- name: DB package for Ubuntu 12.04
+  sudo: yes
+  sudo_user: root
+  apt: >
+    pkg={{item}}
+    state=installed
+    update-cache=yes
+  with_items:
     - postgresql-9.1
     - postgresql-contrib-9.1
     - postgresql-doc-9.1
-    - libpq-dev
+  when: ansible_distribution_version == "12.04"
+  tags:
+    - provision
+
+- name: DB package for Ubuntu 14.04
+  sudo: yes
+  sudo_user: root
+  apt: >
+    pkg={{item}}
+    state=installed
+    update-cache=yes
+  with_items:
+    - postgresql-9.3
+    - postgresql-contrib-9.3
+    - postgresql-doc-9.3
+  when: ansible_distribution_version == "14.04"
   tags:
     - provision
 

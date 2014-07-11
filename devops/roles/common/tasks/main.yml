@@ -118,12 +118,16 @@
   sudo: yes
   sudo_user: "{{project.user}}"
   shell: >
-    source ~/.nvm/nvm.sh && nvm install
+    source ~/.nvm/nvm.sh && nvm install 0.11.13
     chdir={{git.root}}
     executable=/bin/bash
+    creates=/home/{{project.user}}/.nvm/v0.11.13
 
 - name: Install bower
+  sudo: yes
+  sudo_user: "{{project.user}}"
   npm: >
+    executable=~/.nvm/v0.11.13/bin/npm
     name=bower
     state=present
     global=yes

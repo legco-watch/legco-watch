@@ -1,2 +1,2 @@
 [stage]
-192.168.221.4 ansible_ssh_user=vagrant
+54.191.110.92 ansible_ssh_user=ubuntu
