@@ -261,7 +261,9 @@ class LibraryMemberProcessor(BaseProcessor):
                     source_photo_path = utils.get_file_path(item[u'files'][0][u'path'])
                     new_photo_path = 'member_photos/{}.jpg'.format(uid)
                     new_photo_abspath = os.path.abspath(os.path.join('.', 'raw', 'static', 'member_photos', '{}.jpg'.format(uid)))
-                    if not os.path.exists(new_photo_path) and os.path.exists(source_photo_path):
+                    if not os.path.exists(os.path.dirname(new_photo_abspath)):
+                        os.makedirs(os.path.dirname(new_photo_abspath))
+                    if not os.path.exists(new_photo_abspath) and os.path.exists(source_photo_path):
                         shutil.copyfile(source_photo_path, new_photo_abspath)
                     obj.photo_file = new_photo_path
                 except RuntimeError:
