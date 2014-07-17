@@ -261,6 +261,8 @@ class LibraryMemberProcessor(BaseProcessor):
                     source_photo_path = utils.get_file_path(item[u'files'][0][u'path'])
                     new_photo_path = 'member_photos/{}.jpg'.format(uid)
                     new_photo_abspath = os.path.abspath(os.path.join('.', 'raw', 'static', 'member_photos', '{}.jpg'.format(uid)))
+                    # This should be moved up in the process, since we don't need to check if the directory exsts
+                    # for each photo
                     if not os.path.exists(os.path.dirname(new_photo_abspath)):
                         os.makedirs(os.path.dirname(new_photo_abspath))
                     if not os.path.exists(new_photo_abspath) and os.path.exists(source_photo_path):
