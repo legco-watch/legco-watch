@@ -1,5 +1,13 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
+  <h1>Report an error</h1>
+  <form method="post" action="">
+    {% csrf_token %}
+    {{ form.url.as_hidden }}
+    {{ form.reported.as_hidden }}
+    Comment:
+    {{ form.comment }}
+  <input type="submit" value="Submit" />
+  </form>
 {% endblock content %}

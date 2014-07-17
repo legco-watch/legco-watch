@@ -11,3 +11,6 @@ class ErrorReport(models.Model):
     url = models.TextField()
     # User comment
     comment = models.TextField(blank=True)
+
+    def __unicode__(self):
+        return self.reported.strftime('%Y-%m-%d %H:%M:%S')

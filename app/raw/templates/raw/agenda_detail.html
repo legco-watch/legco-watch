@@ -2,7 +2,12 @@
 
 {% block content %}
   <h1>Council Agenda - {{ parser.uid }}</h1>
-  <a href="{{ object.url }}">Original document</a>
+  <p>
+    <a href="{{ object.url }}">Original document</a>
+  </p>
+  <p>
+  <a href="{% url 'error_report' %}?url={{ request.path }}">Report an error on this page</a>
+  </p>
   {% if parser.questions %}
     <h2>Questions</h2>
     <ol>
