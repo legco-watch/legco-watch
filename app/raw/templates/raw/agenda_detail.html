@@ -6,7 +6,7 @@
     <a href="{{ object.url }}">Original document</a>
   </p>
   <p>
-  <a href="{% url 'error_report' %}?url={{ request.path }}">Report an error on this page</a>
+    <a href="{% url 'error_report' %}?url={{ request.path }}">Report an error on this page</a>
   </p>
   {% if parser.questions %}
     <h2>Questions</h2>
@@ -14,7 +14,7 @@
       {% for question in parser.questions %}
         <li>
           <p><strong>{{ question.asker }} asks {{ question.replier }}:</strong></p>
-        <p>{{ question.body|safe }}</p>
+          <p>{{ question.body|safe }}</p>
         </li>
       {% endfor %}
     </ol>

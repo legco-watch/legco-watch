@@ -8,6 +8,9 @@
     <br />
     If it redirects you to the database search page, execute a search, then try clicking the link again
   </p>
+  <p>
+    <a href="{% url 'error_report' %}?url={{ request.path }}">Report an error on this page</a>
+  </p>
   {% if object.photo_file %}
     <p>
       <img src="{% static object.photo_file %}" />
@@ -26,12 +29,12 @@
       <td>Title</td>
       <td>{{ object.title_e }}; {{ object.title_c }}</td>
     </tr>
-  {% for f in fields %}
-    <tr>
-    <td>{{ f.label }}</td>
-    <td>{{ f.value }}</td>
-    </tr>
-  {% endfor %}
+    {% for f in fields %}
+      <tr>
+        <td>{{ f.label }}</td>
+        <td>{{ f.value }}</td>
+      </tr>
+    {% endfor %}
     {% if object.honours_e %}
       <tr>
         <td>Honours</td>
