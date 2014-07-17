@@ -37,6 +37,7 @@ CONTRIB_APPS = (
 )
 
 APPS = (
+    'common',
     'raw',
 )
 
