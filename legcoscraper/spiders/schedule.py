@@ -76,3 +76,41 @@ class ScheduleCommitteeSpider(Spider):
                 'url_c': v['home_url_chi']
             }
             yield ScheduleCommittee(**res)
+
+
+class ScheduleMembership(TypedItem):
+    type_name = 'ScheduleMembership'
+    id = Field()
+    membership_id = Field()
+    member_id = Field()
+    committee_id = Field()
+    post_e = Field()
+    post_c = Field()
+    start_date = Field()
+    end_date = Field()
+
+
+class ScheduleMembershipSpider(Spider):
+    """
+    Spider for relationships between members and committees
+    Not sure what the difference between membership_id and id are
+    """
+    name = 'schedule_membership'
+    start_urls = [
+        'http://app.legco.gov.hk/ScheduleDB/odata/Tmembership'
+    ]
+
+    def parse(self, response):
+        resp = json.loads(response.body_as_unicode())
+        for v in resp['value']:
+            res = {
+                'id': v['id'],
+                'membership_id': v['membership_id'],
+                'member_id': v['member_id'],
+                'committee_id': int(v['committee_id']),
+                'post_e': v['post_eng'],
+                'post_c': v['post_chi'],
+                'start_date': v['post_start_date'],
+                'end_date': v['post_end_date']
+            }
+            yield ScheduleMembership(**res)
