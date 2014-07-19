@@ -155,3 +155,30 @@ class ScheduleMeetingSpider(Spider):
                 'start_date': v['start_date_time']
             }
             yield ScheduleMeeting(**res)
+
+
+class ScheduleMeetingCommittee(TypedItem):
+    type_name = 'ScheduleMeetingCommittee'
+    id = Field()
+    slot_id = Field()
+    committee_id = Field()
+
+
+class ScheduleMeetingCommitteeSpider(Spider):
+    """
+    A join table for meetings and committees
+    """
+    name = 'schedule_meeting_committee'
+    start_urls = [
+        'http://app.legco.gov.hk/ScheduleDB/odata/Tmeeting_committee'
+    ]
+
+    def parse(self, response):
+        resp = json.loads(response.body_as_unicode())
+        for v in resp['value']:
+            res = {
+                'id': v['meet_committee_id'],
+                'slot_id': int(v['slot_id']),
+                'committee_id': int(v['committee_id'])
+            }
+            yield ScheduleMeetingCommittee(**res)
