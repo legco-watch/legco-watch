@@ -114,3 +114,44 @@ class ScheduleMembershipSpider(Spider):
                 'end_date': v['post_end_date']
             }
             yield ScheduleMembership(**res)
+
+
+class ScheduleMeeting(TypedItem):
+    type_name = 'ScheduleMeeting'
+    id = Field()
+    slot_id = Field()
+    subject_e = Field()
+    subject_c = Field()
+    agenda_url_e = Field()
+    agenda_url_c = Field()
+    venue_code = Field()
+    meeting_type = Field()
+    start_date = Field()
+
+
+class ScheduleMeetingSpider(Spider):
+    """
+    Meetings API
+    Seems like meetings are allocated to slots, and there is a
+    separate table relating slots and committees
+    """
+    name = 'schedule_meeting'
+    start_urls = [
+        'http://app.legco.gov.hk/ScheduleDB/odata/Tmeeting'
+    ]
+
+    def parse(self, response):
+        resp = json.loads(response.body_as_unicode())
+        for v in resp['value']:
+            res = {
+                'id': v['meet_id'],
+                'slot_id': int(v['slot_id']),
+                'subject_e': v['subject_eng'],
+                'subject_c': v['subject_chi'],
+                'agenda_url_e': v['agenda_url_eng'],
+                'agenda_url_c': v['agenda_url_chi'],
+                'venue_code': v['venue_code'],
+                'meeting_type': v['meeting_type_eng'],
+                'start_date': v['start_date_time']
+            }
+            yield ScheduleMeeting(**res)
