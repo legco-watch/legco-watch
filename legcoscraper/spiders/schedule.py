@@ -43,3 +43,36 @@ class ScheduleMemberSpider(Spider):
                 'english_name': v['english_name']
             }
             yield ScheduleMember(**res)
+
+
+class ScheduleCommittee(TypedItem):
+    type_name = 'ScheduleCommittee'
+    id = Field()
+    code = Field()
+    name_e = Field()
+    name_c = Field()
+    url_e = Field()
+    url_c = Field()
+
+
+class ScheduleCommitteeSpider(Spider):
+    """
+    Committees from the schedule database.
+    """
+    name = 'schedule_committee'
+    start_urls = [
+        'http://app.legco.gov.hk/ScheduleDB/odata/Tcommittee'
+    ]
+
+    def parse(self, response):
+        resp = json.loads(response.body_as_unicode())
+        for v in resp['value']:
+            res = {
+                'id': v['committee_id'],
+                'code': v['committee_code'],
+                'name_e': v['name_eng'],
+                'name_c': v['name_chi'],
+                'url_e': v['home_url_eng'],
+                'url_c': v['home_url_chi']
+            }
+            yield ScheduleCommittee(**res)
