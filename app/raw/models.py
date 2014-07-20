@@ -215,3 +215,43 @@ class RawMember(RawModel):
 
     def __unicode__(self):
         return u"{} {}".format(unicode(self.name_e), unicode(self.name_c))
+
+
+class RawScheduleMember(RawModel):
+    """
+    Member records from the Schedule API
+    """
+    last_name_c = models.CharField(max_length=100, blank=True)
+    first_name_c = models.CharField(max_length=100, blank=True)
+    last_name_e = models.CharField(max_length=100, blank=True)
+    first_name_e = models.CharField(max_length=100, blank=True)
+    english_name = models.CharField(max_length=100, blank=True)
+
+    def __unicode__(self):
+        return u"{} {} {} {}".format(
+            unicode(self.last_name_c), unicode(self.first_name_c),
+            unicode(self.first_name_e), unicode(self.last_name_e)
+        )
+
+
+class RawCommittee(RawModel):
+    code = models.CharField(max_length=100, blank=True)
+    name_e = models.TextField(blank=True)
+    name_c = models.TextField(blank=True)
+    url_e = models.TextField(blank=True)
+    url_c = models.TextField(blank=True)
+
+    def __unicode__(self):
+        return u'{} {}'.format(unicode(self.code), unicode(self.name_e))
+
+
+class RawCommitteeMembership(RawModel):
+    membership_id = models.IntegerField(null=True, blank=True)
+    _member_id = models.IntegerField(null=True, blank=True)
+    member = models.ForeignKey(RawScheduleMember, null=True, blank=True)
+    _committee_id = models.IntegerField(null=True, blank=True)
+    committee = models.ForeignKey(RawCommittee, null=True, blank=True)
+    post_e = models.CharField(max_length=100, blank=True)
+    post_c = models.CharField(max_length=100, blank=True)
+    start_date = models.DateTimeField(null=True, blank=True)
+    end_date = models.DateTimeField(null=True, blank=True)

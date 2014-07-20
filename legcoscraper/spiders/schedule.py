@@ -80,6 +80,7 @@ class ScheduleCommitteeSpider(Spider):
 
 class ScheduleMembership(TypedItem):
     type_name = 'ScheduleMembership'
+    # Not sure what the difference between membership_id and id are
     id = Field()
     membership_id = Field()
     member_id = Field()
@@ -93,7 +94,6 @@ class ScheduleMembership(TypedItem):
 class ScheduleMembershipSpider(Spider):
     """
     Spider for relationships between members and committees
-    Not sure what the difference between membership_id and id are
     """
     name = 'schedule_membership'
     start_urls = [
