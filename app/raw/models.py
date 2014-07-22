@@ -228,7 +228,8 @@ class RawScheduleMember(RawModel):
     english_name = models.CharField(max_length=100, blank=True)
 
     def __unicode__(self):
-        return u"{} {} {} {}".format(
+        return u"{} {} {} {} {}".format(
+            unicode(self.uid),
             unicode(self.last_name_c), unicode(self.first_name_c),
             unicode(self.first_name_e), unicode(self.last_name_e)
         )
@@ -242,7 +243,7 @@ class RawCommittee(RawModel):
     url_c = models.TextField(blank=True)
 
     def __unicode__(self):
-        return u'{} {}'.format(unicode(self.code), unicode(self.name_e))
+        return u'{} {}'.format(unicode(self.uid), unicode(self.name_e))
 
 
 class RawCommitteeMembership(RawModel):

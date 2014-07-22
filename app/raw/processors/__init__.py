@@ -5,7 +5,7 @@ from django.core.exceptions import ImproperlyConfigured
 import os
 from raw.processors.library_agenda import LibraryAgendaProcessor
 from raw.processors.library_member import LibraryMemberProcessor
-from raw.processors.schedule import ScheduleMemberProcessor
+from raw.processors.schedule import ScheduleMemberProcessor, ScheduleCommitteeProcessor, ScheduleMembershipProcessor
 from django.conf import settings
 
 
@@ -43,7 +43,9 @@ def get_items_file(spider, job_id):
 PROCESS_MAP = {
     'library_agenda': LibraryAgendaProcessor,
     'library_member': LibraryMemberProcessor,
-    'schedule_member': ScheduleMemberProcessor
+    'schedule_member': ScheduleMemberProcessor,
+    'schedule_committee': ScheduleCommitteeProcessor,
+    'schedule_membership': ScheduleMembershipProcessor
 }
 
 

@@ -2,7 +2,7 @@ from datetime import datetime
 import logging
 import warnings
 
-from raw.models import RawScheduleMember
+from raw.models import RawScheduleMember, RawCommittee, RawCommitteeMembership
 from raw.processors.base import BaseProcessor, file_wrapper
 
 
@@ -39,7 +39,7 @@ class BaseScheduleProcessor(BaseProcessor):
         try:
             obj = self.model.objects.get(uid=uid)
             self._count_updated += 1
-        except RawScheduleMember.DoesNotExist:
+        except self.model.DoesNotExist:
             obj = self.model(uid=uid)
             self._count_created += 1
         except self.model.MultipleObjectsReturned:
@@ -65,3 +65,64 @@ class ScheduleMemberProcessor(BaseScheduleProcessor):
 
     def _generate_uid(self, item):
         return 'smember-{}'.format(item['id'])
+
+
+class ScheduleCommitteeProcessor(BaseScheduleProcessor):
+    model = RawCommittee
+
+    def _process_item(self, item, obj):
+        fields = ['code', 'name_e', 'name_c', 'url_e', 'url_c']
+        for f in fields:
+            setattr(obj, f, item.get(f, None))
+        obj.save()
+
+    def _generate_uid(self, item):
+        return 'committee-{}'.format(item['id'])
+
+
+class ScheduleMembershipProcessor(BaseScheduleProcessor):
+    model = RawCommitteeMembership
+
+    def _process_item(self, item, obj):
+        fields = ['post_e', 'post_c']
+        for f in fields:
+            setattr(obj, f, item.get(f, None))
+        obj.membership_id = int(item['membership_id'])
+
+        # Parse the dates
+        fmt = '%Y-%m-%dT%H:%M:%S'
+        start_date = item.get('start_date', None)
+        if start_date is not None:
+            start_date = datetime.strptime(start_date, fmt)
+        obj.start_date = start_date
+
+        end_date = item.get('end_date', None)
+        if end_date is not None:
+            end_date = datetime.strptime(end_date, fmt)
+        obj.end_date = end_date
+
+        # Try to find the member and committee objects
+        mid = int(item['member_id'])
+        obj._member_id = mid
+        try:
+            muid = 'smember-{}'.format(mid)
+            member = RawScheduleMember.objects.get(uid=muid)
+        except RawScheduleMember.DoesNotExist:
+            logger.warn('Could not find member {}'.format(muid))
+            member = None
+        obj.member = member
+
+        cid = int(item['committee_id'])
+        obj._committee_id = cid
+        try:
+            cuid = 'committee-{}'.format(cid)
+            committee = RawCommittee.objects.get(uid=cuid)
+        except RawCommittee.DoesNotExist:
+            logger.warn('Could not find committee {}'.format(cuid))
+            committee = None
+        obj.committee = committee
+
+        obj.save()
+
+    def _generate_uid(self, item):
+        return 'cmembership-{}'.format(item['id'])
