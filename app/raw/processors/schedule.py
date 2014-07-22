@@ -118,6 +118,9 @@ class ScheduleMembershipProcessor(BaseScheduleProcessor):
             cuid = 'committee-{}'.format(cid)
             committee = RawCommittee.objects.get(uid=cuid)
         except RawCommittee.DoesNotExist:
+            # Seems like there are actually a large number
+            # of committees that are referenced in the Membership table
+            # but are not in the Committee table
             logger.warn('Could not find committee {}'.format(cuid))
             committee = None
         obj.committee = committee
