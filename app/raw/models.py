@@ -266,7 +266,7 @@ class RawCommitteeMembership(RawModel):
             committee = unicode(self.committee)
         else:
             committee = self._committee_id
-        return u'{} {}'.format(self.member, self.committee)
+        return u'{} {}'.format(member, committee)
 
 
 class RawMeeting(RawModel):
