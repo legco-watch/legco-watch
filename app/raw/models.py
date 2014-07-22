@@ -255,3 +255,29 @@ class RawCommitteeMembership(RawModel):
     post_c = models.CharField(max_length=100, blank=True)
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
+
+    def __unicode__(self):
+        if self.member is not None:
+            member = unicode(self.member)
+        else:
+            member = self._member_id
+        if self.committee is not None:
+            committee = unicode(self.committee)
+        else:
+            committee = self._committee_id
+        return u'{} {}'.format(self.member, self.committee)
+
+
+class RawMeeting(RawModel):
+    meeting_id = models.IntegerField(null=True, blank=True)
+    slot_id = models.IntegerField(null=True, blank=True)
+    subject_e = models.TextField(blank=True)
+    subject_c = models.TextField(blank=True)
+    agenda_url_e = models.TextField(blank=True)
+    agenda_url_c = models.TextField(blank=True)
+    venue_code = models.CharField(max_length=50, blank=True)
+    meeting_type = models.CharField(max_length=50, blank=True)
+    start_date = models.DateTimeField(null=True, blank=True)
+
+    def __unicode__(self):
+        return u'{} {}'.format(self.slot_id, unicode(self.subject_e))

@@ -1,14 +1,8 @@
-from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 from django.utils.timezone import now
-import json
 import logging
-import os
 import re
-import shutil
 import warnings
 from raw.models import RawCouncilAgenda, LANG_EN, LANG_CN, RawMember, GENDER_M, GENDER_F
-from raw import utils
 from raw.processors.base import BaseProcessor, file_wrapper
 
 
