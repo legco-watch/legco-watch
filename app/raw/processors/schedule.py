@@ -2,7 +2,7 @@ from datetime import datetime
 import logging
 import warnings
 
-from raw.models import RawScheduleMember, RawCommittee, RawCommitteeMembership, RawMeetingCommittee
+from raw.models import RawScheduleMember, RawCommittee, RawCommitteeMembership, RawMeetingCommittee, RawMeeting
 from raw.processors.base import BaseProcessor, file_wrapper
 
 
@@ -19,7 +19,7 @@ class BaseScheduleProcessor(BaseProcessor):
         for item in file_wrapper(self.items_file_path):
             counter += 1
             self._process_item_wrapper(item)
-        logger.info("{} items processed, {} created, {} updated".format(counter, self._count_created, self._count_updated))
+        logger.info("{} items processed, {} created, {} updated, {} errors".format(counter, self._count_created, self._count_updated, self._count_error))
 
     def _process_item(self, item, obj):
         raise NotImplementedError()
@@ -29,6 +29,7 @@ class BaseScheduleProcessor(BaseProcessor):
         obj = self._get_object(uid)
         if obj is None:
             logger.warn(u'Could not process member item: {}'.format(item))
+            self._count_error += 1
             return
         obj.last_parsed = datetime.now()
         if self.job is not None:
@@ -148,3 +149,38 @@ class ScheduleMembershipProcessor(BaseScheduleProcessor):
 
     def _generate_uid(self, item):
         return 'cmembership-{}'.format(item['id'])
+
+
+class ScheduleMeetingProcessor(BaseScheduleProcessor):
+    model = RawMeeting
+
+    def _process_item(self, item, obj):
+        fields = [
+            'subject_e', 'subject_c', 'agenda_url_e', 'agenda_url_c', 'venue_code',
+            'meeting_type'
+        ]
+        for f in fields:
+            setattr(obj, f, item.get(f, None))
+        fmt = '%Y-%m-%dT%H:%M:%S'
+        start_date = item.get('start_date', None)
+        if start_date is not None:
+            start_date = datetime.strptime(start_date, fmt)
+        obj.start_date = start_date
+        obj.meeting_id = item['id']
+        slot = int(item['slot_id'])
+        obj.slot_id = slot
+        # Lookup the committee from the RawMeetingCommittee table
+        try:
+            mtg_cmt = RawMeetingCommittee.objects.get(slot_id=slot)
+        except RawMeetingCommittee.DoesNotExist:
+            logger.warn('Could not find the join for slot {}'.format(slot))
+            mtg_cmt = None
+        except RawMeetingCommittee.MultipleObjectsReturned:
+            logger.warn('Multiple slots returned for slot {}'.format(slot))
+            mtg_cmt = None
+        if mtg_cmt is not None:
+            obj.committee = mtg_cmt.committee
+        obj.save()
+
+    def _generate_uid(self, item):
+        return 'meeting-{}'.format(item['id'])

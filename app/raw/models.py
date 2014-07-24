@@ -281,6 +281,7 @@ class RawCommitteeMembership(RawModel):
 class RawMeeting(RawModel):
     meeting_id = models.IntegerField(null=True, blank=True)
     slot_id = models.IntegerField(null=True, blank=True)
+    committee = models.ForeignKey(RawCommittee, null=True, blank=True, related_name='meetings')
     subject_e = models.TextField(blank=True)
     subject_c = models.TextField(blank=True)
     agenda_url_e = models.TextField(blank=True)
@@ -290,7 +291,7 @@ class RawMeeting(RawModel):
     start_date = models.DateTimeField(null=True, blank=True)
 
     def __unicode__(self):
-        return u'{} {}'.format(self.slot_id, unicode(self.subject_e))
+        return u'{} {}'.format(self.uid, self.subject_e)
 
 
 class RawMeetingCommittee(RawModel):

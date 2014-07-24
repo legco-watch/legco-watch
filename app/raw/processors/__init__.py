@@ -6,7 +6,7 @@ import os
 from raw.processors.library_agenda import LibraryAgendaProcessor
 from raw.processors.library_member import LibraryMemberProcessor
 from raw.processors.schedule import ScheduleMemberProcessor, ScheduleCommitteeProcessor, ScheduleMembershipProcessor, \
-    ScheduleMeetingCommitteeProcessor
+    ScheduleMeetingCommitteeProcessor, ScheduleMeetingProcessor
 from django.conf import settings
 
 
@@ -47,7 +47,8 @@ PROCESS_MAP = {
     'schedule_member': ScheduleMemberProcessor,
     'schedule_committee': ScheduleCommitteeProcessor,
     'schedule_membership': ScheduleMembershipProcessor,
-    'schedule_meeting_committee': ScheduleMeetingCommitteeProcessor
+    'schedule_meeting_committee': ScheduleMeetingCommitteeProcessor,
+    'schedule_meeting': ScheduleMeetingProcessor,
 }
 
 

@@ -12,8 +12,14 @@
   </p>
   <h2>Members</h2>
   <ul>
-  {% for membership in object.memberships.all %}
-    <li>{{ membership.uid }} - {{ membership.member.name_e }} - {{ membership.member.name_c }} - {{ membership.post_e }}</li>
-  {% endfor %}
+    {% for membership in object.memberships.all %}
+      <li>{{ membership.uid }} - {{ membership.member.name_e }} - {{ membership.member.name_c }} - {{ membership.post_e }}</li>
+    {% endfor %}
+  </ul>
+  <h2>Meetings</h2>
+  <ul>
+    {% for meeting in object.meetings.all %}
+      <li>{{ meeting.uid }} - {{ meeting.subject_e }} - {{ meeting.venue_code }} - {{ meeting.start_date }}</li>
+    {% endfor %}
   </ul>
 {% endblock content %}

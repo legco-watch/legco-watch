@@ -12,6 +12,7 @@ class BaseProcessor(object):
         self.job = job  # The ScrapeJob, if available
         self._count_created = 0
         self._count_updated = 0
+        self._count_error = 0
 
 
 def file_wrapper(fp):
