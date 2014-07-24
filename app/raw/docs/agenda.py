@@ -10,6 +10,7 @@ import lxml
 from lxml import etree
 from lxml.html.clean import clean_html
 import re
+from raw.utils import to_string
 
 
 logger = logging.getLogger('legcowatch')
@@ -73,14 +74,9 @@ class CouncilAgenda(object):
         # these are the codeS: &#8205, &#160 (nbsp), \xa0 (nbsp)
 
         # Use the lxml cleaner
-        self.source = clean_html(self.source)
+        self.source = clean_html(to_string(self.source))
         # Finally, load the cleaned string to an ElementTree
-        try:
-            self.tree = lxml.html.fromstring(self.source)
-        except ValueError:
-            # This can throw an error if the source declares an encoding,
-            # so give lxml the encoded string
-            self.tree = lxml.html.fromstring(self.source.encode('utf-8'))
+        self.tree = lxml.html.fromstring(to_string(self.source))
 
     def _clean(self):
         """

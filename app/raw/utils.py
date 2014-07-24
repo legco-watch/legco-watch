@@ -97,3 +97,20 @@ def get_file_path(rel_path):
         raise RuntimeError("Could not find file at {}".format(file_path))
 
     return file_path
+
+
+def to_string(obj, encoding='utf-8'):
+    """
+    Converts unicode objects to strings, and returns strings directly
+    """
+    if isinstance(obj, basestring):
+        if isinstance(obj, unicode):
+            obj = obj.encode(encoding)
+    return obj
+
+
+def to_unicode(obj, encoding='utf-8'):
+    if isinstance(obj, basestring):
+        if not isinstance(obj, unicode):
+            obj = unicode(obj, encoding)
+    return obj
