@@ -1,6 +1,7 @@
 """
 Helpers to load the Scrapy JSON output into RawModels
 """
+from collections import OrderedDict
 from django.core.exceptions import ImproperlyConfigured
 import os
 from raw.processors.library_agenda import LibraryAgendaProcessor
@@ -41,15 +42,18 @@ def get_items_file(spider, job_id):
     return file_path
 
 
-PROCESS_MAP = {
-    'library_agenda': LibraryAgendaProcessor,
-    'library_member': LibraryMemberProcessor,
-    'schedule_member': ScheduleMemberProcessor,
-    'schedule_committee': ScheduleCommitteeProcessor,
-    'schedule_membership': ScheduleMembershipProcessor,
-    'schedule_meeting_committee': ScheduleMeetingCommitteeProcessor,
-    'schedule_meeting': ScheduleMeetingProcessor,
-}
+# Use an OrderedDict because some processors require data from other processors
+# It won't cause an error to run out of order, but it'll be missing data
+PROCESS_MAP = OrderedDict([
+    ('library_agenda', LibraryAgendaProcessor),
+    ('library_member', LibraryMemberProcessor),
+    # The below processors should be run in this order
+    ('schedule_member', ScheduleMemberProcessor),
+    ('schedule_committee', ScheduleCommitteeProcessor),
+    ('schedule_membership', ScheduleMembershipProcessor),
+    ('schedule_meeting_committee', ScheduleMeetingCommitteeProcessor),
+    ('schedule_meeting', ScheduleMeetingProcessor),
+    ])
 
 
 """
