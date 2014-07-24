@@ -2,7 +2,7 @@ from datetime import datetime
 import logging
 import warnings
 
-from raw.models import RawScheduleMember, RawCommittee, RawCommitteeMembership
+from raw.models import RawScheduleMember, RawCommittee, RawCommitteeMembership, RawMeetingCommittee
 from raw.processors.base import BaseProcessor, file_wrapper
 
 
@@ -80,6 +80,26 @@ class ScheduleCommitteeProcessor(BaseScheduleProcessor):
         return 'committee-{}'.format(item['id'])
 
 
+class ScheduleMeetingCommitteeProcessor(BaseScheduleProcessor):
+    model = RawMeetingCommittee
+
+    def _process_item(self, item, obj):
+        obj.slot_id = int(item['slot_id'])
+        cid = int(item['committee_id'])
+        obj._committee_id = cid
+        try:
+            cuid = 'committee-{}'.format(cid)
+            committee = RawCommittee.objects.get(uid=cuid)
+        except RawCommittee.DoesNotExist:
+            logger.warn('Could not find committee {}'.format(cuid))
+            committee = None
+        obj.committee = committee
+        obj.save()
+
+    def _generate_uid(self, item):
+        return 'meeting_committee-{}'.format(item['id'])
+
+
 class ScheduleMembershipProcessor(BaseScheduleProcessor):
     model = RawCommitteeMembership
 
@@ -124,7 +144,6 @@ class ScheduleMembershipProcessor(BaseScheduleProcessor):
             logger.warn('Could not find committee {}'.format(cuid))
             committee = None
         obj.committee = committee
-
         obj.save()
 
     def _generate_uid(self, item):

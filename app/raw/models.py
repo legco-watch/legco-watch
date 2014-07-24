@@ -291,3 +291,12 @@ class RawMeeting(RawModel):
 
     def __unicode__(self):
         return u'{} {}'.format(self.slot_id, unicode(self.subject_e))
+
+
+class RawMeetingCommittee(RawModel):
+    slot_id = models.IntegerField(null=True, blank=True)
+    _committee_id = models.IntegerField(null=True, blank=True)
+    committee = models.ForeignKey(RawCommittee, null=True, blank=True, related_name='meeting_committees')
+
+    def __unicode__(self):
+        return u'{} {}'.format(self.slot_id, self._committee_id)

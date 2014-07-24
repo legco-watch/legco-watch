@@ -5,7 +5,8 @@ from django.core.exceptions import ImproperlyConfigured
 import os
 from raw.processors.library_agenda import LibraryAgendaProcessor
 from raw.processors.library_member import LibraryMemberProcessor
-from raw.processors.schedule import ScheduleMemberProcessor, ScheduleCommitteeProcessor, ScheduleMembershipProcessor
+from raw.processors.schedule import ScheduleMemberProcessor, ScheduleCommitteeProcessor, ScheduleMembershipProcessor, \
+    ScheduleMeetingCommitteeProcessor
 from django.conf import settings
 
 
@@ -45,7 +46,8 @@ PROCESS_MAP = {
     'library_member': LibraryMemberProcessor,
     'schedule_member': ScheduleMemberProcessor,
     'schedule_committee': ScheduleCommitteeProcessor,
-    'schedule_membership': ScheduleMembershipProcessor
+    'schedule_membership': ScheduleMembershipProcessor,
+    'schedule_meeting_committee': ScheduleMeetingCommitteeProcessor
 }
 
 
