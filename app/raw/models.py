@@ -229,10 +229,19 @@ class RawScheduleMember(RawModel):
 
     def __unicode__(self):
         return u"{} {} {} {} {}".format(
-            unicode(self.uid),
-            unicode(self.last_name_c), unicode(self.first_name_c),
-            unicode(self.first_name_e), unicode(self.last_name_e)
+            self.uid,
+            self.last_name_c, self.first_name_c,
+            self.first_name_e, self.last_name_e
         )
+
+    @property
+    def name_c(self):
+        return u'{}{}'.format(self.last_name_c, self.first_name_c)
+
+    @property
+    def name_e(self):
+        first_name = self.english_name if self.english_name != '' else self.first_name_e
+        return u'{} {}'.format(first_name, self.last_name_e)
 
 
 class RawCommittee(RawModel):
@@ -249,9 +258,9 @@ class RawCommittee(RawModel):
 class RawCommitteeMembership(RawModel):
     membership_id = models.IntegerField(null=True, blank=True)
     _member_id = models.IntegerField(null=True, blank=True)
-    member = models.ForeignKey(RawScheduleMember, null=True, blank=True)
+    member = models.ForeignKey(RawScheduleMember, null=True, blank=True, related_name='memberships')
     _committee_id = models.IntegerField(null=True, blank=True)
-    committee = models.ForeignKey(RawCommittee, null=True, blank=True)
+    committee = models.ForeignKey(RawCommittee, null=True, blank=True, related_name='memberships')
     post_e = models.CharField(max_length=100, blank=True)
     post_c = models.CharField(max_length=100, blank=True)
     start_date = models.DateTimeField(null=True, blank=True)

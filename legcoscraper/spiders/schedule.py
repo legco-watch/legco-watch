@@ -81,6 +81,10 @@ class ScheduleCommitteeSpider(Spider):
 class ScheduleMembership(TypedItem):
     type_name = 'ScheduleMembership'
     # Not sure what the difference between membership_id and id are
+    # So id is the table foreign key.
+    # A member can have multiple memberships if they assume some sort
+    # of role like Chairman.
+    # Membership_id is unique for each committee/member combination
     id = Field()
     membership_id = Field()
     member_id = Field()
