@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+  <h1>{{ object.uid }} - {{ object.code }} - {{ object.name_e }} - {{ object.name_c }}</h1>
+  <p>
+    <a href="{{ object.url_e }}">English page</a>
+    <a href="{{ object.url_c }}">Chinese page</a>
+  </p>
+  <p>
+    <a href="{% url 'error_report' %}?url={{ request.path }}">Report an error on this page</a>
+  </p>
+{% endblock content %}

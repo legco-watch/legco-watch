@@ -1,5 +1,5 @@
 from django.views.generic import ListView, DetailView
-from raw.models import RawCouncilAgenda, RawMember
+from raw.models import RawCouncilAgenda, RawMember, RawCommittee
 
 
 class RawCouncilAgendaListView(ListView):
@@ -36,3 +36,14 @@ class RawMemberDetailView(DetailView):
             res = {'label': f, 'value': getattr(self.object, f, '')}
             context['fields'].append(res)
         return context
+
+
+class RawCommitteeListView(ListView):
+    model = RawCommittee
+    template_name = 'raw/committee_list.html'
+    paginate_by = 25
+
+
+class RawCommitteeDetailView(DetailView):
+    model = RawCommittee
+    template_name = 'raw/committee_detail.html'

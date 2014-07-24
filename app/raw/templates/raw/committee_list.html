@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Committees</h1>
+  <ul>
+  {% for committee in object_list %}
+    <li><a href="{% url 'raw_committee' committee.id %}">{{ committee.uid }} - {{ committee.code }} - {{ committee.name_e }}</a></li>
+  {% endfor %}
+  </ul>
+  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+  {% if page_obj.has_previous %}
+    <a href="{% url 'raw_member_list' %}?page={{ page_obj.previous_page_number }}">Prev</a>
+  {% endif %}
+  {% if page_obj.has_next %}
+    <a href="{% url 'raw_member_list' %}?page={{ page_obj.next_page_number }}">Next</a>
+  {% endif %}
+
+{% endblock content %}
