@@ -8,8 +8,9 @@ from collections import OrderedDict
 import logging
 import lxml
 from lxml import etree
-from lxml.html.clean import clean_html
+from lxml.html.clean import clean_html, Cleaner
 import re
+from lxml.html import HTMLParser
 from raw.utils import to_string
 
 
@@ -69,14 +70,19 @@ class CouncilAgenda(object):
         self.source = re.sub(single_quotes, u"'", self.source)
         # Convert colons
         self.source = self.source.replace(u'\uff1a', u':')
+        # Remove line breaks and tabs
+        self.source = self.source.replace(u'\n', u'')
+        self.source = self.source.replace(u'\t', u'')
         # There are also some "zero width joiners" in random places
         # in the text.  Doesn't seem to cause any harm, though, so leave for now
         # these are the codeS: &#8205, &#160 (nbsp), \xa0 (nbsp)
 
         # Use the lxml cleaner
-        self.source = clean_html(to_string(self.source))
+        cleaner = Cleaner()
+        parser = HTMLParser(encoding='utf-8')
         # Finally, load the cleaned string to an ElementTree
-        self.tree = lxml.html.fromstring(to_string(self.source))
+        self.tree = cleaner.clean_html(lxml.html.fromstring(to_string(self.source), parser=parser))
+        # self.tree = lxml.html.fromstring(to_string(self.source))
 
     def _clean(self):
         """
@@ -182,7 +188,6 @@ class CouncilAgenda(object):
         """
         # Need to keep order of the map because we need to check for members' bills before
         # we check for bills
-
         for prop_name, check_strings in CouncilAgenda.SECTION_MAP.items():
             if any_in(check_strings, header):
                 return prop_name
