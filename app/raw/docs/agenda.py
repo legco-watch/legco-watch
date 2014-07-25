@@ -14,8 +14,8 @@ from raw.utils import to_string
 
 
 logger = logging.getLogger('legcowatch')
-QUESTION_PATTERN_E = ur'^[0-9]+\..*?Hon\s(.*?)\sto ask:'
-QUESTION_PATTERN_C = ur'^[0-9]+\.\s*(.*?)議員問:'
+QUESTION_PATTERN_E = ur'^\*?([0-9]+)\..*?Hon\s(.*?)\sto ask:'
+QUESTION_PATTERN_C = ur'^\*?([0-9]+)\.\s*(.*?)議員問:'
 
 
 class CouncilAgenda(object):
@@ -218,12 +218,16 @@ class AgendaQuestion(object):
         pattern = QUESTION_PATTERN_E if english else QUESTION_PATTERN_C
         match = re.match(pattern, text)
         if match is not None:
-            self.asker = match.group(1)
+            self.number = match.group(1)
+            self.asker = match.group(2)
         else:
             logger.warn(u'Could not find asker of question in element: {}'.format(text))
             self.asker = None
 
         # Get the responder
+        # If the question is the last question, then there may be a note
+        # that begins with an asterisk that says which questions were
+        # for written reply
         text = elements[-1].text_content()
         match = re.search(AgendaQuestion.RESPONDER_PATTERN, text)
         if match is not None:
