@@ -13,8 +13,9 @@
     <ol>
       {% for question in parser.questions %}
         <li>
-          <p><strong>{{ question.asker }} asks {{ question.replier }}:</strong></p>
+          <p><strong>{{ question.asker }} asks {{ question.replier }} ({% if question.type == question.QTYPE_ORAL %}Oral{% else %}Written{% endif %}):</strong></p>
           <p>{{ question.body|safe }}</p>
+          <p></p>
         </li>
       {% endfor %}
     </ol>

@@ -216,6 +216,8 @@ class AgendaQuestion(object):
     the question, and this object will parse out the sections
     """
     RESPONDER_PATTERN = ur':\s?(.+)$'
+    QTYPE_ORAL = 1
+    QTYPE_WRITTEN = 2
 
     def __init__(self, elements, english=True):
         self._elements = elements
@@ -227,9 +229,18 @@ class AgendaQuestion(object):
         if match is not None:
             self.number = match.group(1)
             self.asker = match.group(2)
+            # Get question type
+            # Can be oral or written.  Could also be urgent, but have not yet seen how these are
+            # indicated
+            if text.startswith('*'):
+                self.type = self.QTYPE_WRITTEN
+            else:
+                self.type = self.QTYPE_ORAL
         else:
             logger.warn(u'Could not find asker of question in element: {}'.format(text))
+            self.number = None
             self.asker = None
+            self.type = None
 
         # Get the responder
         # If the question is the last question, then there may be a note
