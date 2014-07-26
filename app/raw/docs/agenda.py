@@ -98,7 +98,8 @@ class CouncilAgenda(object):
         """
         Parse the source document and populate this object's properties
         """
-        pattern = ur'^[IV]+\.'
+        # The A is for special question sections, such as the agenda on June 18, 2014
+        pattern = ur'^[IVA]+\.'
         current_section = None
         # Iterate over the elements in self.tree.iter()
         # We only want paragraphs and table, since these appear to be the main top level elements
