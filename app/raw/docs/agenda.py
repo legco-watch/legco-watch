@@ -75,7 +75,9 @@ class CouncilAgenda(object):
         self.source = self.source.replace(u'\t', u'')
         # There are also some "zero width joiners" in random places
         # in the text.  Doesn't seem to cause any harm, though, so leave for now
-        # these are the codeS: &#8205, &#160 (nbsp), \xa0 (nbsp)
+        # these are the codeS: &#8205, &#160 (nbsp), \xa0 (nbsp), \u200d
+        # Also previously had some non breaking spaces in unicode \u00a0, but this
+        # may have been fixed by changing the parser below
 
         # Use the lxml cleaner
         cleaner = Cleaner()
@@ -103,7 +105,7 @@ class CouncilAgenda(object):
         # ie. we don't want to go fully down the tree
         for elem in self.tree.iter('table', 'p'):
             # When we encounter a header element, figure out what section it is a header for
-            text = elem.text_content()
+            text = elem.text_content().strip()
             if text and re.search(pattern, text):
                 section_name = self._identify_section(text)
                 if section_name is not None:
@@ -219,7 +221,7 @@ class AgendaQuestion(object):
         self._elements = elements
 
         # Get the asker
-        text = elements[0].text_content()
+        text = elements[0].text_content().strip()
         pattern = QUESTION_PATTERN_E if english else QUESTION_PATTERN_C
         match = re.match(pattern, text)
         if match is not None:
@@ -233,16 +235,22 @@ class AgendaQuestion(object):
         # If the question is the last question, then there may be a note
         # that begins with an asterisk that says which questions were
         # for written reply
-        text = elements[-1].text_content()
-        match = re.search(AgendaQuestion.RESPONDER_PATTERN, text)
-        if match is not None:
-            self.replier = match.group(1)
+        # As a heuristic, just search the last two elements, and keep track
+        # of which is the last index of the body of the question
+        ending_index = -2
+        for e in elements[-2:]:
+            text = e.text_content().strip()
+            match = re.search(AgendaQuestion.RESPONDER_PATTERN, text)
+            if match is not None:
+                self.replier = match.group(1)
+                break
+            ending_index += 1
         else:
             logger.warn(u'Could not find responder of question in element: {}'.format(text))
             self.replier = None
 
         # Store the rest of the elements into the body as html
-        self.body = ''.join([etree.tounicode(xx, method='html') for xx in elements[1:-1]])
+        self.body = ''.join([etree.tounicode(xx, method='html') for xx in elements[1:ending_index]])
 
     def __repr__(self):
         return u'<Question by {}>'.format(self.asker).encode('utf-8')
