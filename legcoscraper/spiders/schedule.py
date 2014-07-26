@@ -35,6 +35,7 @@ class ScheduleMemberSpider(Spider):
         resp = json.loads(response.body_as_unicode())
         for v in resp['value']:
             res = {
+                # member_id is the same as the member id in the main member database
                 'id': v['member_id'],
                 'last_name_c': v['surname_chi'],
                 'first_name_c': v['firstname_chi'],

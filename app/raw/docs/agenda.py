@@ -249,6 +249,10 @@ class AgendaQuestion(object):
         # for written reply
         # As a heuristic, just search the last two elements, and keep track
         # of which is the last index of the body of the question
+
+        # In other cases, if there is more than one public officer to reply, then
+        # the list of public officers could be split across two elements.  See, for example,
+        # the agenda from June 18, 2014, question 1
         ending_index = -2
         for e in elements[-2:]:
             text = e.text_content().strip()
