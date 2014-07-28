@@ -11,7 +11,7 @@ from lxml import etree
 from lxml.html.clean import clean_html, Cleaner
 import re
 from lxml.html import HTMLParser
-from raw.utils import to_string
+from raw.utils import to_string, to_unicode
 
 
 logger = logging.getLogger('legcowatch')
@@ -19,6 +19,8 @@ QUESTION_PATTERN_E = ur'^\*?([0-9]+)\..*?Hon\s(.*?)\sto ask:'
 QUESTION_PATTERN_C = ur'^\*?([0-9]+)\.\s*(.*?)議員問:'
 LEGISLATION_E = u'Subsidiary Legislation'
 LEGISLATION_C = u'附屬法例'
+OTHER_PAPERS_E = u'Other Papers'
+OTHER_PAPERS_C = u'其他文件'
 
 
 class CouncilAgenda(object):
@@ -151,17 +153,26 @@ class CouncilAgenda(object):
             # We only care about tables, specifically:
             # 1) a table with "Subsidiary Legislation / Instruments as its title, and
             # 2) a table with "Other Paper" as the title
+            # One difficulty is that not every table is headered, such as
+            # in the case of the June 5 2013 agenda, since there was only one paper
             first_row_text = tbl[0].text_content().strip()
             match_text = LEGISLATION_E if self.english else LEGISLATION_C
+            match_text2 = OTHER_PAPERS_E if self.english else OTHER_PAPERS_C
+            import ipdb; ipdb.set_trace()
             if match_text in first_row_text:
-                # This should be table of subsidiary legislation
-                # Each row is a piece of legislation
-                for item in tbl[1:]:
-                    # Item should be a tr element
-                    parsed = TabledLegislation(item)
-                    logger.debug(u'Found legislation {}'.format(parsed))
-                    parsed_papers.append(parsed)
-                continue
+                start_index = 1
+                cls = TabledLegislation
+            elif match_text2 in first_row_text:
+                start_index = 1
+                cls = OtherTabledPaper
+            else:
+                start_index = 0
+                cls = OtherTabledPaper
+            for item in tbl[start_index:]:
+                # Item should be a tr element
+                parsed = cls(item)
+                logger.debug(u'Found legislation {}'.format(parsed.title))
+                parsed_papers.append(parsed)
         self.tabled_papers_p = parsed_papers
 
     def _parse_members_bills(self):
@@ -318,6 +329,20 @@ class TabledLegislation(object):
 
     def __repr__(self):
         return u'<TabledLegislation {}: {}>'.format(self.number, self.title).encode('utf-8')
+
+
+class OtherTabledPaper(object):
+    """
+    Other tabled papers
+
+    Instantiated with a tr element, but minimal parsing, so this object catches all
+    tabled papers that we can't otherwise recognize
+    """
+    def __init__(self, row, english=True):
+        self.title = row[-1].text_content().strip()
+
+    def __repr__(self):
+        return u'<OtherTabledPaper {}>'.format(self.title).encode('utf-8')
 
 
 class AgendaMotion(object):
