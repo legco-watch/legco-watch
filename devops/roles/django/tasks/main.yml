@@ -27,6 +27,17 @@
 # Collectstatic, syncdb, and migrate
 - include: ../handlers/main.yml tags=deploy
 
+# Install bower dependencies
+- name: Install bower dependencies
+  sudo: true
+  sudo_user: "{{project.user}}"
+  shell: >
+    source ~/.nvm/nvm.sh && nvm use && bower install
+    chdir={{git.root}}
+    executable=/bin/bash
+  tags:
+    - deploy
+
 # This will create a user named 'legcowatch' with password 'changeme'
 # Should only be run on provisions, otherwise
 # it'll wipe out the first user every time it's run
