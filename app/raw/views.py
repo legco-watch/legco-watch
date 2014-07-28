@@ -1,4 +1,6 @@
+from django.http import HttpResponse
 from django.views.generic import ListView, DetailView
+from django.views.generic.detail import BaseDetailView
 from raw.models import RawCouncilAgenda, RawMember, RawCommittee
 
 
@@ -16,6 +18,15 @@ class RawCouncilAgendaDetailView(DetailView):
         context = super(RawCouncilAgendaDetailView, self).get_context_data(**kwargs)
         context['parser'] = self.object.get_parser()
         return context
+
+
+class RawCouncilAgendaSourceView(BaseDetailView):
+    model = RawCouncilAgenda
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        parser = self.object.get_parser()
+        return HttpResponse(parser.source)
 
 
 class RawMemberListView(ListView):
