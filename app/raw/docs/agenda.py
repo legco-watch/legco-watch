@@ -186,7 +186,7 @@ class CouncilAgenda(object):
                 else:
                     logger.debug(u'Inferred other papers table')
                     parsed_papers.append(self._parse_other_papers(tbl))
-        self.tabled_papers_p = list(itertools.chain.from_iterable(parsed_papers))
+        self.tabled_papers = list(itertools.chain.from_iterable(parsed_papers))
 
     def _parse_tabled_legislation(self, tbl):
         parsed_papers = []
