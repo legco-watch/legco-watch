@@ -17,6 +17,8 @@ from raw.utils import to_string
 logger = logging.getLogger('legcowatch')
 QUESTION_PATTERN_E = ur'^\*?([0-9]+)\..*?Hon\s(.*?)\sto ask:'
 QUESTION_PATTERN_C = ur'^\*?([0-9]+)\.\s*(.*?)議員問:'
+LEGISLATION_E = u'Subsidiary Legislation'
+LEGISLATION_C = u'附屬法例'
 
 
 class CouncilAgenda(object):
@@ -141,15 +143,26 @@ class CouncilAgenda(object):
         """
         if self.tabled_papers is None:
             return
+        # Filter out paragraphs, which are actually children of the table elements
+        self.tabled_papers = [xx for xx in self.tabled_papers if xx.tag == u'table']
         logger.info(u'Parsing tabled papers from {} elements'.format(len(self.tabled_papers)))
         parsed_papers = []
-        parts = []
         for tbl in self.tabled_papers:
             # We only care about tables, specifically:
             # 1) a table with "Subsidiary Legislation / Instruments as its title, and
             # 2) a table with "Other Paper" as the title
-            if tbl.tag != u'table':
+            first_row_text = tbl[0].text_content().strip()
+            match_text = LEGISLATION_E if self.english else LEGISLATION_C
+            if match_text in first_row_text:
+                # This should be table of subsidiary legislation
+                # Each row is a piece of legislation
+                for item in tbl[1:]:
+                    # Item should be a tr element
+                    parsed = TabledLegislation(item)
+                    logger.debug(u'Found legislation {}'.format(parsed))
+                    parsed_papers.append(parsed)
                 continue
+        self.tabled_papers_p = parsed_papers
 
     def _parse_members_bills(self):
         pass
@@ -294,14 +307,17 @@ class TabledLegislation(object):
     """
     Object for tabled subsidiary legislation and instruments.  These will
     typically have a canonical title and a legislation number
+
+    Instantiated with a tr element that is a row in the table of subsidiary legislation
     """
-    def __init__(self, elements, english=True):
-        self.number = None
-        self.title = None
-        pass
+    def __init__(self, row, english=True):
+        # Sometimes the first column is a number, other times the number is not present
+        # So we start from the last column, since that should always be the paper number
+        self.number = row[-1].text_content().strip()
+        self.title = row[-2].text_content().strip()
 
     def __repr__(self):
-        return u'<TabledLegislation {}: {}>'.format(self.number, self.title)
+        return u'<TabledLegislation {}: {}>'.format(self.number, self.title).encode('utf-8')
 
 
 class AgendaMotion(object):
