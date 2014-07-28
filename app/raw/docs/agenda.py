@@ -11,6 +11,7 @@ from lxml import etree
 from lxml.html.clean import clean_html, Cleaner
 import re
 from lxml.html import HTMLParser
+import itertools
 from raw.utils import to_string, to_unicode, grouper
 
 
@@ -158,35 +159,58 @@ class CouncilAgenda(object):
             first_row_text = tbl[0].text_content().strip()
             match_text = LEGISLATION_E if self.english else LEGISLATION_C
             match_text2 = OTHER_PAPERS_E if self.english else OTHER_PAPERS_C
-            import ipdb; ipdb.set_trace()
             if match_text in first_row_text:
                 # Subsidiary legislation
-                # Papers occur in sngle rows
-                for item in tbl[1:]:
-                    parsed = TabledLegislation(item)
-                    logger.debug(u'Found legislation {}'.format(parsed.title))
-                    parsed_papers.append(parsed)
+                # Papers occur in single rows
+                logger.debug(u'Found subsidiary legislation table')
+                parsed_papers.append(self._parse_tabled_legislation(tbl[1:]))
             elif match_text2 in first_row_text:
                 # Other papers table
                 # rows occur in pairs, with the first row being the title
                 # and the second row being the presenter
-                grouped_tbl = grouper(tbl[1:], 2)
-                for item in grouped_tbl:
-                    # In this case, item is tuple of tr elements
-                    parsed = OtherTabledPaper(item)
-                    logger.debug(u'Found other paper {}'.format(parsed.title))
-                    parsed_papers.append(parsed)
+                logger.debug(u'Found other papers table')
+                parsed_papers.append(self._parse_other_papers(tbl[1:]))
             else:
-                pass
                 # No title, try to infer the table
                 # For some Chinese agendas, it seems like the title is not included
                 # or it could be in a different element
                 # Check the second row to see if there are parenthesis
                 # If there are, then it's likely Other papers
                 # Or, can check the last column to see if there is a legislation number
+                paper_number = ur'\d+/\d+'
+                last_col = tbl[0][-1].text_content().strip()
+                match = re.match(paper_number, last_col)
+                if match:
+                    logger.debug(u'Inferred subsidiary legislation table')
+                    parsed_papers.append(self._parse_tabled_legislation(tbl))
+                else:
+                    logger.debug(u'Inferred other papers table')
+                    parsed_papers.append(self._parse_other_papers(tbl))
+        self.tabled_papers_p = list(itertools.chain.from_iterable(parsed_papers))
 
-        import ipdb; ipdb.set_trace()
-        self.tabled_papers_p = parsed_papers
+    def _parse_tabled_legislation(self, tbl):
+        parsed_papers = []
+        for item in tbl:
+            # Sometimes there are blank rows
+            if item.text_content().strip() == u'':
+                continue
+            try:
+                parsed = TabledLegislation(item)
+            except IndexError:
+                logger.warning(u'Could not parsed tabled legislation for agenda {}'.format(self.uid))
+            logger.debug(u'Found legislation {}'.format(parsed.title))
+            parsed_papers.append(parsed)
+        return parsed_papers
+
+    def _parse_other_papers(self, tbl):
+        parsed_papers = []
+        grouped_tbl = grouper(tbl, 2)
+        for item in grouped_tbl:
+            # In this case, item is tuple of tr elements
+            parsed = OtherTabledPaper(item)
+            logger.debug(u'Found other paper {}'.format(parsed.title))
+            parsed_papers.append(parsed)
+        return parsed_papers
 
     def _parse_members_bills(self):
         pass
@@ -338,7 +362,12 @@ class TabledLegislation(object):
         # Sometimes the first column is a number, other times the number is not present
         # So we start from the last column, since that should always be the paper number
         self.number = row[-1].text_content().strip()
-        self.title = row[-2].text_content().strip()
+        # Sometimes there is a blank column in between the paper number and the title
+        title = row[-2].text_content().strip()
+        if title == '':
+            self.title = row[-3].text_content().strip()
+        else:
+            self.title = title
 
     def __repr__(self):
         return u'<TabledLegislation {}: {}>'.format(self.number, self.title).encode('utf-8')
