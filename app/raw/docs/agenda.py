@@ -11,7 +11,7 @@ from lxml import etree
 from lxml.html.clean import clean_html, Cleaner
 import re
 from lxml.html import HTMLParser
-from raw.utils import to_string, to_unicode
+from raw.utils import to_string, to_unicode, grouper
 
 
 logger = logging.getLogger('legcowatch')
@@ -160,19 +160,32 @@ class CouncilAgenda(object):
             match_text2 = OTHER_PAPERS_E if self.english else OTHER_PAPERS_C
             import ipdb; ipdb.set_trace()
             if match_text in first_row_text:
-                start_index = 1
-                cls = TabledLegislation
+                # Subsidiary legislation
+                # Papers occur in sngle rows
+                for item in tbl[1:]:
+                    parsed = TabledLegislation(item)
+                    logger.debug(u'Found legislation {}'.format(parsed.title))
+                    parsed_papers.append(parsed)
             elif match_text2 in first_row_text:
-                start_index = 1
-                cls = OtherTabledPaper
+                # Other papers table
+                # rows occur in pairs, with the first row being the title
+                # and the second row being the presenter
+                grouped_tbl = grouper(tbl[1:], 2)
+                for item in grouped_tbl:
+                    # In this case, item is tuple of tr elements
+                    parsed = OtherTabledPaper(item)
+                    logger.debug(u'Found other paper {}'.format(parsed.title))
+                    parsed_papers.append(parsed)
             else:
-                start_index = 0
-                cls = OtherTabledPaper
-            for item in tbl[start_index:]:
-                # Item should be a tr element
-                parsed = cls(item)
-                logger.debug(u'Found legislation {}'.format(parsed.title))
-                parsed_papers.append(parsed)
+                pass
+                # No title, try to infer the table
+                # For some Chinese agendas, it seems like the title is not included
+                # or it could be in a different element
+                # Check the second row to see if there are parenthesis
+                # If there are, then it's likely Other papers
+                # Or, can check the last column to see if there is a legislation number
+
+        import ipdb; ipdb.set_trace()
         self.tabled_papers_p = parsed_papers
 
     def _parse_members_bills(self):
@@ -335,11 +348,21 @@ class OtherTabledPaper(object):
     """
     Other tabled papers
 
-    Instantiated with a tr element, but minimal parsing, so this object catches all
-    tabled papers that we can't otherwise recognize
+    Instantiated with a tuple of two tr elements
     """
-    def __init__(self, row, english=True):
-        self.title = row[-1].text_content().strip()
+    def __init__(self, rows, english=True):
+        # The HTML uses things like BRs and spans to split the text up, but these
+        # are removed by text_content().  So we'll need to add a space for each element,
+        # then convert duplicate spaces to a single space
+        title_elems = rows[0].xpath('.//*')
+        for e in title_elems:
+            e.tail = ' ' + e.tail if e.tail else ' '
+        title = rows[0].text_content().strip()
+        self.title = ' '.join(title.split())
+        if rows[1] is not None:
+            self.presenter = rows[1].text_content().strip()
+        else:
+            self.presenter = None
 
     def __repr__(self):
         return u'<OtherTabledPaper {}>'.format(self.title).encode('utf-8')

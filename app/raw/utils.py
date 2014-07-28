@@ -3,6 +3,7 @@ Some utilities for working with spiders
 """
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from itertools import izip_longest
 from scrapy.crawler import Crawler
 from scrapy.utils.project import get_project_settings
 import magic
@@ -114,3 +115,12 @@ def to_unicode(obj, encoding='utf-8'):
         if not isinstance(obj, unicode):
             obj = unicode(obj, encoding)
     return obj
+
+
+def grouper(iterable, n, fillvalue=None):
+    """
+    Collect data into fixed-length chunks or blocks
+    """
+    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
+    args = [iter(iterable)] * n
+    return izip_longest(fillvalue=fillvalue, *args)
