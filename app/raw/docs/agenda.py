@@ -104,9 +104,12 @@ class CouncilAgenda(object):
         # Iterate over the elements in self.tree.iter()
         # We only want paragraphs and table, since these appear to be the main top level elements
         # ie. we don't want to go fully down the tree
+        # This is buggy for converted DOC files, since usually the tables have nested p elements
         for elem in self.tree.iter('table', 'p'):
             # When we encounter a header element, figure out what section it is a header for
             text = elem.text_content().strip()
+            if text == u'':
+                continue
             if text and re.search(pattern, text):
                 section_name = self._identify_section(text)
                 if section_name is not None:
@@ -133,7 +136,20 @@ class CouncilAgenda(object):
         # We won't parse others, since we don't know what those are
 
     def _parse_tabled_papers(self):
-        pass
+        """
+        Parse elements for tabled papers
+        """
+        if self.tabled_papers is None:
+            return
+        logger.info(u'Parsing tabled papers from {} elements'.format(len(self.tabled_papers)))
+        parsed_papers = []
+        parts = []
+        for tbl in self.tabled_papers:
+            # We only care about tables, specifically:
+            # 1) a table with "Subsidiary Legislation / Instruments as its title, and
+            # 2) a table with "Other Paper" as the title
+            if tbl.tag != u'table':
+                continue
 
     def _parse_members_bills(self):
         pass
@@ -149,34 +165,36 @@ class CouncilAgenda(object):
         scan through the list, and give groups of elements that constitute a question
         to the AgendaQuestion constructor.
         """
-        if self.questions is not None:
-            logger.info(u"Parsing questions from {} elements".format(len(self.questions)))
-            parsed_questions = []
-            pattern = QUESTION_PATTERN_E if self.english else QUESTION_PATTERN_C
-            parts = []
-            for q in self.questions:
-                content = q.text_content().strip()
-                # Discard empty elements
-                if content == '':
-                    continue
-                # Match for question starts
-                match = re.match(pattern, content)
-                if match is not None:
-                    # Found a match for a new question start
-                    # If we've accumulated parts for a prior question, clear those out
-                    if len(parts) > 0:
-                        ag = AgendaQuestion(parts, english=self.english)
-                        parsed_questions.append(ag)
-                        parts = []
-                    logger.debug(u"Found question {}".format(content))
-                # Continue to accumulate parts
-                parts.append(q)
+        if self.questions is None:
+            return
 
-            # Make sure to parse the last question
-            ag = AgendaQuestion(parts, english=self.english)
-            parsed_questions.append(ag)
-            self.questions = parsed_questions
-            logger.info(u"Parsed {} questions".format(len(self.questions)))
+        logger.info(u"Parsing questions from {} elements".format(len(self.questions)))
+        parsed_questions = []
+        pattern = QUESTION_PATTERN_E if self.english else QUESTION_PATTERN_C
+        parts = []
+        for q in self.questions:
+            content = q.text_content().strip()
+            # Discard empty elements
+            if content == '':
+                continue
+            # Match for question starts
+            match = re.match(pattern, content)
+            if match is not None:
+                # Found a match for a new question start
+                # If we've accumulated parts for a prior question, clear those out
+                if len(parts) > 0:
+                    ag = AgendaQuestion(parts, english=self.english)
+                    parsed_questions.append(ag)
+                    parts = []
+                logger.debug(u"Found question {}".format(content))
+            # Continue to accumulate parts
+            parts.append(q)
+
+        # Make sure to parse the last question
+        ag = AgendaQuestion(parts, english=self.english)
+        parsed_questions.append(ag)
+        self.questions = parsed_questions
+        logger.info(u"Parsed {} questions".format(len(self.questions)))
 
     def _parse_bills(self):
         pass
@@ -270,6 +288,20 @@ class AgendaQuestion(object):
 
     def __repr__(self):
         return u'<Question by {}>'.format(self.asker).encode('utf-8')
+
+
+class TabledLegislation(object):
+    """
+    Object for tabled subsidiary legislation and instruments.  These will
+    typically have a canonical title and a legislation number
+    """
+    def __init__(self, elements, english=True):
+        self.number = None
+        self.title = None
+        pass
+
+    def __repr__(self):
+        return u'<TabledLegislation {}: {}>'.format(self.number, self.title)
 
 
 class AgendaMotion(object):
@@ -383,13 +415,26 @@ The Chief Executive's Question and Answer Session
 
 
 from raw.docs.agenda import get_all_agendas, CouncilAgenda
+from raw.models import RawCouncilAgenda
 from raw import utils
+import random
+
 agendas = get_all_agendas()
 objs = []
+sample = [xx.get_parser() for xx in random.sample(agendas[0:100], 10)]
+
+tbls = []
+for xx in sample:
+    tbls.append([xxx for xxx in xx.tabled_papers if xxx.tag == 'table'])
+
 
 for ag in agendas:
     objs.append(ag.get_parser())
 
+with open('doc_e.html', 'wb') as foo:
+    foo.write(a.source.encode('utf-8'))
+
+a = RawCouncilAgenda.objects.get(id=2357).get_parser()
 
 # clean the html
 from lxml.html.clean import clean_html
