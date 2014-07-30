@@ -13,10 +13,23 @@
   </p>
   {% if parser.tabled_papers %}
     <h2>Tabled papers</h2>
+    <table class="table table-condensed">
+      <thead>
+      <tr>
+        <td>Paper number</td>
+        <td>Title</td>
+        <td>Presenter</td>
+      </tr>
+      </thead>
+      {% for p in parser.tabled_papers %}
+        <tr>
+          <td>{{ p.number }}</td>
+          <td>{{ p.title }}</td>
+          <td>{{ p.presenter }}</td>
+        </tr>
+      {% endfor %}
+    </table>
     <ul>
-    {% for p in parser.tabled_papers %}
-      <li>{{ p.number }} - {{ p.title }} - {{ p.presenter }}</li>
-    {% endfor %}
     </ul>
   {% endif %}
   {% if parser.questions %}

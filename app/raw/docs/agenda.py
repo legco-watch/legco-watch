@@ -20,7 +20,7 @@ QUESTION_PATTERN_E = ur'^\*?([0-9]+)\..*?Hon\s(.*?)\sto ask:'
 QUESTION_PATTERN_C = ur'^\*?([0-9]+)\.\s*(.*?)議員問:'
 LEGISLATION_E = u'Subsidiary Legislation'
 LEGISLATION_C = u'附屬法例'
-OTHER_PAPERS_E = u'Other Papers'
+OTHER_PAPERS_E = u'Other Paper'
 OTHER_PAPERS_C = u'其他文件'
 
 
@@ -179,7 +179,7 @@ class CouncilAgenda(object):
                 # Or, can check the last column to see if there is a legislation number
                 paper_number = ur'\d+/\d+'
                 last_col = tbl[0][-1].text_content().strip()
-                match = re.match(paper_number, last_col)
+                match = re.search(paper_number, last_col)
                 if match:
                     logger.debug(u'Inferred subsidiary legislation table')
                     parsed_papers.append(self._parse_tabled_legislation(tbl))
@@ -379,6 +379,9 @@ class OtherTabledPaper(object):
 
     Instantiated with a tuple of two tr elements
     """
+    PRESENTER_E = ur'presented by (the )?(.+?)\)'
+    PRESENTER_C = ur'由教(\w+?)提交'
+
     def __init__(self, rows, english=True):
         # The HTML uses things like BRs and spans to split the text up, but these
         # are removed by text_content().  So we'll need to add a space for each element,
@@ -387,11 +390,16 @@ class OtherTabledPaper(object):
         for e in title_elems:
             e.tail = ' ' + e.tail if e.tail else ' '
         title = rows[0].text_content().strip()
+        # Strip out any starting numbers
+        title = re.sub(ur'^\d+.[ ]?', '', title)
         self.title = ' '.join(title.split())
+        self.presenter = None
         if rows[1] is not None:
-            self.presenter = rows[1].text_content().strip()
-        else:
-            self.presenter = None
+            match_pattern = self.PRESENTER_E if english else self.PRESENTER_C
+            text = rows[1].text_content().strip()
+            match = re.search(match_pattern, text)
+            if match is not None:
+                self.presenter = match.group(2)
 
     def __repr__(self):
         return u'<OtherTabledPaper {}>'.format(self.title).encode('utf-8')
