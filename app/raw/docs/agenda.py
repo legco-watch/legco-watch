@@ -109,7 +109,8 @@ class CouncilAgenda(object):
         # Iterate over the elements in self.tree.iter()
         # We only want paragraphs and table, since these appear to be the main top level elements
         # ie. we don't want to go fully down the tree
-        # This is buggy for converted DOC files, since usually the tables have nested p elements
+        # This is buggy for converted DOC files (older agendas),
+        # since usually the tables have nested p elements
         for elem in self.tree.iter('table', 'p'):
             # When we encounter a header element, figure out what section it is a header for
             text = elem.text_content().strip()
@@ -163,13 +164,15 @@ class CouncilAgenda(object):
                 # Subsidiary legislation
                 # Papers occur in single rows
                 logger.debug(u'Found subsidiary legislation table')
-                parsed_papers.append(self._parse_tabled_legislation(tbl[1:]))
+                # In older files, sometimes the table has all the elements after it in its iterator,
+                # so to avoid processing to much, just process the direct tr children
+                parsed_papers.append(self._parse_tabled_legislation(tbl.xpath('./tr')[1:]))
             elif match_text2 in first_row_text:
                 # Other papers table
                 # rows occur in pairs, with the first row being the title
                 # and the second row being the presenter
                 logger.debug(u'Found other papers table')
-                parsed_papers.append(self._parse_other_papers(tbl[1:]))
+                parsed_papers.append(self._parse_other_papers(tbl.xpath('./tr')[1:]))
             else:
                 # No title, try to infer the table
                 # For some Chinese agendas, it seems like the title is not included
@@ -182,10 +185,10 @@ class CouncilAgenda(object):
                 match = re.search(paper_number, last_col)
                 if match:
                     logger.debug(u'Inferred subsidiary legislation table')
-                    parsed_papers.append(self._parse_tabled_legislation(tbl))
+                    parsed_papers.append(self._parse_tabled_legislation(tbl.xpath('./tr')))
                 else:
                     logger.debug(u'Inferred other papers table')
-                    parsed_papers.append(self._parse_other_papers(tbl))
+                    parsed_papers.append(self._parse_other_papers(tbl.xpath('./tr')))
         self.tabled_papers = list(itertools.chain.from_iterable(parsed_papers))
 
     def _parse_tabled_legislation(self, tbl):
