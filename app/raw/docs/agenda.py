@@ -289,6 +289,35 @@ class CouncilAgenda(object):
         logger.info(u"Parsed {} questions".format(len(self.questions)))
 
     def _parse_bills(self):
+        """
+
+        from raw.docs.agenda import get_all_agendas, CouncilAgenda
+        from raw.models import RawCouncilAgenda
+        from raw import utils
+        import itertools
+        import random
+
+        agendas = get_all_agendas(1)
+        objs = []
+        sample = [xx.get_parser() for xx in random.sample(agendas[0:100], 50)]
+        sample = [xx for xx in sample if xx.bills is not None]
+
+        # Seems like most bills in english agendas are in tables, and the first row is the stage that the bill is in
+        # Try to get an inventory of all the possible bill headers
+        bills = itertools.chain.from_iterable([xx.bills for xx in sample])
+        bill_tables = [xx for xx in bills if xx.tag == 'table']
+        bill_headers = set([xx[0].text_content().strip() for xx in bill_tables])
+
+        # main headers appear to be:
+        # First Reading
+        # Second Reading (debate to resume)
+        # Second Reading (debate to resume), Committee Stage and Third Reading
+        # Second Reading (debate to be adjourned)
+        # Committee Stage and Third Reading
+
+        # But lots of noise
+
+        """
         pass
 
     def _parse_motions(self):
@@ -477,10 +506,14 @@ def any_in(arr, iterable):
     return False
 
 
-def get_all_agendas():
+def get_all_agendas(language=0):
     from raw import models, utils
-    objs = models.RawCouncilAgenda.objects.order_by('-uid').all()
-    return objs
+    objs = models.RawCouncilAgenda.objects.order_by('-uid')
+    if language == 1:
+        objs = objs.filter(language=models.LANG_EN)
+    if language == 2:
+        objs = objs.filter(language=models.LANG_CN)
+    return objs.all()
 
 
 """
@@ -569,41 +602,6 @@ sample = [xx.get_parser() for xx in random.sample(agendas[0:100], 10)]
 tbls = []
 for xx in sample:
     tbls.append([xxx for xxx in xx.tabled_papers if xxx.tag == 'table'])
-
-
-for ag in agendas:
-    objs.append(ag.get_parser())
-
-with open('doc_e.html', 'wb') as foo:
-    foo.write(a.source.encode('utf-8'))
-
-a = RawCouncilAgenda.objects.get(id=2357).get_parser()
-
-# clean the html
-from lxml.html.clean import clean_html
-clean_res = clean_html(res)
-
-# Write to local disk to testing
-res = utils.doc_to_html(doc_e[2])
-with open('doc_e.html', 'wb') as foo:
-    foo.write(res.encode('utf-8'))
-res = utils.doc_to_html(doc_c[2])
-with open('doc_c.html', 'wb') as foo:
-    foo.write(res.encode('utf-8'))
-
-res = pydocx.docx2html(docx_e[2])
-with open('docx_e.html', 'wb') as foo:
-    foo.write(res.encode('utf-8'))
-res = pydocx.docx2html(docx_c[2])
-with open('docx_c.html', 'wb') as foo:
-    foo.write(res.encode('utf-8'))
-
-import shutil
-shutil.copyfile(doc_e[2], './doc_e.doc')
-shutil.copyfile(doc_c[2], './doc_c.doc')
-shutil.copyfile(docx_e[2], './docx_e.docx')
-shutil.copyfile(docx_c[2], './docx_c.docx')
-
 """
 
 
