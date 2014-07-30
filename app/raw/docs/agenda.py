@@ -317,8 +317,37 @@ class CouncilAgenda(object):
 
         # But lots of noise
 
+        # Strategy is to iterate over the table elements in the bills list
+        # If we find that the header of the table includes one of the first, second, or third readings, then we
+        # pass to a method ot handle that kind of a table
+        # First reading bills only have title, no government official
+        # Second and third reading bills have a government official column present
+        # Committee stage bills have possible amendments in rows under the bill
+
         """
-        pass
+
+        if self.bills is None:
+            return
+        logger.info(u"Parsing bills from {} elements".format(len(self.bills)))
+        parsed_bills = []
+        for b in self.bills:
+            if b.tag != 'table':
+                continue
+            header = b[0].text_content().strip().lower()
+            if header.startswith('first reading'):
+                logger.debug(u'Found first reading bills table headered: {}'.format(header))
+                pass
+            elif 'committee stage' in header:
+                logger.debug(u'Found committee stage bills table headered: {}'.format(header))
+                pass
+            elif header.startswith('second reading'):
+                logger.debug(u'Found second reading bills table headered: {}'.format(header))
+                pass
+            else:
+                # Unknown tag
+                logger.warning(u'Unkown bills table header: {}'.format(header))
+                pass
+
 
     def _parse_motions(self):
         pass
