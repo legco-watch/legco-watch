@@ -15,6 +15,10 @@ import itertools
 from raw.utils import to_string, to_unicode, grouper
 
 
+PRESENTER_E = ur'presented by (?:the )?(.+?)\)'
+
+PRESENTER_C = ur'由(\w+?)提交'
+
 logger = logging.getLogger('legcowatch')
 QUESTION_PATTERN_E = ur'^\*?([0-9]+)\..*?Hon\s(.*?)\sto ask:'
 QUESTION_PATTERN_C = ur'^\*?([0-9]+)\.\s*(.*?)議員問:'
@@ -151,47 +155,68 @@ class CouncilAgenda(object):
         # Filter out paragraphs, which are actually children of the table elements
         # Actually we only want to filter out paragraphs that are children of table cell elements
         # Since some older documents don't use tables for the list of legislation (particularly other papers)
-        self.tabled_papers = [xx for xx in self.tabled_papers if xx.tag == u'table']
+        # self.tabled_papers = [xx for xx in self.tabled_papers if xx.tag == u'table']
         logger.info(u'Parsing tabled papers from {} elements'.format(len(self.tabled_papers)))
+        legislation_header = LEGISLATION_E if self.english else LEGISLATION_C
+        other_papers_header = OTHER_PAPERS_E if self.english else OTHER_PAPERS_C
         parsed_papers = []
-        for tbl in self.tabled_papers:
-            # We only care about tables, specifically:
-            # 1) a table with "Subsidiary Legislation / Instruments as its title, and
-            # 2) a table with "Other Paper" as the title
-            # One difficulty is that not every table is headered, such as
-            # in the case of the June 5 2013 agenda, since there was only one paper
-            first_row_text = tbl[0].text_content().strip()
-            match_text = LEGISLATION_E if self.english else LEGISLATION_C
-            match_text2 = OTHER_PAPERS_E if self.english else OTHER_PAPERS_C
-            if match_text in first_row_text:
-                # Subsidiary legislation
-                # Papers occur in single rows
-                logger.debug(u'Found subsidiary legislation table')
-                # In older files, sometimes the table has all the elements after it in its iterator,
-                # so to avoid processing to much, just process the direct tr children
-                parsed_papers.append(self._parse_tabled_legislation(tbl.xpath('./tr')[1:]))
-            elif match_text2 in first_row_text:
-                # Other papers table
-                # rows occur in pairs, with the first row being the title
-                # and the second row being the presenter
-                logger.debug(u'Found other papers table')
-                parsed_papers.append(self._parse_other_papers(tbl.xpath('./tr')[1:]))
-            else:
-                # No title, try to infer the table
-                # For some Chinese agendas, it seems like the title is not included
-                # or it could be in a different element
-                # Check the second row to see if there are parenthesis
-                # If there are, then it's likely Other papers
-                # Or, can check the last column to see if there is a legislation number
-                paper_number = ur'\d+/\d+'
-                last_col = tbl[0][-1].text_content().strip()
-                match = re.search(paper_number, last_col)
-                if match:
-                    logger.debug(u'Inferred subsidiary legislation table')
-                    parsed_papers.append(self._parse_tabled_legislation(tbl.xpath('./tr')))
+        # For non-table elements
+        paper_parts = []
+        for elem in self.tabled_papers:
+            # We care about two sections:
+            # 1) "Subsidiary Legislation / Instruments
+            # 2) "Other Paper"
+            # Sometimes these are in tables, other times they are series of
+            # <p> tags (usually the case in older documents)
+            # Sometimes the tables are not headered, so we have to try to infer whether they
+            # are subsidiary legislation or other papers
+            if elem.tag == u'table':
+                first_row_text = elem[0].text_content().strip()
+                if first_row_text.startswith(legislation_header):
+                    # Subsidiary legislation
+                    # Papers occur in single rows
+                    logger.debug(u'Found subsidiary legislation table')
+                    # In older files, sometimes the table has all the elements after it in its iterator,
+                    # so to avoid processing to much, just process the direct tr children
+                    parsed_papers.append(self._parse_tabled_legislation(elem.xpath('./tr')[1:]))
+                elif other_papers_header in first_row_text:
+                    # Other papers table
+                    # rows occur in pairs, with the first row being the title
+                    # and the second row being the presenter
+                    logger.debug(u'Found other papers table')
+                    parsed_papers.append(self._parse_other_papers(elem.xpath('./tr')[1:]))
                 else:
-                    logger.debug(u'Inferred other papers table')
-                    parsed_papers.append(self._parse_other_papers(tbl.xpath('./tr')))
+                    # No title, try to infer the table
+                    # For some Chinese agendas, it seems like the title is not included
+                    # or it could be in a different element
+                    # Check the second row to see if there are parenthesis
+                    # If there are, then it's likely Other papers
+                    # Or, can check the last column to see if there is a legislation number
+                    paper_number = ur'^\d+/\d+$'
+                    last_col = elem[0][-1].text_content().strip()
+                    match = re.search(paper_number, last_col)
+                    if match:
+                        logger.debug(u'Inferred subsidiary legislation table')
+                        parsed_papers.append(self._parse_tabled_legislation(elem.xpath('./tr')))
+                    else:
+                        logger.debug(u'Inferred other papers table')
+                        parsed_papers.append(self._parse_other_papers(elem.xpath('./tr')))
+            else:
+                # If it's not a table, then it's probably a list of other papers
+                # in a Chinese agenda.  We need to consume these elements sequentially
+                # and look for the presenter as a delimiter
+                text = elem.text_content().strip()
+                if text.startswith(other_papers_header) or text.startswith(legislation_header):
+                    continue
+                match_pattern = PRESENTER_E if self.english else PRESENTER_C
+                match = re.search(match_pattern, text, re.UNICODE)
+                if match:
+                    # Found the presenter statement, signifying the end of the paper
+                    paper_parts.append(elem)
+                    parsed_papers.append([OtherTabledPaper(paper_parts, self.english)])
+                    paper_parts = []
+                else:
+                    paper_parts.append(elem)
         self.tabled_papers = list(itertools.chain.from_iterable(parsed_papers))
 
     def _parse_tabled_legislation(self, tbl):
@@ -201,11 +226,11 @@ class CouncilAgenda(object):
             if item.text_content().strip() == u'':
                 continue
             try:
-                parsed = TabledLegislation(item)
+                parsed = TabledLegislation(item, self.english)
+                logger.debug(u'Found legislation {}'.format(parsed.title))
+                parsed_papers.append(parsed)
             except IndexError:
                 logger.warning(u'Could not parsed tabled legislation for agenda {}'.format(self.uid))
-            logger.debug(u'Found legislation {}'.format(parsed.title))
-            parsed_papers.append(parsed)
         return parsed_papers
 
     def _parse_other_papers(self, tbl):
@@ -213,7 +238,7 @@ class CouncilAgenda(object):
         grouped_tbl = grouper(tbl, 2)
         for item in grouped_tbl:
             # In this case, item is tuple of tr elements
-            parsed = OtherTabledPaper(item)
+            parsed = OtherTabledPaper(item, self.english)
             logger.debug(u'Found other paper {}'.format(parsed.title))
             parsed_papers.append(parsed)
         return parsed_papers
@@ -383,29 +408,40 @@ class OtherTabledPaper(object):
     """
     Other tabled papers
 
-    Instantiated with a tuple of two tr elements
+    Instantiated with a tuple of two tr elements, or a list of p elements
     """
-    PRESENTER_E = ur'presented by (the )?(.+?)\)'
-    PRESENTER_C = ur'由教(\w+?)提交'
-
     def __init__(self, rows, english=True):
-        # The HTML uses things like BRs and spans to split the text up, but these
-        # are removed by text_content().  So we'll need to add a space for each element,
-        # then convert duplicate spaces to a single space
-        title_elems = rows[0].xpath('.//*')
-        for e in title_elems:
-            e.tail = ' ' + e.tail if e.tail else ' '
-        title = rows[0].text_content().strip()
-        # Strip out any starting numbers
-        title = re.sub(ur'^\d+.[ ]?', '', title)
-        self.title = ' '.join(title.split())
         self.presenter = None
-        if rows[1] is not None:
-            match_pattern = self.PRESENTER_E if english else self.PRESENTER_C
-            text = rows[1].text_content().strip()
-            match = re.search(match_pattern, text)
+        join_string = ' ' if english else ''
+        if rows[0].tag == 'tr':
+            # The HTML uses things like BRs and spans to split the text up, but these
+            # are removed by text_content().  So we'll need to add a space for each element,
+            # then convert duplicate spaces to a single space
+            if english:
+                title_elems = rows[0].xpath('.//*')
+                for e in title_elems:
+                    e.tail = ' ' + e.tail if e.tail else ' '
+            title = rows[0].text_content().strip()
+            # Strip out any starting numbers
+            title = re.sub(ur'^\d+.[ ]?', '', title)
+            self.title = join_string.join(title.split())
+            if rows[1] is not None:
+                match_pattern = PRESENTER_E if english else PRESENTER_C
+                text = rows[1].text_content().strip()
+                match = re.search(match_pattern, text, re.UNICODE)
+                if match is not None:
+                    self.presenter = match.group(1)
+        else:
+            # series of p elements.  Last element is the presenter
+            match_pattern = PRESENTER_E if english else PRESENTER_C
+            text = rows[-1].text_content().strip()
+            match = re.search(match_pattern, text, re.UNICODE)
             if match is not None:
-                self.presenter = match.group(2)
+                self.presenter = match.group(1)
+            title = join_string.join([xx.text_content().strip() for xx in rows[0:-1]])
+            title = re.sub(ur'^\d+.[ ]?', '', title)
+            self.title = title
+
 
     def __repr__(self):
         return u'<OtherTabledPaper {}>'.format(self.title).encode('utf-8')

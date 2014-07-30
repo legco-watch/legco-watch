@@ -25,8 +25,7 @@ class RawCouncilAgendaSourceView(BaseDetailView):
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-        parser = self.object.get_parser()
-        return HttpResponse(parser.source)
+        return HttpResponse(self.object.get_source())
 
 
 class RawMemberListView(ListView):

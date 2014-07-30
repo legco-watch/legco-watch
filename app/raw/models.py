@@ -120,10 +120,7 @@ class RawCouncilAgenda(RawModel):
     def full_local_filename(self):
         return utils.get_file_path(self.local_filename)
 
-    def get_parser(self):
-        """
-        Returns the parser for this RawCouncilAgenda object
-        """
+    def get_source(self):
         full_file = self.full_local_filename()
         filetype = utils.check_file_type(full_file)
         if filetype == utils.DOCX:
@@ -132,6 +129,13 @@ class RawCouncilAgenda(RawModel):
             src = utils.doc_to_html(full_file)
         else:
             raise NotImplementedError(u"Unexpected filetype for uid {}".format(self.uid))
+        return src
+
+    def get_parser(self):
+        """
+        Returns the parser for this RawCouncilAgenda object
+        """
+        src = self.get_source()
         return CouncilAgenda(self.uid, src)
 
     @classmethod
