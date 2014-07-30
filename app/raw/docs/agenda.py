@@ -106,12 +106,13 @@ class CouncilAgenda(object):
         # The A is for special question sections, such as the agenda on June 18, 2014
         pattern = ur'^[IVA]+\.'
         current_section = None
-        # Iterate over the elements in self.tree.iter()
-        # We only want paragraphs and table, since these appear to be the main top level elements
-        # ie. we don't want to go fully down the tree
-        # This is buggy for converted DOC files (older agendas),
-        # since usually the tables have nested p elements
-        for elem in self.tree.iter('table', 'p'):
+        # Iterate over the top level elements under body.
+        # In newer documents, this is contained in a div, but otherwise divs are not present
+        elems = self.tree.xpath('.//body/div/*')
+        if len(elems) == 0:
+            # If no div, get the direct children of body
+            elems = self.tree.xpath('.//body/*')
+        for elem in elems:
             # When we encounter a header element, figure out what section it is a header for
             text = elem.text_content().strip()
             if text == u'':
@@ -148,6 +149,8 @@ class CouncilAgenda(object):
         if self.tabled_papers is None:
             return
         # Filter out paragraphs, which are actually children of the table elements
+        # Actually we only want to filter out paragraphs that are children of table cell elements
+        # Since some older documents don't use tables for the list of legislation (particularly other papers)
         self.tabled_papers = [xx for xx in self.tabled_papers if xx.tag == u'table']
         logger.info(u'Parsing tabled papers from {} elements'.format(len(self.tabled_papers)))
         parsed_papers = []
