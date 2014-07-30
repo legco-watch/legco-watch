@@ -15,10 +15,6 @@ import itertools
 from raw.utils import to_string, to_unicode, grouper
 
 
-PRESENTER_E = ur'presented by (?:the )?(.+?)\)'
-
-PRESENTER_C = ur'由(\w+?)提交'
-
 logger = logging.getLogger('legcowatch')
 QUESTION_PATTERN_E = ur'^\*?([0-9]+)\..*?Hon\s(.*?)\sto ask:'
 QUESTION_PATTERN_C = ur'^\*?([0-9]+)\.\s*(.*?)議員問:'
@@ -26,6 +22,8 @@ LEGISLATION_E = u'Subsidiary Legislation'
 LEGISLATION_C = u'附屬法例'
 OTHER_PAPERS_E = u'Other Paper'
 OTHER_PAPERS_C = u'其他文件'
+PRESENTER_E = ur'presented by (?:the )?(.+?)\)'
+PRESENTER_C = ur'由(\w+?)提交'
 
 
 class CouncilAgenda(object):
@@ -234,6 +232,8 @@ class CouncilAgenda(object):
         return parsed_papers
 
     def _parse_other_papers(self, tbl):
+        # Strip out empty rows
+        tbl = [xx for xx in tbl if xx.text_content().strip() != '']
         parsed_papers = []
         grouped_tbl = grouper(tbl, 2)
         for item in grouped_tbl:
