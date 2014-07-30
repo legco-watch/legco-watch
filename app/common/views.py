@@ -1,10 +1,19 @@
 from datetime import datetime
 from django.forms import ModelForm
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
-from django.views.generic import FormView
+from django.views.generic import FormView, TemplateView
 # Create your views here.
 from urllib import unquote_plus
 from common.models import ErrorReport
+
+
+class LandingView(TemplateView):
+    template_name = 'landing.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(LandingView, self).get_context_data(**kwargs)
+        context['errors'] = ErrorReport.objects.open_errors()
+        return context
 
 
 class ErrorReportForm(ModelForm):

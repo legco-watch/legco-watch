@@ -10,4 +10,26 @@
     <li><a href="{% url 'raw_committee_list' %}">Committees</a></li>
   </ul>
 
+  {% if errors|length > 0 %}
+    <h1>Latest error reports</h1>
+    <table class="table table-condensed">
+      <thead>
+      <tr>
+        <td>Reported</td>
+        <td>URL</td>
+        <td>Description</td>
+        <td>Admin</td>
+      </tr>
+      </thead>
+      {% for e in errors %}
+        <tr>
+          <td>{{ e.reported }}</td>
+          <td><a href="http://{{ request.get_host }}{{ e.url }}">{{ e.url }}</a></td>
+          <td>{{ e.comment }}</td>
+          <td><a href="{% url 'admin:common_errorreport_change' e.id %}">edit</a></td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+
 {% endblock content %}
