@@ -355,18 +355,21 @@ class CouncilAgenda(object):
                 r = 0
                 max_r = len(rows)
                 next_r = 1
+                title = None
                 while r < max_r:
                     this_row = rows[r]
                     row_text = this_row.text_content().strip()
+                    if row_text.startswith(u'('):
+                        pass
                     # Check for amendments first
-                    if u'Committee stage amendments' in row_text:
+                    elif u'Committee stage amendments' in row_text:
                         amendments.append(this_row[-1].text_content().strip())
                     elif u'Bill' not in row_text:
                         # More attendees
                         attendees.append(this_row[-1].text_content().strip())
                     else:
                         # If this isn't the first row, close the prior bill
-                        if r > 0:
+                        if r > 0 and title is not None:
                             bill = BillReading(title, stage, attendees, amendments)
                             parsed_bills.append(bill)
                             attendees = []
