@@ -11,7 +11,20 @@
   <p>
     <a href="{% url 'error_report' %}?url={{ request.path }}">Report an error on this page</a>
   </p>
+  <h2>Sections</h2>
+  <ul>
+    {% if parser.tabled_papers %}
+      <li><a href="#tabled_papers">Tabled papers</a></li>
+    {% endif %}
+    {% if parser.questions %}
+      <li><a href="#questions">Questions</a></li>
+    {% endif %}
+    {% if parser.bills %}
+      <li><a href="#bills">Bills</a></li>
+    {% endif %}
+  </ul>
   {% if parser.tabled_papers %}
+    <a name="tabled_papers"></a>
     <h2>Tabled papers</h2>
     <table class="table table-condensed">
       <thead>
@@ -33,6 +46,7 @@
     </ul>
   {% endif %}
   {% if parser.questions %}
+    <a name="questions"></a>
     <h2>Questions</h2>
     <ol>
       {% for question in parser.questions %}
@@ -43,5 +57,26 @@
         </li>
       {% endfor %}
     </ol>
+  {% endif %}
+  {% if parser.bills %}
+    <a name="bills"></a>
+    <h2>Bills</h2>
+
+    <table class="table table-condensed">
+      <thead>
+      <tr>
+        <td>Title</td>
+        <td>Reading</td>
+        <td>Officers in attendance</td>
+      </tr>
+      </thead>
+      {% for b in parser.bills %}
+        <tr>
+          <td>{{ b.title }}</td>
+          <td>{{ b.pretty_reading }}</td>
+          <td>{{ b.attendees|join:', ' }}</td>
+        </tr>
+      {% endfor %}
+    </table>
   {% endif %}
 {% endblock content %}

@@ -336,18 +336,59 @@ class CouncilAgenda(object):
             header = b[0].text_content().strip().lower()
             if header.startswith('first reading'):
                 logger.debug(u'Found first reading bills table headered: {}'.format(header))
-                pass
-            elif 'committee stage' in header:
+                for row in b.xpath('./tr')[1:]:
+                    title = row[-1].text_content().strip()
+                    bill = BillReading(title, BillReading.FIRST)
+                    parsed_bills.append(bill)
+            elif u'committee stage' in header:
                 logger.debug(u'Found committee stage bills table headered: {}'.format(header))
-                pass
+                if header.startswith(u'committee stage'):
+                    stage = BillReading.THIRD
+                else:
+                    stage = BillReading.SECOND_THIRD
+                rows = b.xpath('./tr')[1:]
+                # Need to use an index here, so we can check the following row to see if there is:
+                # a continuation with more attendees, as in council_agenda-20140416-e
+                # or amendments, as in council_agenda-20131218-e
+                attendees = []
+                amendments = []
+                r = 0
+                max_r = len(rows)
+                next_r = 1
+                while r < max_r:
+                    this_row = rows[r]
+                    row_text = this_row.text_content().strip()
+                    # Check for amendments first
+                    if u'Committee stage amendments' in row_text:
+                        pass
+                    elif u'Bill' not in row_text:
+                        # More attendees
+                        attendees.append(this_row[-1].text_content().strip())
+                    else:
+                        # If this isn't the first row, close the prior bill
+                        if r > 0:
+                            bill = BillReading(title, stage, attendees, amendments)
+                            parsed_bills.append(bill)
+                            attendees = []
+                            amendments = []
+                        # An actual bill
+                        # We go from the right, since sometimes there are numbers as the first column
+                        title = this_row[-3].text_content().strip()
+                        attendees.append(this_row[-1].text_content().strip())
+                    r = next_r
+                    next_r += 1
+                # Close the last bill
+                bill = BillReading(title, stage, attendees, amendments)
+                parsed_bills.append(bill)
+
             elif header.startswith('second reading'):
                 logger.debug(u'Found second reading bills table headered: {}'.format(header))
                 pass
             else:
                 # Unknown tag
-                logger.warning(u'Unkown bills table header: {}'.format(header))
+                logger.warning(u'Unknown bills table header: {}'.format(header))
                 pass
-
+        self.bills = parsed_bills
 
     def _parse_motions(self):
         pass
@@ -503,6 +544,33 @@ class OtherTabledPaper(object):
 
     def __repr__(self):
         return u'<OtherTabledPaper {}>'.format(self.title).encode('utf-8')
+
+
+class BillReading(object):
+    FIRST = 1
+    SECOND = 2
+    SECOND_THIRD = 23
+    THIRD = 3
+    READING_TEXT = {
+        FIRST: u'First reading',
+        SECOND: u'Second reading',
+        SECOND_THIRD: u'Second reading, committee stage and third reading',
+        THIRD: u'Committee stage and third reading'
+    }
+
+    def __init__(self, title, reading, attendees=None, amendments=None):
+        self.title = title
+        self.attendees = attendees if attendees is not None else []
+        self.amendments = amendments
+        self.reading = reading
+        logger.debug(u'Parsed bill {} at {}'.format(self.title, self.READING_TEXT[self.reading]))
+
+    def __repr__(self):
+        return to_string(u'<BillReading {} {}>'.format(self.title, self.reading))
+
+    @property
+    def pretty_reading(self):
+        return self.READING_TEXT[self.reading]
 
 
 class AgendaMotion(object):
