@@ -360,7 +360,7 @@ class CouncilAgenda(object):
                     row_text = this_row.text_content().strip()
                     # Check for amendments first
                     if u'Committee stage amendments' in row_text:
-                        pass
+                        amendments.append(this_row[-1].text_content().strip())
                     elif u'Bill' not in row_text:
                         # More attendees
                         attendees.append(this_row[-1].text_content().strip())
@@ -380,10 +380,14 @@ class CouncilAgenda(object):
                 # Close the last bill
                 bill = BillReading(title, stage, attendees, amendments)
                 parsed_bills.append(bill)
-
             elif header.startswith('second reading'):
                 logger.debug(u'Found second reading bills table headered: {}'.format(header))
-                pass
+                rows = b.xpath('./tr')[1:]
+                for row in rows:
+                    title = row[-3].text_content().strip()
+                    attendees = [row[-1].text_content().strip()]
+                    bill = BillReading(title, BillReading.SECOND, attendees)
+                    parsed_bills.append(bill)
             else:
                 # Unknown tag
                 logger.warning(u'Unknown bills table header: {}'.format(header))
@@ -561,7 +565,7 @@ class BillReading(object):
     def __init__(self, title, reading, attendees=None, amendments=None):
         self.title = title
         self.attendees = attendees if attendees is not None else []
-        self.amendments = amendments
+        self.amendments = amendments if amendments is not None else []
         self.reading = reading
         logger.debug(u'Parsed bill {} at {}'.format(self.title, self.READING_TEXT[self.reading]))
 
