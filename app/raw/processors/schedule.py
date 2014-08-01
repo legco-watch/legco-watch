@@ -79,7 +79,7 @@ class ScheduleCommitteeProcessor(BaseScheduleProcessor):
         obj.save()
 
     def _generate_uid(self, item):
-        return 'committee-{}'.format(item['id'])
+        return '{}-{}'.format(RawCommittee.UID_PREFIX, item['id'])
 
 
 class ScheduleMeetingCommitteeProcessor(BaseScheduleProcessor):
@@ -127,7 +127,7 @@ class ScheduleMembershipProcessor(BaseScheduleProcessor):
         mid = int(item['member_id'])
         obj._member_id = mid
         try:
-            muid = 'smember-{}'.format(mid)
+            muid = '{}-{}'.format(RawScheduleMember.UID_PREFIX, mid)
             member = RawScheduleMember.objects.get(uid=muid)
         except RawScheduleMember.DoesNotExist:
             logger.warn('Could not find member {}'.format(muid))
@@ -137,7 +137,7 @@ class ScheduleMembershipProcessor(BaseScheduleProcessor):
         cid = int(item['committee_id'])
         obj._committee_id = cid
         try:
-            cuid = 'committee-{}'.format(cid)
+            cuid = '{}-{}'.format(RawCommittee.UID_PREFIX, cid)
             committee = RawCommittee.objects.get(uid=cuid)
         except RawCommittee.DoesNotExist:
             # Seems like there are actually a large number
@@ -149,7 +149,7 @@ class ScheduleMembershipProcessor(BaseScheduleProcessor):
         obj.save()
 
     def _generate_uid(self, item):
-        return 'cmembership-{}'.format(item['id'])
+        return '{}-{}'.format(RawCommitteeMembership.UID_PREFIX, item['id'])
 
 
 class ScheduleMeetingProcessor(BaseScheduleProcessor):
@@ -184,4 +184,4 @@ class ScheduleMeetingProcessor(BaseScheduleProcessor):
         obj.save()
 
     def _generate_uid(self, item):
-        return 'meeting-{}'.format(item['id'])
+        return '{}-{}'.format(RawMeeting.UID_PREFIX,item['id'])

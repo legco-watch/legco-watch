@@ -74,6 +74,23 @@ class ScrapeJob(models.Model):
         return u"{}: {}".format(self.spider, self.job_id)
 
 
+class RawModelManager(models.Manager):
+    def get_by_uid(self, uid):
+        # Try to retrieve the object by either just the numerical uid
+        # or the full uid string
+        if self.model.UID_PREFIX is None:
+            raise RuntimeError('UID_PREFIX is not defined on {}'.format(self.model))
+
+        if isinstance(uid, int):
+            uid = '{}-{}'.format(self.model.UID_PREFIX, uid)
+            obj = self.get(uid=uid)
+        elif isinstance(uid, basestring):
+            obj = self.get(uid=uid)
+        else:
+            raise RuntimeError('Invalid UID format'.format(uid))
+        return obj
+
+
 class RawModel(models.Model):
     """
     Abstract base class for all raw models
@@ -89,6 +106,9 @@ class RawModel(models.Model):
     uid = models.CharField(max_length=100, blank=True)
     # Page from which the Item was crawled
     crawled_from = models.TextField(blank=True)
+
+    UID_PREFIX = None
+    objects = RawModelManager()
 
     class Meta:
         abstract = True
@@ -217,8 +237,17 @@ class RawMember(RawModel):
     occupation_e = models.TextField(blank=True)
     occupation_c = models.TextField(blank=True)
 
+    UID_PREFIX = 'member'
+
     def __unicode__(self):
         return u"{} {}".format(unicode(self.name_e), unicode(self.name_c))
+
+    def get_raw_schedule_member(self):
+        try:
+            # member-<#> to smember-<#>
+            return RawScheduleMember.objects.get(uid='s' + self.uid)
+        except RawMember.DoesNotExist:
+            return None
 
 
 class RawScheduleMember(RawModel):
@@ -230,6 +259,8 @@ class RawScheduleMember(RawModel):
     last_name_e = models.CharField(max_length=100, blank=True)
     first_name_e = models.CharField(max_length=100, blank=True)
     english_name = models.CharField(max_length=100, blank=True)
+
+    UID_PREFIX = 'smember'
 
     def __unicode__(self):
         return u"{} {} {} {} {}".format(
@@ -247,6 +278,13 @@ class RawScheduleMember(RawModel):
         first_name = self.english_name if self.english_name != '' else self.first_name_e
         return u'{} {}'.format(first_name, self.last_name_e)
 
+    def get_raw_member(self):
+        try:
+            # smember-<#> to member-<#>
+            return RawMember.objects.get(uid=self.uid[1:])
+        except RawMember.DoesNotExist:
+            return None
+
 
 class RawCommittee(RawModel):
     code = models.CharField(max_length=100, blank=True)
@@ -254,6 +292,8 @@ class RawCommittee(RawModel):
     name_c = models.TextField(blank=True)
     url_e = models.TextField(blank=True)
     url_c = models.TextField(blank=True)
+
+    UID_PREFIX = 'committee'
 
     def __unicode__(self):
         return u'{} {}'.format(unicode(self.uid), unicode(self.name_e))
@@ -269,6 +309,8 @@ class RawCommitteeMembership(RawModel):
     post_c = models.CharField(max_length=100, blank=True)
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
+
+    UID_PREFIX = 'cmembership'
 
     def __unicode__(self):
         if self.member is not None:
@@ -294,6 +336,8 @@ class RawMeeting(RawModel):
     venue_code = models.CharField(max_length=50, blank=True)
     meeting_type = models.CharField(max_length=50, blank=True)
     start_date = models.DateTimeField(null=True, blank=True)
+
+    UID_PREFIX = 'meeting'
 
     def __unicode__(self):
         return u'{} {}'.format(self.uid, self.subject_e)
