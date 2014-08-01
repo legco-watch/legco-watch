@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.utils import timezone
 import logging
 import warnings
 
@@ -164,7 +165,7 @@ class ScheduleMeetingProcessor(BaseScheduleProcessor):
         fmt = '%Y-%m-%dT%H:%M:%S'
         start_date = item.get('start_date', None)
         if start_date is not None:
-            start_date = datetime.strptime(start_date, fmt)
+            start_date = timezone.make_aware(datetime.strptime(start_date, fmt), timezone.utc)
         # The Tmeeting table on the council database actually tracks meeting-slots
         # So you could have a meeting with two slots if it is schedule for a long time, I guess
         # We check to make sure we save the earliest slot start_date

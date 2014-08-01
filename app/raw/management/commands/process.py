@@ -2,7 +2,10 @@
 Run the processor for a given crawler.  Scrape job must be complete before
 processing.
 """
+from django.conf import settings
 from django.core.management import BaseCommand
+from django.db.backends import BaseDatabaseWrapper
+from django.db.backends.util import CursorWrapper
 from optparse import make_option
 import os
 from raw import processors
@@ -26,6 +29,10 @@ class Command(BaseCommand):
     help = 'Trigger a crawl on the scrapyd server, and store the JobId for retrieval later'
 
     def handle(self, *args, **options):
+        # Disable DB debug messages temporarily
+        if settings.DEBUG:
+            original = BaseDatabaseWrapper.make_debug_cursor
+            BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
         items_file = options.get('items_file', None)
         if items_file is not None:
             if not os.path.exists(items_file):
@@ -34,6 +41,8 @@ class Command(BaseCommand):
         else:
             for spider in args:
                 self.handle_single_spider(spider, options.get('force', False))
+        if settings.DEBUG:
+            BaseDatabaseWrapper.make_debug_cursor = original
 
     def handle_single_spider(self, spider, force=False):
         # Get the path to the Items file
