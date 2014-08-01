@@ -15,6 +15,13 @@ import itertools
 from raw.utils import to_string, to_unicode, grouper
 
 
+SECOND_READING_PATTERN_C = u'二讀'
+
+BILL_AMENDMENT_PATTERN_C = u'全體委員會審議階段修正案'
+
+FIRST_READING_PATTERN_C = u'首讀'
+
+COMMITTEE_STAGE_PATTERN_C = u'全體委員會審議階段'
 logger = logging.getLogger('legcowatch')
 QUESTION_PATTERN_E = ur'^\*?([0-9]+)\..*?Hon\s(.*?)\sto ask:'
 QUESTION_PATTERN_C = ur'^\*?([0-9]+)\.\s*(.*?)議員問:'
@@ -24,6 +31,7 @@ OTHER_PAPERS_E = u'Other Paper'
 OTHER_PAPERS_C = u'其他文件'
 PRESENTER_E = ur'presented by (?:the )?(.+?)\)'
 PRESENTER_C = ur'由(\w+?)提交'
+BILL_PATTERN_C = u'條例草案'
 
 
 class CouncilAgenda(object):
@@ -83,6 +91,8 @@ class CouncilAgenda(object):
         # There are also some "zero width joiners" in random places
         # in the text.  Doesn't seem to cause any harm, though, so leave for now
         # these are the codeS: &#8205, &#160 (nbsp), \xa0 (nbsp), \u200d
+        zero_width_joiners = u'\u200d'
+        self.source = self.source.replace(zero_width_joiners, u'')
         # Also previously had some non breaking spaces in unicode \u00a0, but this
         # may have been fixed by changing the parser below
 
@@ -328,13 +338,90 @@ class CouncilAgenda(object):
 
         if self.bills is None:
             return
+        if self.english:
+            self._parse_english_bills()
+        else:
+            self._parse_chinese_bills()
+
+    def _parse_chinese_bills(self):
+        logger.info(u"Parsing bills from {} elements".format(len(self.bills)))
+        parsed_bills = []
+        for i in range(len(self.bills)):
+            # For chinese bills, the headers are outside of the tables and enclosed in <p> tags.
+            # So check if the the tag is a p tag, and if it matches a header text
+            this_element = self.bills[i]
+            if this_element.tag == 'p':
+                text = this_element.text_content().strip()
+                if text.startswith(FIRST_READING_PATTERN_C):
+                    logger.debug(u'Found first reading bills table headered: {}'.format(text))
+                    # First reading
+                    table = self.bills[i+1]
+                    for row in table.xpath('./tr'):
+                        title = row[-1].text_content().strip()
+                        bill = BillReading(title, BillReading.FIRST)
+                        parsed_bills.append(bill)
+                elif COMMITTEE_STAGE_PATTERN_C in text:
+                    # Second and committee stage
+                    logger.debug(u'Found committee stage bills table headered: {}'.format(text))
+                    if text.startswith(COMMITTEE_STAGE_PATTERN_C):
+                        stage = BillReading.THIRD
+                    else:
+                        stage = BillReading.SECOND_THIRD
+                    table = self.bills[i+1]
+                    rows = table.xpath('./tr')
+                    attendees = []
+                    amendments = []
+                    r = 0
+                    max_r = len(rows)
+                    next_r = 1
+                    title = None
+                    while r < max_r:
+                        this_row = rows[r]
+                        row_text = this_row.text_content().strip()
+                        # Check for amendments first
+                        if BILL_AMENDMENT_PATTERN_C in row_text:
+                            amendments.append(this_row[-1].text_content().strip())
+                        elif BILL_PATTERN_C not in row_text:
+                            # More attendees
+                            attendees.append(this_row[-1].text_content().strip())
+                        else:
+                            # If this isn't the first row, close the prior bill
+                            if r > 0 and title is not None:
+                                bill = BillReading(title, stage, attendees, amendments)
+                                parsed_bills.append(bill)
+                                attendees = []
+                                amendments = []
+                            # An actual bill
+                            # We go from the right, since sometimes there are numbers as the first column
+                            title = this_row[-3].text_content().strip()
+                            attendees.append(this_row[-1].text_content().strip())
+                        r = next_r
+                        next_r += 1
+                    # Close the last bill
+                    bill = BillReading(title, stage, attendees, amendments)
+                    parsed_bills.append(bill)
+                elif text.startswith(SECOND_READING_PATTERN_C):
+                    logger.debug(u'Found second reading bills table headered: {}'.format(text))
+                    rows = self.bills[i+1].xpath('./tr')
+                    for row in rows:
+                        title = row[-3].text_content().strip()
+                        attendees = [row[-1].text_content().strip()]
+                        bill = BillReading(title, BillReading.SECOND, attendees)
+                        parsed_bills.append(bill)
+                else:
+                    # Unknown tag
+                    logger.warning(u'Unknown bills table header: {}'.format(text))
+
+        self.bills = parsed_bills
+
+    def _parse_english_bills(self):
         logger.info(u"Parsing bills from {} elements".format(len(self.bills)))
         parsed_bills = []
         for b in self.bills:
             if b.tag != 'table':
                 continue
             header = b[0].text_content().strip().lower()
-            if header.startswith('first reading'):
+            if header.startswith(u'first reading'):
                 logger.debug(u'Found first reading bills table headered: {}'.format(header))
                 for row in b.xpath('./tr')[1:]:
                     title = row[-1].text_content().strip()
@@ -359,10 +446,8 @@ class CouncilAgenda(object):
                 while r < max_r:
                     this_row = rows[r]
                     row_text = this_row.text_content().strip()
-                    if row_text.startswith(u'('):
-                        pass
                     # Check for amendments first
-                    elif u'Committee stage amendments' in row_text:
+                    if u'Committee stage amendments' in row_text:
                         amendments.append(this_row[-1].text_content().strip())
                     elif u'Bill' not in row_text:
                         # More attendees
@@ -394,7 +479,6 @@ class CouncilAgenda(object):
             else:
                 # Unknown tag
                 logger.warning(u'Unknown bills table header: {}'.format(header))
-                pass
         self.bills = parsed_bills
 
     def _parse_motions(self):
