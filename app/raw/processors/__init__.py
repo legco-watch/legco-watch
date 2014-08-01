@@ -53,7 +53,7 @@ PROCESS_MAP = OrderedDict([
     ('schedule_membership', ScheduleMembershipProcessor),
     ('schedule_meeting_committee', ScheduleMeetingCommitteeProcessor),
     ('schedule_meeting', ScheduleMeetingProcessor),
-    ])
+])
 
 
 """

@@ -165,21 +165,21 @@ class ScheduleMeetingProcessor(BaseScheduleProcessor):
         start_date = item.get('start_date', None)
         if start_date is not None:
             start_date = datetime.strptime(start_date, fmt)
-        obj.start_date = start_date
+        # The Tmeeting table on the council database actually tracks meeting-slots
+        # So you could have a meeting with two slots if it is schedule for a long time, I guess
+        # We check to make sure we save the earliest slot start_date
+        if obj.start_date is None or start_date < obj.start_date:
+            obj.start_date = start_date
         obj.meeting_id = item['id']
         slot = int(item['slot_id'])
         obj.slot_id = slot
         # Lookup the committee from the RawMeetingCommittee table
-        try:
-            mtg_cmt = RawMeetingCommittee.objects.get(slot_id=slot)
-        except RawMeetingCommittee.DoesNotExist:
-            logger.warn('Could not find the join for slot {}'.format(slot))
-            mtg_cmt = None
-        except RawMeetingCommittee.MultipleObjectsReturned:
-            logger.warn('Multiple slots returned for slot {}'.format(slot))
+        mtg_cmt = RawMeetingCommittee.objects.filter(slot_id=slot)
+        if len(mtg_cmt) == 0:
+            logger.warn('No committees for slot {}'.format(slot))
             mtg_cmt = None
         if mtg_cmt is not None:
-            obj.committee = mtg_cmt.committee
+            obj.committees = [xx.committee for xx in mtg_cmt]
         obj.save()
 
     def _generate_uid(self, item):

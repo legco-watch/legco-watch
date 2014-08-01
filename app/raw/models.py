@@ -284,8 +284,9 @@ class RawCommitteeMembership(RawModel):
 
 class RawMeeting(RawModel):
     meeting_id = models.IntegerField(null=True, blank=True)
+    # This is the primary key in the council's table
     slot_id = models.IntegerField(null=True, blank=True)
-    committee = models.ForeignKey(RawCommittee, null=True, blank=True, related_name='meetings')
+    committees = models.ManyToManyField(RawCommittee, null=True, blank=True, related_name='meetings')
     subject_e = models.TextField(blank=True)
     subject_c = models.TextField(blank=True)
     agenda_url_e = models.TextField(blank=True)

@@ -88,9 +88,9 @@ class CouncilAgenda(object):
         # Remove line breaks and tabs
         self.source = self.source.replace(u'\n', u'')
         self.source = self.source.replace(u'\t', u'')
-        # There are also some "zero width joiners" in random places
-        # in the text.  Doesn't seem to cause any harm, though, so leave for now
-        # these are the codeS: &#8205, &#160 (nbsp), \xa0 (nbsp), \u200d
+        # There are also some "zero width joiners" in random places in the text
+        # Should remove them here, since they make string search unreliable
+        # these are the codes: &#8205, &#160 (nbsp), \xa0 (nbsp), \u200d
         zero_width_joiners = u'\u200d'
         self.source = self.source.replace(zero_width_joiners, u'')
         # Also previously had some non breaking spaces in unicode \u00a0, but this
