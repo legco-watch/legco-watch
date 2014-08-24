@@ -602,7 +602,7 @@ class OtherTabledPaper(object):
     """
     def __init__(self, rows, english=True):
         self.presenter = None
-        join_string = ' ' if english else ''
+        join_string = u' ' if english else u''
         if rows[0].tag == 'tr':
             # The HTML uses things like BRs and spans to split the text up, but these
             # are removed by text_content().  So we'll need to add a space for each element,
@@ -610,10 +610,10 @@ class OtherTabledPaper(object):
             if english:
                 title_elems = rows[0].xpath('.//*')
                 for e in title_elems:
-                    e.tail = ' ' + e.tail if e.tail else ' '
+                    e.tail = u' ' + e.tail if e.tail else u' '
             title = rows[0].text_content().strip()
             # Strip out any starting numbers
-            title = re.sub(ur'^\d+.[ ]?', '', title)
+            title = re.sub(ur'^\d+.[ ]?', u'', title)
             self.title = join_string.join(title.split())
             if rows[1] is not None:
                 match_pattern = PRESENTER_E if english else PRESENTER_C
