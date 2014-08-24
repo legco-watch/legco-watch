@@ -49,4 +49,60 @@ class Agenda20140709TestCase(TestCase):
         self.assertEqual(foo.type, agenda.AgendaQuestion.QTYPE_WRITTEN)
 
     def test_bills_count(self):
+        self.assertEqual(len(self.parser.bills), 9)
+
+    def test_spot_check_bills(self):
+        foo = self.parser.bills[1]
+        self.assertEqual(foo.reading, agenda.BillReading.FIRST)
+        self.assertEqual(foo.title, u'Land (Miscellaneous Provisions) (Amendment) Bill 2014')
+        self.assertEqual(foo.attendees, [])
+        
+        foo = self.parser.bills[3]
+        self.assertEqual(foo.reading, agenda.BillReading.SECOND)
+        self.assertEqual(foo.title, u'Land (Miscellaneous Provisions) (Amendment) Bill 2014')
+        self.assertEqual(foo.attendees, [u'Secretary for Development'])
+
+        foo = self.parser.bills[7]
+        self.assertEqual(foo.reading, agenda.BillReading.SECOND_THIRD)
+        self.assertEqual(foo.title, u'Stamp Duty (Amendment) Bill 2013')
+        self.assertEqual(len(foo.attendees), 2, foo.attendees)
+        self.assertEqual(set(foo.attendees), {u'Secretary for Financial Services and the Treasury',
+                                              u'Under Secretary for Financial Services and the Treasury'})
+        self.assertEqual(len(foo.amendments), 3)
+
+
+class Agenda20130508TestCase(TestCase):
+    def setUp(self):
+        with open('raw/tests/fixtures/council_agenda-20130508-e.html', 'rb') as f:
+            self.src = f.read().decode('utf-8')
+        self.parser = agenda.CouncilAgenda('council_agenda-20130508-e', self.src)
+
+    def test_count_tabled_papers(self):
+        self.assertEqual(len(self.parser.tabled_papers), 9)
+
+    def test_tabled_papers_type(self):
+        for p in self.parser.tabled_papers[0:8]:
+            self.assertTrue(isinstance(p, agenda.TabledLegislation))
+
+        self.assertTrue(isinstance(self.parser.tabled_papers[8], agenda.OtherTabledPaper))
+
+    def test_spot_check_tabled_papers(self):
+        pass
+
+    def test_questions_count(self):
+        pass
+
+    def test_spot_check_questions(self):
+        pass
+
+    def test_bills_count(self):
+        pass
+
+    def test_spot_check_bills(self):
+        pass
+
+    def test_motions_count(self):
+        pass
+
+    def test_spot_check_motions(self):
         pass

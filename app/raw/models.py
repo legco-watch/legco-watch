@@ -165,6 +165,13 @@ class RawCouncilAgenda(RawModel):
         """
         return cls.objects.get(uid=parser.uid)
 
+    def _dump_as_fixture(self):
+        """
+        Saves the raw html to a fixture for testing
+        """
+        with open('raw/tests/fixtures/{}.html'.format(self.uid), 'wb') as f:
+            f.write(self.get_source().encode('utf-8'))
+
 
 class RawCouncilVoteResult(RawModel):
     """
