@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Tests for CouncilAgenda object
 from django.test import TestCase
 import logging
@@ -106,3 +109,46 @@ class Agenda20130508TestCase(TestCase):
 
     def test_spot_check_motions(self):
         pass
+
+
+class Agenda20140430TestCase(TestCase):
+    def setUp(self):
+        with open('raw/tests/fixtures/council_agenda-20140430-c.html', 'rb') as f:
+            self.src = f.read().decode('utf-8')
+        self.parser = agenda.CouncilAgenda('council_agenda-20130430-c', self.src)
+
+    def test_count_tabled_papers(self):
+        self.assertEqual(len(self.parser.tabled_papers), 7)
+
+    def test_tabled_papers_type(self):
+        for p in self.parser.tabled_papers[0:4]:
+            self.assertTrue(isinstance(p, agenda.TabledLegislation))
+
+        for p in self.parser.tabled_papers[4:7]:
+            self.assertTrue(isinstance(p, agenda.OtherTabledPaper))
+
+    def test_spot_check_papers(self):
+        pass
+
+    def test_questions_count(self):
+        self.assertEqual(len(self.parser.questions), 18)
+
+    def test_questions_spot_check(self):
+        foo = self.parser.questions[7]
+        self.assertEqual(foo.asker, u'張超雄')
+        self.assertEqual(foo.replier, u'發展局局長')
+        self.assertEqual(foo.type, agenda.AgendaQuestion.QTYPE_ORAL)
+
+    def test_bills_count(self):
+        self.assertEqual(len(self.parser.bills), 9)
+
+    def test_bills_spot_check(self):
+        foo = self.parser.bills[2]
+        self.assertEqual(foo.title, u'《電子健康紀錄互通系統條例草案》')
+        self.assertEqual(foo.attendees, [])
+        self.assertEqual(foo.reading, agenda.BillReading.FIRST)
+
+        foo = self.parser.bills[8]
+        self.assertEqual(foo.title, u'《2014年撥款條例草案》')
+        self.assertEqual(set(foo.attendees), {u'財政司司長'})
+        self.assertEqual(foo.reading, agenda.BillReading.THIRD)
