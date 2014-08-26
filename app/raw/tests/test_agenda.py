@@ -90,25 +90,44 @@ class Agenda20130508TestCase(TestCase):
         self.assertTrue(isinstance(self.parser.tabled_papers[8], agenda.OtherTabledPaper))
 
     def test_spot_check_tabled_papers(self):
-        pass
+        foo = self.parser.tabled_papers[2]
+        self.assertEqual(foo.title, u'Trade Marks Ordinance (Amendment of Schedule 1) Regulation 2013')
+        self.assertEqual(foo.number, u'64/2013')
+
+        foo = self.parser.tabled_papers[8]
+        self.assertEqual(foo.title, u'No. 92 - Financial statements for the year ended 31 August 2012')
+        self.assertEqual(foo.presenter, u'Secretary for Education')
 
     def test_questions_count(self):
-        pass
+        self.assertEqual(len(self.parser.questions), 22)
 
     def test_spot_check_questions(self):
-        pass
+        foo = self.parser.questions[21]
+        self.assertEqual(foo.asker, u'Emily LAU')
+        self.assertEqual(foo.replier, u'Secretary for Financial Services and the Treasury')
+        self.assertEqual(foo.type, agenda.AgendaQuestion.QTYPE_WRITTEN)
 
     def test_bills_count(self):
-        pass
+        self.assertEqual(len(self.parser.bills), 8)
 
     def test_spot_check_bills(self):
-        pass
+        foo = self.parser.bills[0]
+        self.assertEqual(foo.title, u'Hong Kong Arts Development Council (Amendment) Bill 2013')
+        self.assertEqual(foo.reading, agenda.BillReading.FIRST)
+        self.assertEqual(foo.amendments, [])
+        self.assertEqual(foo.attendees, [])
 
-    def test_motions_count(self):
-        pass
+        foo = self.parser.bills[6]
+        self.assertEqual(foo.title, u'Appropriation Bill 2013')
+        self.assertEqual(foo.reading, agenda.BillReading.SECOND_THIRD)
+        self.assertEqual(len(foo.amendments), 1)
+        # Attendees on these appropriations bills are always tricky
 
-    def test_spot_check_motions(self):
-        pass
+        foo = self.parser.bills[7]
+        self.assertEqual(foo.title, u'Pilotage (Amendment) Bill 2013')
+        self.assertEqual(foo.reading, agenda.BillReading.SECOND_THIRD)
+        self.assertEqual(foo.attendees, [u'Secretary for Transport and Housing'])
+        self.assertEqual(foo.amendments, [])
 
 
 class Agenda20140430TestCase(TestCase):
