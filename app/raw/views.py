@@ -12,6 +12,7 @@ class RawCouncilAgendaListView(ListView):
 
 class RawCouncilAgendaDetailView(DetailView):
     model = RawCouncilAgenda
+    slug_field = 'uid'
     template_name = 'raw/agenda_detail.html'
 
     def get_context_data(self, **kwargs):
@@ -22,6 +23,7 @@ class RawCouncilAgendaDetailView(DetailView):
 
 class RawCouncilAgendaSourceView(BaseDetailView):
     model = RawCouncilAgenda
+    slug_field = 'uid'
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
