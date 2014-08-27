@@ -56,6 +56,14 @@ class MemberNameTestCase(SimpleTestCase):
         self.assertEqual(n2, n3)
         self.assertNotEqual(n1, n3)
 
+    def test_honours_or_title_dont_matter(self):
+        n1 = MemberName(u'Jasper TSANG Yok-sing, GBS, JP')
+        n2 = MemberName(u'Hon Jasper TSANG Yok-sing, JS')
+        n3 = MemberName(u'Mr Jasper TSANG Yok-sing')
+        self.assertEqual(n1, n2)
+        self.assertEqual(n2, n3)
+        self.assertEqual(n1, n3)
+
     def test_reversed_english_name(self):
         name = MemberName(u'Tsang, Jasper')
         self.assertEqual(name.last_name, u'Tsang')
