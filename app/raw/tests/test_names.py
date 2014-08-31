@@ -44,7 +44,7 @@ class MemberNameTestCase(SimpleTestCase):
         self.assertEqual(name.chinese_name, u'Yok-sing')
         # By convention, full name in English is english-name last-name
         # or chinese-name last-name, but not both english-name and chinese-name
-        self.assertEqual(name.full_name, u'Jasper Tsang')
+        self.assertEqual(name.full_name, u'Jasper Tsang Yok-sing')
         self.assertEqual(name.title, u'Hon')
         self.assertEqual(name.honours, [u'GBS', u'JP'])
 

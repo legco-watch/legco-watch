@@ -58,7 +58,44 @@ class MemberName(object):
         return u'<MemberName: {}>'.format(self.full_name)
 
     def __eq__(self, other):
-        pass
+        """
+        For English names:
+        Last names must match.  If both Chinese name and English name are present, then both must match.
+        If one or the other is present, then they must match.
+        A name with both Chinese and English names can match a name with only one or the other.
+        For example Jasper Tsang Yok-sing will match Tsang Yok-sing, but the latter will not match Jasper Tsang.
+        """
+        # If all nulls, then no matches
+        if self.last_name is None or other.last_name is None:
+            return False
+        if self.english_name is None and self.chinese_name is None:
+            return False
+        if other.english_name is None and other.chinese_name is None:
+            return False
+
+        # If full names match, we can all go home
+        if self.full_name == other.full_name:
+            return True
+
+        # Otherwise, do more complex checks
+        if self.last_name != other.last_name:
+            return False
+
+        if self.english_name is not None and other.english_name is not None and self.english_name == other.english_name:
+            if self.chinese_name is not None and other.chinese_name is not None and self.chinese_name != other.chinese_name:
+                return False
+            else:
+                return True
+
+        if self.chinese_name is not None and other.chinese_name is not None and self.chinese_name == other.chinese_name:
+            if self.english_name is not None and other.english_name is not None and self.english_name != other.english_name:
+                return False
+            else:
+                return True
+
+        return False
+
+
 
     def _parse_english_name(self, name):
         """
@@ -66,9 +103,12 @@ class MemberName(object):
         """
         title_re = ur'(?P<title>Mr|Mrs|Miss|Ms|Hon|Dr)'
         ename_re = ur'(?P<fname>[a-zA-Z]+)'
-        lname_cap_re = ur'(?P<lname>[A-Z]+)'
-        cname_re = ur'(?P<cname>[a-zA-Z-]+)'
-        fully_qualified = ur'^(?P<title>Mr|Mrs|Miss|Ms|Hon|Dr)? ?(?P<fname>[a-zA-Z]+) (?P<lname>[A-Z]+) (?P<cname>[a-zA-Z-]+)?(, )?(?P<hon>[A-Z, ]+)?'
+        lname_cap_re = ur'(?P<lname>[A-Z]{2,})'
+        lname_re = ur'(?P<lname>[a-zA-Z]+)'
+        # We assume that the Chinese names consist of three characters, otherwise they're indistinguishable
+        # from English names
+        cname_re = ur'(?P<cname>[a-zA-Z]+-{1}[a-zA-Z]+)'
+        fully_qualified = ur'^{}? ?{} {} {}?(, )?(?P<hon>[A-Z, ]+)?'.format(title_re, ename_re, lname_cap_re, cname_re)
         match = re.match(fully_qualified, name)
         if match is not None:
             res = match.groupdict()
@@ -78,9 +118,48 @@ class MemberName(object):
                 self.honours = [xx.strip() for xx in res['hon'].split(',') if xx is not None]
             self.last_name = proper(res['lname'])
             self.chinese_name = proper(res['cname'])
-        minimal = ur''
-        reversed = ur''
-        anglicized = ur''
+            return
+
+        english_with_anglicized = ur'{} {} {}'.format(ename_re, lname_re, cname_re)
+        match = re.search(english_with_anglicized, name)
+        if match is not None:
+            res = match.groupdict()
+            self.english_name = proper(res['fname'])
+            self.last_name = proper(res['lname'])
+            self.chinese_name = proper(res['cname'])
+            return
+
+        minimal_with_cap = ur'{} {}'.format(ename_re, lname_cap_re)
+        match = re.search(minimal_with_cap, name)
+        if match is not None:
+            res = match.groupdict()
+            self.english_name = proper(res['fname'])
+            self.last_name = proper(res['lname'])
+            return
+
+        minimal_anglicized = ur'{} {}'.format(lname_re, cname_re)
+        match = re.search(minimal_anglicized, name)
+        if match is not None:
+            res = match.groupdict()
+            self.last_name = proper(res['lname'])
+            self.chinese_name = proper(res['cname'])
+            return
+
+        reversed = ur'{}, {}'.format(lname_re, ename_re)
+        match = re.search(reversed, name)
+        if match is not None:
+            res = match.groupdict()
+            self.last_name = proper(res['lname'])
+            self.english_name = proper(res['fname'])
+            return
+
+        minimal = ur'{} {}'.format(ename_re, lname_re)
+        match = re.search(minimal, name)
+        if match is not None:
+            res = match.groupdict()
+            self.last_name = proper(res['lname'])
+            self.english_name = proper(res['fname'])
+            return
 
     def _parse_chinese_name(self, name):
         """
@@ -92,7 +171,10 @@ class MemberName(object):
     def full_name(self):
         if self.is_english:
             if self.english_name is not None:
-                return u'{} {}'.format(self.english_name, self.last_name)
+                if self.chinese_name is not None:
+                    return u'{} {} {}'.format(self.english_name, self.last_name, self.chinese_name)
+                else:
+                    return u'{} {}'.format(self.english_name, self.last_name)
             else:
                 return u'{} {}'.format(self.chinese_name, self.last_name)
         else:
