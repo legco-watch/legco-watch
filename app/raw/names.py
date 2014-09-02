@@ -190,13 +190,19 @@ class MemberName(object):
 
 class NameMatcher(object):
     """
-    Searcher class which takes a collection of MemberNames and stores then in a last name based index
+    Searcher class which takes a collection of MemberNames and stores them in a last name based index
     Chinese names are stored by the Chinese character, so the index can grow quite large
     """
     def __init__(self, names):
+        """
+        :param names: list of MemberNames or list of tuples where MemberName is the first element in each tuple
+        """
         self._index = {}
         for n in names:
-            first_letter = n.last_name[0].lower()
+            if isinstance(n, MemberName):
+                first_letter = n.last_name[0].lower()
+            else:
+                first_letter = n[0].last_name[0].lower()
             if self._index.get(first_letter, None) is None:
                 self._index[first_letter] = []
             self._index[first_letter].append(n)
@@ -212,6 +218,10 @@ class NameMatcher(object):
         if self._index.get(first_letter, None) is None:
             return None
         for n in self._index[first_letter]:
-            if n == name:
-                return n
+            if isinstance(n, MemberName):
+                if n == name:
+                    return n
+            else:
+                if n[0] == name:
+                    return n
         return None

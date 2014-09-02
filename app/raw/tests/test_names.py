@@ -131,3 +131,12 @@ class NameMatcherTestCase(SimpleTestCase):
         matcher = NameMatcher([n1, n2, n3])
         res = matcher.match(n)
         self.assertEqual(id(n1), id(res))
+
+    def test_with_tuples(self):
+        n1 = MemberName(last_name=u'Wu', chinese_name=u'Chi-wai')
+        n2 = MemberName(last_name=u'Wong', english_name=u'Christopher', chinese_name=u'Kim-kam')
+        n3 = MemberName(last_name=u'Edward', english_name=u'Youde')
+        n = MemberName(last_name=u'Wu', chinese_name=u'Chi-wai')
+        matcher = NameMatcher([(n1, 'foo'), (n2, 'bar'), (n3, 'baz')])
+        res = matcher.match(n)
+        self.assertEqual(res, (n1, 'foo'))
