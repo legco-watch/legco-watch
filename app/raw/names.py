@@ -174,6 +174,11 @@ class MemberName(object):
             self.title = res['title']
             return
 
+    def is_valid(self):
+        if self.last_name is not None and len(self.last_name) > 0:
+            return True
+        return False
+
     @property
     def full_name(self):
         if self.is_english:
@@ -200,9 +205,13 @@ class NameMatcher(object):
         self._index = {}
         for n in names:
             if isinstance(n, MemberName):
-                first_letter = n.last_name[0].lower()
+                name_obj = n
             else:
-                first_letter = n[0].last_name[0].lower()
+                name_obj = n[0]
+            if not name_obj.is_valid():
+                # Invalid names are ignored
+                continue
+            first_letter = name_obj.last_name[0].lower()
             if self._index.get(first_letter, None) is None:
                 self._index[first_letter] = []
             self._index[first_letter].append(n)
@@ -214,6 +223,8 @@ class NameMatcher(object):
         :param name: MemberName
         :return: MemberName or None
         """
+        if not name.is_valid():
+            return None
         first_letter = name.last_name[0].lower()
         if self._index.get(first_letter, None) is None:
             return None

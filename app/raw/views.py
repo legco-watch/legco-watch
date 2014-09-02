@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.views.generic import ListView, DetailView
 from django.views.generic.detail import BaseDetailView
 from raw.models import RawCouncilAgenda, RawMember, RawCommittee
-from raw.names import NameMatcher
+from raw.names import NameMatcher, MemberName
 
 
 class RawCouncilAgendaListView(ListView):
@@ -18,8 +18,18 @@ class RawCouncilAgendaDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(RawCouncilAgendaDetailView, self).get_context_data(**kwargs)
-        context['parser'] = self.object.get_parser()
-        context['name_matcher'] = NameMatcher()
+        parser = self.object.get_parser()
+        context['parser'] = parser
+        all_members = RawMember.objects.all()
+        names = [(xx.get_name_object(), xx) for xx in all_members]
+        matcher = NameMatcher(names)
+        questions = []
+        for q in parser.questions:
+            name = MemberName(q.asker)
+            match = matcher.match(name)
+            obj = (q, match)
+            questions.append(obj)
+        context['questions'] = questions
         return context
 
 

@@ -49,9 +49,9 @@
     <a name="questions"></a>
     <h2>Questions</h2>
     <ol>
-      {% for question in parser.questions %}
+      {% for question, name in questions %}
         <li>
-          <p><strong>{{ question.asker }} asks {{ question.replier }} ({% if question.type == question.QTYPE_ORAL %}Oral{% else %}Written{% endif %}):</strong></p>
+          <p><strong><a href="{% url 'raw_member' pk=name.1.id %}">{{ question.asker }}</a> asks {{ question.replier }} ({% if question.type == question.QTYPE_ORAL %}Oral{% else %}Written{% endif %}):</strong></p>
           <p>{{ question.body|safe }}</p>
           <p></p>
         </li>
