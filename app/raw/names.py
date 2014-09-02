@@ -43,9 +43,9 @@ class MemberName(object):
             # No full name, so use the components
             if not is_ascii(last_name):
                 self.is_english = False
-            self.english_name = english_name
-            self.last_name = last_name
-            self.chinese_name = chinese_name
+            self.english_name = proper(english_name)
+            self.last_name = proper(last_name)
+            self.chinese_name = proper(chinese_name)
         else:
             # Check for language, then call the relevant parser
             if is_ascii(full_name):
@@ -74,6 +74,7 @@ class MemberName(object):
             return False
 
         # If full names match, we can all go home
+        # Chinese names are caught here
         if self.full_name == other.full_name:
             return True
 
@@ -188,4 +189,29 @@ class MemberName(object):
 
 
 class NameMatcher(object):
-    pass
+    """
+    Searcher class which takes a collection of MemberNames and stores then in a last name based index
+    Chinese names are stored by the Chinese character, so the index can grow quite large
+    """
+    def __init__(self, names):
+        self._index = {}
+        for n in names:
+            first_letter = n.last_name[0].lower()
+            if self._index.get(first_letter, None) is None:
+                self._index[first_letter] = []
+            self._index[first_letter].append(n)
+
+    def match(self, name):
+        """
+        Given an instance of MemberName, find a name in the index that matches it
+
+        :param name: MemberName
+        :return: MemberName or None
+        """
+        first_letter = name.last_name[0].lower()
+        if self._index.get(first_letter, None) is None:
+            return None
+        for n in self._index[first_letter]:
+            if n == name:
+                return n
+        return None

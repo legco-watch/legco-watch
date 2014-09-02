@@ -4,7 +4,7 @@
 # Tests for MemberName object
 from django.test import SimpleTestCase
 import logging
-from raw.names import MemberName
+from raw.names import MemberName, NameMatcher
 
 
 logging.disable(logging.CRITICAL)
@@ -119,4 +119,15 @@ class MemberNameTestCase(SimpleTestCase):
             # Other characters
             "Edward Loughlin O'MALLEY",
             'Richard Graves MacDONNELL',
-            ]
+        ]
+
+
+class NameMatcherTestCase(SimpleTestCase):
+    def test_simple_match(self):
+        n1 = MemberName(last_name=u'Wu', chinese_name=u'Chi-wai')
+        n2 = MemberName(last_name=u'Wong', english_name=u'Christopher', chinese_name=u'Kim-kam')
+        n3 = MemberName(last_name=u'Edward', english_name=u'Youde')
+        n = MemberName(last_name=u'Wu', chinese_name=u'Chi-wai')
+        matcher = NameMatcher([n1, n2, n3])
+        res = matcher.match(n)
+        self.assertEqual(id(n1), id(res))
