@@ -97,3 +97,26 @@ class MemberNameTestCase(SimpleTestCase):
         n1 = MemberName(u'曾鈺成')
         n2 = MemberName(u'曾鈺成議員')
         self.assertEqual(n1, n2)
+
+    def test_to_implement(self):
+        names = [
+            # two character Chinese names
+            'WEI Yuk',
+            # Four character Chinese names
+            u'梁劉柔芬'
+            # Initials
+            'J. R. YOUNG',
+            # Middle names
+            'Alfred Gascoyne WISE',
+            'Anthony Henry Reginald COOMBES',
+            'Julius C. POWER',
+            # Misformattings with additional spaces
+            'Mary WONG  Wing-cheung',
+            # Multiple last names
+            'Charles William Robert ST. JOHN',
+            'Percy Selwyn SELWYN-CLARKE',
+            'George William DES VOEUX',
+            # Other characters
+            "Edward Loughlin O'MALLEY",
+            'Richard Graves MacDONNELL',
+            ]
