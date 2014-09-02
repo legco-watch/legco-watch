@@ -95,8 +95,6 @@ class MemberName(object):
 
         return False
 
-
-
     def _parse_english_name(self, name):
         """
         Given an english full name, try to parse it into its constituent parts
@@ -105,8 +103,8 @@ class MemberName(object):
         ename_re = ur'(?P<fname>[a-zA-Z]+)'
         lname_cap_re = ur'(?P<lname>[A-Z]{2,})'
         lname_re = ur'(?P<lname>[a-zA-Z]+)'
-        # We assume that the Chinese names consist of three characters, otherwise they're indistinguishable
-        # from English names
+        # We assume that the anglicized Chinese names consist of three characters, though there are definitely
+        # some members for whom this is not the case.
         cname_re = ur'(?P<cname>[a-zA-Z]+-{1}[a-zA-Z]+)'
         fully_qualified = ur'^{}? ?{} {} {}?(, )?(?P<hon>[A-Z, ]+)?'.format(title_re, ename_re, lname_cap_re, cname_re)
         match = re.match(fully_qualified, name)
@@ -165,7 +163,15 @@ class MemberName(object):
         """
         Given a chinese name, parse it into its constituent parts
         """
-        pass
+        # Assumes that Chinese names are 3 characters.
+        cname_re = ur'^(?P<name>\w{2,3})(?P<title>議員)?$'
+        match = re.match(cname_re, name, re.UNICODE)
+        if match is not None:
+            res = match.groupdict()
+            self.last_name = res['name'][0]
+            self.chinese_name = res['name'][1:3]
+            self.title = res['title']
+            return
 
     @property
     def full_name(self):
