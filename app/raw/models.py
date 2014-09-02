@@ -1,6 +1,7 @@
 from django.db import models
 from raw import utils
 from raw.docs.agenda import CouncilAgenda
+from raw.names import MemberName
 
 
 LANG_CN = 1
@@ -255,6 +256,12 @@ class RawMember(RawModel):
             return RawScheduleMember.objects.get(uid='s' + self.uid)
         except RawMember.DoesNotExist:
             return None
+
+    def get_name_object(self, english=True):
+        if english:
+            return MemberName(self.name_e)
+        else:
+            return MemberName(self.name_c)
 
 
 class RawScheduleMember(RawModel):

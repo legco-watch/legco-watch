@@ -55,7 +55,7 @@ class MemberName(object):
                 self.is_english = False
 
     def __repr__(self):
-        return u'<MemberName: {}>'.format(self.full_name)
+        return u'<MemberName: {}>'.format(self.full_name).encode('utf-8')
 
     def __eq__(self, other):
         """
