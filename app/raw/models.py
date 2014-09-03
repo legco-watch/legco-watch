@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.encoding import force_unicode
 from raw import utils
 from raw.docs.agenda import CouncilAgenda
 from raw.names import MemberName
@@ -218,6 +219,11 @@ class RawCouncilQuestion(RawModel):
     subject_link = models.URLField(blank=True)
     reply_link = models.URLField(blank=True)
     language = models.IntegerField(null=True, blank=True, choices=LANG_CHOICES)
+
+    UID_PREFIX = 'question'
+
+    def __unicode__(self):
+        return u'{} on {}'.format(force_unicode(self.asker), force_unicode(self.raw_date))
 
 
 class RawMember(RawModel):
