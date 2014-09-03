@@ -212,7 +212,7 @@ class RawCouncilQuestion(RawModel):
     raw_date = models.CharField(max_length=50, blank=True)
     # Q. 5 <br> (Oral), for example
     number_and_type = models.CharField(max_length=255, blank=True)
-    raised_by = models.CharField(max_length=255, blank=True)
+    asker = models.CharField(max_length=255, blank=True)
     subject = models.TextField(blank=True)
     # Link to the agenda anchor with the text of the question
     subject_link = models.URLField(blank=True)
