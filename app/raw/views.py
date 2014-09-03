@@ -24,11 +24,12 @@ class RawCouncilAgendaDetailView(DetailView):
         names = [(xx.get_name_object(), xx) for xx in all_members]
         matcher = NameMatcher(names)
         questions = []
-        for q in parser.questions:
-            name = MemberName(q.asker)
-            match = matcher.match(name)
-            obj = (q, match)
-            questions.append(obj)
+        if parser.questions is not None:
+            for q in parser.questions:
+                name = MemberName(q.asker)
+                match = matcher.match(name)
+                obj = (q, match)
+                questions.append(obj)
         context['questions'] = questions
         return context
 
