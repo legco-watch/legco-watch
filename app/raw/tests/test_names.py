@@ -119,6 +119,9 @@ class MemberNameTestCase(SimpleTestCase):
             # Other characters
             "Edward Loughlin O'MALLEY",
             'Richard Graves MacDONNELL',
+            # Multiple honorifics,
+            'Dr Hon KWOK Ka-ki',
+            'Ir Dr Hon LO Wai-kwok',
         ]
 
 
