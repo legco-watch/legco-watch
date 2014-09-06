@@ -1,5 +1,8 @@
 from django.db import models
+from django.db.models import Count
 from django.utils.encoding import force_unicode
+from datetime import date
+import re
 from raw import utils
 from raw.docs.agenda import CouncilAgenda
 from raw.names import MemberName, NameMatcher
@@ -260,6 +263,10 @@ class RawMember(RawModel):
         matcher = NameMatcher(names)
         return matcher
 
+    @classmethod
+    def get_members_with_questions(cls):
+        return cls.objects.annotate(num_q=Count('raw_questions')).filter(num_q__gt=0)
+
 
 class RawCouncilQuestion(RawModel):
     """
@@ -269,7 +276,7 @@ class RawCouncilQuestion(RawModel):
     # Q. 5 <br> (Oral), for example
     number_and_type = models.CharField(max_length=255, blank=True)
     raw_asker = models.CharField(max_length=255, blank=True)
-    asker = models.ForeignKey(RawMember, blank=True, null=True)
+    asker = models.ForeignKey(RawMember, blank=True, null=True, related_name='raw_questions')
     subject = models.TextField(blank=True)
     # Link to the agenda anchor with the text of the question
     subject_link = models.TextField(blank=True)
@@ -277,12 +284,21 @@ class RawCouncilQuestion(RawModel):
     language = models.IntegerField(null=True, blank=True, choices=LANG_CHOICES)
 
     UID_PREFIX = 'question'
+    DATE_RE = ur'(?P<day>\d{1,2})\.(?P<mon>\d{1,2})\.(?P<year>\d{2,4})'
 
     def __unicode__(self):
         if self.asker_id is None:
             return u'{} on {}'.format(force_unicode(self.raw_asker), force_unicode(self.raw_date))
         else:
             return u'{} on {}'.format(force_unicode(self.asker), force_unicode(self.raw_date))
+
+    @property
+    def date(self):
+        match = re.match(self.DATE_RE, self.raw_date)
+        if match is None:
+            return None
+        groups = match.groupdict()
+        return date(int(groups['year']), int(groups['mon']), int(groups['day']))
 
 
 class RawScheduleMember(RawModel):
