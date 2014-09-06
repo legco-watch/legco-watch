@@ -42,4 +42,25 @@
       </tr>
     {% endif %}
   </table>
+  {% if object.raw_questions.count > 0 %}
+  <h2>Questions asked</h2>
+    <ul>
+    {% for q in questions %}
+      <li>
+      {{ q.date }} -
+        {% if q.subject_link != '' %}
+        <a href="{{ q.subject_link }}">
+          {{ q.subject }}
+        </a>
+      {% else %}
+        {{ q.subject }}
+      {% endif %}
+      {% if q.reply_link != '' %}
+        - <a href="{{ q.reply_link }}">reply</a></a>
+      {% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+
+  {% endif %}
 {% endblock content %}

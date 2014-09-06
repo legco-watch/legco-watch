@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from django.views.generic import ListView, DetailView
 from django.views.generic.detail import BaseDetailView
+from raw import models
 from raw.models import RawCouncilAgenda, RawMember, RawCommittee
 from raw.names import NameMatcher, MemberName
 
@@ -58,6 +59,10 @@ class RawMemberDetailView(DetailView):
         for f in fields:
             res = {'label': f, 'value': getattr(self.object, f, '')}
             context['fields'].append(res)
+
+        questions = self.object.raw_questions.filter(language=models.LANG_EN)
+        questions_with_dates = sorted([(xx, xx.date) for xx in questions], key=lambda x: x[1])
+        context['questions'] = [xx for xx, dd in questions_with_dates]
         return context
 
 

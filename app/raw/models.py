@@ -286,6 +286,9 @@ class RawCouncilQuestion(RawModel):
     UID_PREFIX = 'question'
     DATE_RE = ur'(?P<day>\d{1,2})\.(?P<mon>\d{1,2})\.(?P<year>\d{2,4})'
 
+    class Meta:
+        ordering = ['-raw_date']
+
     def __unicode__(self):
         if self.asker_id is None:
             return u'{} on {}'.format(force_unicode(self.raw_asker), force_unicode(self.raw_date))
