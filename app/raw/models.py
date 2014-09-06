@@ -2,7 +2,7 @@ from django.db import models
 from django.utils.encoding import force_unicode
 from raw import utils
 from raw.docs.agenda import CouncilAgenda
-from raw.names import MemberName
+from raw.names import MemberName, NameMatcher
 
 
 LANG_CN = 1
@@ -206,26 +206,6 @@ class RawCouncilHansard(RawModel):
     local_filename = models.CharField(max_length=255, blank=True)
 
 
-class RawCouncilQuestion(RawModel):
-    """
-    Storage for Members' questions, from http://www.legco.gov.hk/yr13-14/english/counmtg/question/ques1314.htm#toptbl
-    """
-    raw_date = models.CharField(max_length=50, blank=True)
-    # Q. 5 <br> (Oral), for example
-    number_and_type = models.CharField(max_length=255, blank=True)
-    asker = models.CharField(max_length=255, blank=True)
-    subject = models.TextField(blank=True)
-    # Link to the agenda anchor with the text of the question
-    subject_link = models.URLField(blank=True)
-    reply_link = models.URLField(blank=True)
-    language = models.IntegerField(null=True, blank=True, choices=LANG_CHOICES)
-
-    UID_PREFIX = 'question'
-
-    def __unicode__(self):
-        return u'{} on {}'.format(force_unicode(self.asker), force_unicode(self.raw_date))
-
-
 class RawMember(RawModel):
     name_e = models.CharField(max_length=100, blank=True)
     name_c = models.CharField(max_length=100, blank=True)
@@ -268,6 +248,38 @@ class RawMember(RawModel):
             return MemberName(self.name_e)
         else:
             return MemberName(self.name_c)
+
+    @classmethod
+    def get_matcher(cls):
+        """
+        Returns an instance of NameMatcher that is populated with all of the names in the database
+        for use when trying to match plain text names against Member entities
+        """
+        all_members = cls.objects.all()
+        names = [(xx.get_name_object(), xx) for xx in all_members]
+        matcher = NameMatcher(names)
+        return matcher
+
+
+class RawCouncilQuestion(RawModel):
+    """
+    Storage for Members' questions, from http://www.legco.gov.hk/yr13-14/english/counmtg/question/ques1314.htm#toptbl
+    """
+    raw_date = models.CharField(max_length=50, blank=True)
+    # Q. 5 <br> (Oral), for example
+    number_and_type = models.CharField(max_length=255, blank=True)
+    raw_asker = models.CharField(max_length=255, blank=True)
+    asker = models.ForeignKey(RawMember, blank=True, null=True)
+    subject = models.TextField(blank=True)
+    # Link to the agenda anchor with the text of the question
+    subject_link = models.TextField(blank=True)
+    reply_link = models.TextField(blank=True)
+    language = models.IntegerField(null=True, blank=True, choices=LANG_CHOICES)
+
+    UID_PREFIX = 'question'
+
+    def __unicode__(self):
+        return u'{} on {}'.format(force_unicode(self.asker), force_unicode(self.raw_date))
 
 
 class RawScheduleMember(RawModel):

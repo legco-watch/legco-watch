@@ -20,9 +20,7 @@ class RawCouncilAgendaDetailView(DetailView):
         context = super(RawCouncilAgendaDetailView, self).get_context_data(**kwargs)
         parser = self.object.get_parser()
         context['parser'] = parser
-        all_members = RawMember.objects.all()
-        names = [(xx.get_name_object(), xx) for xx in all_members]
-        matcher = NameMatcher(names)
+        matcher = RawMember.get_matcher()
         questions = []
         if parser.questions is not None:
             for q in parser.questions:

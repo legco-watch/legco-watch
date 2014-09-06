@@ -1,6 +1,6 @@
 from django.contrib import admin
 from raw.models import ScrapeJob, RawCouncilAgenda, RawMember, RawScheduleMember, RawCommittee, RawCommitteeMembership, \
-    RawMeetingCommittee, RawMeeting
+    RawMeetingCommittee, RawMeeting, RawCouncilQuestion
 
 
 admin.site.register(ScrapeJob)
@@ -11,3 +11,4 @@ admin.site.register(RawCommittee)
 admin.site.register(RawCommitteeMembership)
 admin.site.register(RawMeetingCommittee)
 admin.site.register(RawMeeting)
+admin.site.register(RawCouncilQuestion)

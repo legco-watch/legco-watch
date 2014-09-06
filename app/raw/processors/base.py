@@ -3,7 +3,7 @@ import json
 
 class BaseProcessor(object):
     """
-    Base clase for processing lists of scraped Items and inserting them into the database
+    Base class for processing lists of scraped Items and inserting them into the database
 
     Subclasses should implement a process method
     """
@@ -13,6 +13,9 @@ class BaseProcessor(object):
         self._count_created = 0
         self._count_updated = 0
         self._count_error = 0
+
+    def process(self, *args, **kwargs):
+        pass
 
 
 def file_wrapper(fp):
