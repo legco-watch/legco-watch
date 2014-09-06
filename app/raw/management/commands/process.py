@@ -14,7 +14,7 @@ from raw.models import ScrapeJob
 
 class Command(BaseCommand):
     args = '<spider_name spider_name ...>'
-    options_list = BaseCommand.option_list + (
+    option_list = BaseCommand.option_list + (
         make_option('--force',
                     action='store_true',
                     dest='force',
@@ -26,13 +26,15 @@ class Command(BaseCommand):
                     type='string',
                     help="Process this Items file instead of looking in the ScrapeJobs database"),
     )
-    help = 'Trigger a crawl on the scrapyd server, and store the JobId for retrieval later'
+    help = 'Process the results of a crawl'
 
     def handle(self, *args, **options):
         # Disable DB debug messages temporarily
         if settings.DEBUG:
             original = BaseDatabaseWrapper.make_debug_cursor
             BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
+        if len(args) == 0:
+            raise RuntimeError('You must provide a spider name to process the results.')
         items_file = options.get('items_file', None)
         if items_file is not None:
             if not os.path.exists(items_file):

@@ -250,13 +250,13 @@ class RawMember(RawModel):
             return MemberName(self.name_c)
 
     @classmethod
-    def get_matcher(cls):
+    def get_matcher(cls, english=True):
         """
         Returns an instance of NameMatcher that is populated with all of the names in the database
         for use when trying to match plain text names against Member entities
         """
         all_members = cls.objects.all()
-        names = [(xx.get_name_object(), xx) for xx in all_members]
+        names = [(xx.get_name_object(english), xx) for xx in all_members]
         matcher = NameMatcher(names)
         return matcher
 
@@ -279,7 +279,10 @@ class RawCouncilQuestion(RawModel):
     UID_PREFIX = 'question'
 
     def __unicode__(self):
-        return u'{} on {}'.format(force_unicode(self.asker), force_unicode(self.raw_date))
+        if self.asker_id is None:
+            return u'{} on {}'.format(force_unicode(self.raw_asker), force_unicode(self.raw_date))
+        else:
+            return u'{} on {}'.format(force_unicode(self.asker), force_unicode(self.raw_date))
 
 
 class RawScheduleMember(RawModel):
