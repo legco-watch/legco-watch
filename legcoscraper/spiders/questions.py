@@ -4,11 +4,11 @@ Scraper for Council Meeting Questions
 
 From http://www.legco.gov.hk/yr13-14/english/counmtg/question/ques1314.htm#toptbl, for example
 """
-import logging
 from lxml.html import HTMLParser
 from scrapy.item import Field
 from scrapy.selector import Selector
 from scrapy.spider import Spider
+from scrapy import log
 import lxml
 import re
 from legcoscraper.items import TypedItem
@@ -60,11 +60,31 @@ class QuestionSpider(Spider):
     HEADER_RE_E = u'Council meeting on (?P<date>[0-9.]+)'
     HEADER_RE_C = u'會議日期\s*(?P<date>[0-9.]+)'
 
+    def make_question(self, language, response, row, this_date):
+        """
+        Given a question row, create a dict with the question fields
+        """
+        # Sometimes replies don't have links
+        this_question = {
+            'date': this_date,
+            'source_url': response.url,
+            'number_and_type': row[0].text_content(),
+            'asker': row[1].text_content(),
+            'subject': row[2].text_content(),
+            'subject_link': row[2][0].get('href', None),
+            'language': language
+        }
+        try:
+            this_question['reply_link'] = row[3][0].get('href', None)
+        except IndexError:
+            self.log(u'No reply link on {} from {}'.format(response.url, this_date), level=log.WARNING)
+        return this_question
+
     def parse(self, response):
         sel = Selector(response)
         body = sel.xpath('//div[@id="_content_"]')
         if len(body) != 1:
-            logging.warn(u'Expected single body element, but found {} on {}'.format(len(body), response.url))
+            self.log(u'Expected single body element, but found {} on {}'.format(len(body), response.url), level=log.WARNING)
             return
         body = body[0]
         # Store the number of headers as a check for how many tables of questions we should get out
@@ -93,28 +113,14 @@ class QuestionSpider(Spider):
                 this_date = match.groupdict()['date']
                 count_sessions += 1
                 questions_table = elem.getnext()
-                for row in questions_table:
+                for row in questions_table.xpath('./tr'):
                     # We ignore the header row, which is indicated by ths
                     if row[0].tag == 'th':
                         continue
-                    # Sometimes replies don't have links
-                    this_question = {
-                        'date': this_date,
-                        'source_url': response.url,
-                        'number_and_type': row[0].text_content(),
-                        'asker': row[1].text_content(),
-                        'subject': row[2].text_content(),
-                        'subject_link': row[2][0].get('href', None),
-                        'language': language
-                    }
-                    try:
-                        this_question['reply_link'] = row[3][0].get('href', None)
-                    except IndexError:
-                        logging.warn(u'No reply link on {} from {}'.format(response.url, this_date))
-                        pass
-                    yield Question(**this_question)
+                    this_question = self.make_question(language, response, row, this_date)
                     count_questions += 1
+                    yield Question(**this_question)
 
         if num_headers != count_sessions:
-            logging.warn(u'Expected {} sessions on {}, but only found tables for {}'.format(num_headers, response.url, count_sessions))
-        logging.info(u'Processed {} questions in {} sessions'.format(count_questions, count_sessions))
+            self.log(u'Expected {} sessions on {}, but only found tables for {}'.format(num_headers, response.url, count_sessions), level=log.WARNING)
+        self.log(u'Processed {} questions in {} sessions'.format(count_questions, count_sessions), level=log.INFO)
