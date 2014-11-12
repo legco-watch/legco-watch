@@ -1,12 +1,7 @@
 FROM legcowatch/appserver
 
+# Set up the development environment
+COPY files/.bashrc /root/.bashrc
+COPY files/.profile /root/.profile
 
-COPY .bashrc /root/.bashrc
-COPY .profile /root/.profile
-
-
-RUN /etc/my_init.d/00_regen_ssh_host_keys.sh
-
-# Use baseimage-docker's init system.
-CMD ["/sbin/my_init", "--enable-insecure-key"]
-
+VOLUME /docker

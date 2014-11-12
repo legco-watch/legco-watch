@@ -1,0 +1,18 @@
+dev:
+  build: docker/dev
+  ports:
+    - "2223:22"
+  volumes:
+    - ./:/docker
+  links:
+    - db
+
+dbdata:
+  image: debian:7.7
+  command: echo "Database data container"
+
+
+db:
+  build: docker/dbserver
+  ports:
+    - "5432:5432"
