@@ -11,14 +11,22 @@ RUN ${VIRTUALENV_PATH}/bin/pip install -r /tmp/base_reqs.txt
 
 # Install uWSGI
 RUN ${VIRTUALENV_PATH}/bin/pip install uwsgi
-COPY files/legco-watch.ini ${PROJECT_PATH}/legco-watch.ini
 
 # Get the latest code
-VOLUME ${PROJECT_PATH}
 RUN git clone https://github.com/legco-watch/legco-watch.git ${PROJECT_PATH}
 
+# Set up the database
+WORKDIR ${PROJECT_PATH}
+run pwd
+run ls -la
+#RUN /bin/bash -c 'source ${VIRTUALENV_PATH}/bin/activate \
+#    && python manage.py syncdb --noinput \
+#    && python manage.py migrate --noinput \
+#    && python manage.py collectstatic --noinput'
+
 # Copy over configuration
-COPY files/local.py ${PROJECT_PATH}/app/legcowatch/local.py
+#COPY files/local.py ${PROJECT_PATH}/app/legcowatch/local.py
+#COPY files/legco-watch.ini ${PROJECT_PATH}/legco-watch.ini
 
 # uWSGI entrypoint
-ENTRYPOINT ["/usr/local/bin/uwsgi", "--ini", "${PROJECT_PATH}/legco-watch.ini"]
+#ENTRYPOINT ["${VIRTUALENV_PATH}/bin/uwsgi", "--ini", "${PROJECT_PATH}/legco-watch.ini"]
