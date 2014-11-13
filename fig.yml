@@ -12,14 +12,22 @@
 dbdata:
   build: docker/dbdata
 
+logdata:
+  build: docker/logdata
+
 db:
   build: docker/dbserver
   ports:
     - "5432:5432"
   volumes_from:
     - dbdata
+    - logdata
 
 appserver:
   build: docker/appserver
   links:
-    - db
+    - db:db
+  volumes_from:
+    - logdata
+  ports:
+    - "0.0.0.0:8001:8001"
