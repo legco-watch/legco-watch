@@ -33,7 +33,6 @@ CONTRIB_APPS = (
     'south',
     'rest_framework',
     'pipeline',
-    'djangobower',
     'debug_toolbar'
 )
 
@@ -90,7 +89,6 @@ USE_TZ = True
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    'djangobower.finders.BowerFinder'
 )
 
 BOWER_COMPONENTS_ROOT = os.path.abspath('.')
