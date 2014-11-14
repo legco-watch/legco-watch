@@ -1,22 +1,26 @@
-#dev:
-#  build: docker/dev
-#  ports:
-#    - "2223:22"
-#  volumes:
-#    - ./:/docker
-#  volumes_from:
-#    - dbdata
-#  links:
-#    - db
-#
+dev:
+  image: legcowatch/dev
+  ports:
+    - "2223:22"
+    - "8000:8000"
+  volumes:
+    - ./:/docker
+  volumes_from:
+    - dbdata
+    - logdata
+  links:
+    - db:db
+
 dbdata:
-  build: docker/dbdata
+  image: legcowatch/dbdata
+  command: true
 
 logdata:
-  build: docker/logdata
+  image: legcowatch/logdata
+  command: true
 
 db:
-  build: docker/dbserver
+  image: legcowatch/dbserver
   ports:
     - "5432:5432"
   volumes_from:
@@ -24,7 +28,7 @@ db:
     - logdata
 
 appserver:
-  build: docker/appserver
+  image: legcowatch/appserver
   links:
     - db:db
   volumes_from:

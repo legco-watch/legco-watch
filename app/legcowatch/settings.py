@@ -91,6 +91,10 @@ STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 )
 
+STATICFILES_DIRS = (
+    os.path.abspath('.') + '/static',
+)
+
 BOWER_COMPONENTS_ROOT = os.path.abspath('.')
 
 LOGGING = {
