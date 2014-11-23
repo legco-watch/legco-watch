@@ -38,5 +38,11 @@ appserver:
   ports:
     - "8001:8001"
 
+worker:
+  image: legcowatch/worker
+  links:
+    - db:db
+    - rabbitmq:rabbitmq
+
 rabbitmq:
   image: legcowatch/rabbitmq
