@@ -19,6 +19,6 @@ def run_scraper():
     crawler.configure()
     crawler.crawl(spider)
     crawler.start()
-    log.start(loglevel=log.DEBUG, logstdout=True)
+    log.start(loglevel=log.INFO, logstdout=True)
     reactor.run()
     return output_name
