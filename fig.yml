@@ -10,6 +10,7 @@ dev:
     - logdata
   links:
     - db:db
+    - rabbitmq:rabbitmq
 
 dbdata:
   image: legcowatch/dbdata
@@ -31,7 +32,11 @@ appserver:
   image: legcowatch/appserver
   links:
     - db:db
+    - rabbitmq:rabbitmq
   volumes_from:
     - logdata
   ports:
     - "8001:8001"
+
+rabbitmq:
+  image: legcowatch/rabbitmq

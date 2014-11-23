@@ -12,6 +12,10 @@ RUN ${VIRTUALENV_PATH}/bin/pip install -r /tmp/base_reqs.txt
 # Install uWSGI
 RUN ${VIRTUALENV_PATH}/bin/pip install uwsgi
 
+# Install Celery
+COPY files/celery_reqs.txt /tmp/
+RUN ${VIRTUALENV_PATH}/bin/pip install -r /tmp/celery_reqs.txt
+
 # Get the latest code
 RUN git clone https://github.com/legco-watch/legco-watch.git ${PROJECT_PATH}
 

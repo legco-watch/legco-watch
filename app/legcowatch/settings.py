@@ -27,6 +27,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'djcelery',
 )
 
 CONTRIB_APPS = (
@@ -142,5 +143,8 @@ LOGGING = {
         },
     }
 }
+
+CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
+
 # Import settings local to this machine
 from .local import *
