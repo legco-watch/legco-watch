@@ -10,9 +10,8 @@ import os
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 BOT_NAME = 'legcoscraper'
-
-SPIDER_MODULES = ['legcoscraper.spiders']
-NEWSPIDER_MODULE = 'legcoscraper.spiders'
+SPIDER_MODULES = ['raw.scraper.spiders']
+NEWSPIDER_MODULE = 'raw.scraper.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENT = 'legcoscraper (+http://odhk.github.io/)'
@@ -23,9 +22,8 @@ ITEM_PIPELINES = [
     'scrapy.contrib.pipeline.files.FilesPipeline',
 ]
 
-# Needs to be absolute for deployment to scrapyd
-# This is overridden in scrapy_local.py in the parent directory
-FILES_STORE = '/var/legco-watch/scrapyd/files'
+DATA_DIR_BASE = '/legco-data'
+FILES_STORE = os.path.join(DATA_DIR_BASE, 'files')
 
 DOWNLOADER_MIDDLEWARES = {
     # 100 is for the ordering of the middleware pipeline, not for timeout
@@ -44,14 +42,4 @@ DEFAULT_REQUEST_HEADERS = {
 }
 
 HTTPCACHE_ENABLED = True
-HTTPCACHE_DIR = os.path.join(PROJECT_ROOT, 'httpcache')
-
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
-FILES_STORE = os.path.join(PROJECT_ROOT, 'datafiles')
-
-# load local dev settings
-try:
-    from scrapy_local import *
-except ImportError:
-    pass
-
+HTTPCACHE_DIR = os.path.join(DATA_DIR_BASE, 'httpcache')
