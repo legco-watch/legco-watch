@@ -12,7 +12,7 @@ from raw.scraper.spiders.members import LibraryMemberSpider
 @shared_task
 def run_scraper():
     output_name = 'foo.jl'
-    spider = LibraryAgendaSpider()
+    spider = LibraryMemberSpider()
     settings = get_project_settings()
     output_path = os.path.join(settings.get('DATA_DIR_BASE'), 'scrapes', output_name)
     settings.overrides['FEED_URI'] = output_path
