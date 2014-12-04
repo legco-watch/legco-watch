@@ -14,8 +14,8 @@ def run_scraper():
     output_name = 'foo.jl'
     spider = LibraryAgendaSpider()
     settings = get_project_settings()
-    url_path = os.path.join(settings.get('DATA_DIR_BASE'), 'scrapes', output_name)
-    settings.overrides['FEED_URI'] = url_path
+    output_path = os.path.join(settings.get('DATA_DIR_BASE'), 'scrapes', output_name)
+    settings.overrides['FEED_URI'] = output_path
 
     crawler = Crawler(settings)
     crawler.signals.connect(reactor.stop, signal=signals.spider_closed)
@@ -24,4 +24,4 @@ def run_scraper():
     crawler.start()
     log.start(loglevel=log.INFO, logstdout=True)
     reactor.run()
-    return output_name
+    return output_path
