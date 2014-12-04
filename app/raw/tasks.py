@@ -4,6 +4,7 @@ from twisted.internet import reactor
 from scrapy.crawler import Crawler
 from scrapy import log, signals
 from scrapy.utils.project import get_project_settings
+from celery.contrib import rdb
 import os
 
 from raw.scraper.spiders.legco_library import LibraryAgendaSpider
@@ -11,6 +12,7 @@ from raw.scraper.spiders.members import LibraryMemberSpider
 
 @shared_task
 def run_scraper():
+    rdb.set_trace()
     output_name = 'foo.jl'
     spider = LibraryMemberSpider()
     settings = get_project_settings()
