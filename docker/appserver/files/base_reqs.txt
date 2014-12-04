@@ -33,4 +33,5 @@ zope.interface==4.1.1
 six==1.6.1
 django-bower==5.0.1
 Scrapy==0.22.2
+boto==2.34.0
 # Need this since it's in some Django app modules

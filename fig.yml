@@ -8,17 +8,22 @@ dev:
   volumes_from:
     - dbdata
     - logdata
+    - appdata
   links:
     - db:db
     - rabbitmq:rabbitmq
 
 dbdata:
   image: legcowatch/dbdata
-  command: true
+  command: echo
 
 logdata:
   image: legcowatch/logdata
-  command: true
+  command: echo
+
+appdata:
+  image: legcowatch/appdata
+  command: echo
 
 db:
   image: legcowatch/dbserver
@@ -35,6 +40,7 @@ appserver:
     - rabbitmq:rabbitmq
   volumes_from:
     - logdata
+    - appdata
   ports:
     - "8001:8001"
 
@@ -43,6 +49,8 @@ worker:
   links:
     - db:db
     - rabbitmq:rabbitmq
+  volumes_from:
+    - appdata
 
 rabbitmq:
   image: legcowatch/rabbitmq
