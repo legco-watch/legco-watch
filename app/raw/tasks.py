@@ -74,7 +74,7 @@ def scrape_task(spider_name):
         # Create the ScrapeJob record
         job = ScrapeJob.objects.create(
             spider=spider_name,
-            scheduled=datetime.now,
+            scheduled=datetime.now(),
             # see http://stackoverflow.com/questions/18872854/getting-task-id-inside-a-celery-task
             job_id=scrape_task.request.id,
             raw_response=output_path
