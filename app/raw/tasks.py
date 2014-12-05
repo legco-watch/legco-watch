@@ -66,6 +66,7 @@ def scrape_task(spider_name):
     # Check to see if we're already running a scrape by looking for open ScrapeJobs
     is_scraping = is_spider_scraping(spider_name)
     if is_scraping is False:
+        logging.info('Starting new scrape of {}'.format(spider_name))
         # configure the output
         output_name = generate_scrape_name(spider_name)
         output_path = os.path.join(settings.get('DATA_DIR_BASE'), 'scrapes', output_name)
@@ -89,6 +90,7 @@ def scrape_task(spider_name):
         crawler.start()
         reactor.run()
     else:
+        logging.info('Pending job found for spider {}'.format(spider_name))
         job = is_scraping
 
     return job.raw_response
