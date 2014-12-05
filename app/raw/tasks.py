@@ -83,7 +83,7 @@ def scrape_task(spider_name):
         complete_cb = complete_job(job.id)
 
         crawler.signals.connect(reactor.stop, signal=signals.spider_closed)
-        crawler.signals.connect(complete_cb, signals=signals.spider_closed)
+        crawler.signals.connect(complete_cb, signal=signals.spider_closed)
         log.start(loglevel=log.INFO, logstdout=True)
         crawler.crawl(spider)
         crawler.start()
