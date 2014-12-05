@@ -32,6 +32,11 @@ DOWNLOADER_MIDDLEWARES = {
     'scrapy.contrib.spidermiddleware.referer.RefererMiddleware': 102,
 }
 
+DOWNLOAD_HANDLERS = {
+    # Fix for an exception that gets thrown when a crawler is loaded with boto installed but without AWS credentials
+    's3': None
+}
+
 # Overriding this. If we do not send Connection: keep-alive, the legco-site will not
 # respond to our requests. This is despite it calling Conneciton: close in the response
 # Not quite sure why scrapy doesn't send this by default though?
