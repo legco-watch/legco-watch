@@ -32,6 +32,6 @@ wsgiref==0.1.2
 zope.interface==4.1.1
 six==1.6.1
 django-bower==5.0.1
-Scrapy==0.22.2
+Scrapy==0.24.0
 boto==2.34.0
 # Need this since it's in some Django app modules
