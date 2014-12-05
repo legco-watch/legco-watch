@@ -8,6 +8,7 @@ from scrapy import log, signals
 from scrapy.utils.project import get_project_settings
 import os
 from raw.models import ScrapeJob
+from django.conf import settings as djsettings
 
 from raw.scraper.spiders.legco_library import LibraryAgendaSpider
 from raw.scraper.spiders.members import LibraryMemberSpider
@@ -55,6 +56,12 @@ def scrape_task(spider_name):
     """
     # create and configure the spider
     settings = get_project_settings()
+    # configure the output
+    # Technically don't need this unless we actually do the scrape, but need to put
+    # up here before the crawler is instantiated so the FEED_URI override is active
+    output_name = generate_scrape_name(spider_name)
+    output_path = os.path.join(settings.get('DATA_DIR_BASE'), 'scrapes', output_name)
+    settings.overrides['FEED_URI'] = output_path
     crawler = Crawler(settings)
     crawler.configure()
     try:
@@ -66,18 +73,18 @@ def scrape_task(spider_name):
     # Check to see if we're already running a scrape by looking for open ScrapeJobs
     is_scraping = is_spider_scraping(spider_name)
     if is_scraping is False:
-        logging.info('Starting new scrape of {}'.format(spider_name))
-        # configure the output
-        output_name = generate_scrape_name(spider_name)
-        output_path = os.path.join(settings.get('DATA_DIR_BASE'), 'scrapes', output_name)
-        settings.overrides['FEED_URI'] = output_path
-
+        logger.info('Starting new scrape of {}'.format(spider_name))
         # Create the ScrapeJob record
+        job_id = scrape_task.request.id
+        if job_id is None:
+            # Case if called directly without using Celery, put in a dummy job id
+            timestamp = datetime.now().strftime('%y%m%d%H%m')
+            job_id = 'MANUAL_RUN{}'.format(timestamp)
         job = ScrapeJob.objects.create(
             spider=spider_name,
             scheduled=datetime.now(),
             # see http://stackoverflow.com/questions/18872854/getting-task-id-inside-a-celery-task
-            job_id=scrape_task.request.id,
+            job_id=job_id,
             raw_response=output_path
         )
         # and set up the callback for updating it
@@ -85,12 +92,15 @@ def scrape_task(spider_name):
 
         crawler.signals.connect(reactor.stop, signal=signals.spider_closed)
         crawler.signals.connect(complete_cb, signal=signals.spider_closed)
-        log.start(loglevel=log.INFO, logstdout=True)
+        if djsettings.DEBUG:
+            log.start(loglevel=log.DEBUG, logstdout=True)
+        else:
+            log.start(loglevel=log.INFO, logstdout=True)
         crawler.crawl(spider)
         crawler.start()
         reactor.run()
     else:
-        logging.info('Pending job found for spider {}'.format(spider_name))
+        logger.info('Pending job found for spider {}'.format(spider_name))
         job = is_scraping
 
     return job.raw_response

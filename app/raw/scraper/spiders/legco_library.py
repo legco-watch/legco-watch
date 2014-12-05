@@ -1,8 +1,12 @@
+import logging
 from scrapy.http import Request
 from scrapy.selector import Selector
 from scrapy.spider import Spider
 import urlparse
 from raw.scraper.items import LibraryAgenda, LibraryResultPage
+
+
+logger = logging.getLogger('legcowatch')
 
 
 class LegcoLibrarySpider(Spider):
@@ -79,4 +83,5 @@ class LibraryAgendaSpider(LegcoLibrarySpider):
             file_urls=file_urls,
             source_url=response.url
         )
+        logger.info('Parsed Agenda {}'.format(title_en))
         yield item
