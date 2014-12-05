@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from datetime import datetime
+import logging
 from celery import shared_task
 from twisted.internet import reactor
 from scrapy.crawler import Crawler
@@ -10,6 +11,8 @@ from raw.models import ScrapeJob
 
 from raw.scraper.spiders.legco_library import LibraryAgendaSpider
 from raw.scraper.spiders.members import LibraryMemberSpider
+
+logger = logging.getLogger('legcowatch')
 
 
 def generate_scrape_name(spider_name):
@@ -23,7 +26,9 @@ def complete_job(scrapejob_id):
     creates a callback for updating a ScrapeJob once a scrape has completed
     """
     def cb():
-        pass
+        updated_count = ScrapeJob.objects.filter(id=scrapejob_id).update(completed=datetime.now())
+        if updated_count != 1:
+            logger.warn('Expected one job when completing ScrapeJob, found {} with id {}'.format(updated_count, scrapejob_id))
     return cb
 
 
@@ -34,7 +39,11 @@ def is_spider_scraping(spider_name):
     :param spider_name: str name of the spider
     :return: False if no ScrapeJob is found, otherwise returns the ScrapeJob instance
     """
-    pass
+    try:
+        pending_job = ScrapeJob.objects.pending_jobs().filter(spider=spider_name).latest('scheduled')
+    except ScrapeJob.DoesNotExist as e:
+        return False
+    return pending_job
 
 
 @shared_task
@@ -52,8 +61,7 @@ def scrape_task(spider_name):
         spider = crawler.spiders.create(spider_name)
     except KeyError as e:
         # No spider found.
-        # TODO: implement logging here
-        raise
+        raise RuntimeError('Could not find spider with name {}'.format(spider_name))
 
     # Check to see if we're already running a scrape by looking for open ScrapeJobs
     is_scraping = is_spider_scraping(spider_name)
