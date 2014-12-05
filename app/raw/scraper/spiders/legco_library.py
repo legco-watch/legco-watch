@@ -83,5 +83,5 @@ class LibraryAgendaSpider(LegcoLibrarySpider):
             file_urls=file_urls,
             source_url=response.url
         )
-        logger.info('Parsed Agenda {}'.format(title_en))
+        logger.info('Scraped {}'.format(title_en))
         yield item

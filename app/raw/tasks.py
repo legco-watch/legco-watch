@@ -7,6 +7,7 @@ from scrapy.crawler import Crawler
 from scrapy import log, signals
 from scrapy.utils.project import get_project_settings
 import os
+from raw import processors
 from raw.models import ScrapeJob
 from django.conf import settings as djsettings
 
@@ -48,7 +49,7 @@ def is_spider_scraping(spider_name):
 
 
 @shared_task
-def scrape_task(spider_name):
+def do_scrape(spider_name):
     """
     Asynchronous task for individual scrapes that is executed by Celery workers.
     :param spider_name: str name of the spider that should be run
@@ -75,7 +76,7 @@ def scrape_task(spider_name):
     if is_scraping is False:
         logger.info('Starting new scrape of {}'.format(spider_name))
         # Create the ScrapeJob record
-        job_id = scrape_task.request.id
+        job_id = do_scrape.request.id
         if job_id is None:
             # Case if called directly without using Celery, put in a dummy job id
             timestamp = datetime.now().strftime('%y%m%d%H%m')
@@ -101,3 +102,26 @@ def scrape_task(spider_name):
         job = is_scraping
 
     return job.raw_response
+
+
+@shared_task
+def process_scrape(spider_name, force=False):
+    """
+    Process the results of a scrape for a spider.  Will read the JSONLines file and make the appropriate
+    Raw objects in the database
+    :param spider_name: str name of the spider that produced the results
+    :return:
+    """
+    try:
+        if force:
+            job = ScrapeJob.objects.latest_complete_job(spider_name)
+        else:
+            job = ScrapeJob.objects.latest_unprocessed_job(spider_name)
+    except ScrapeJob.DoesNotExist:
+        logger.warn("No jobs found for spider {}".format(spider_name))
+        return
+
+    items_file = job.raw_response
+    processor = processors.get_processor_for_spider(spider_name)
+    processor(items_file, job).process()
+    return
