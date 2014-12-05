@@ -92,10 +92,7 @@ def scrape_task(spider_name):
 
         crawler.signals.connect(reactor.stop, signal=signals.spider_closed)
         crawler.signals.connect(complete_cb, signal=signals.spider_closed)
-        if djsettings.DEBUG:
-            log.start(loglevel=log.DEBUG, logstdout=True)
-        else:
-            log.start(loglevel=log.INFO, logstdout=True)
+        log.start(loglevel=log.INFO, logstdout=True)
         crawler.crawl(spider)
         crawler.start()
         reactor.run()
