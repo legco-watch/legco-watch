@@ -64,7 +64,7 @@ class ScrapeJobManager(models.Manager):
 
 class ScrapeJob(models.Model):
     """
-    A call to the Scrapyd server for a job
+    Details for keeping track of a scrape job
     """
     spider = models.CharField(max_length=100)
     scheduled = models.DateTimeField()

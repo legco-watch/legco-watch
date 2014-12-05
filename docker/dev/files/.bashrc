@@ -107,3 +107,4 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
 fi
 
 source ~/envs/appserver/bin/activate
+alias dj='python manage.py'
