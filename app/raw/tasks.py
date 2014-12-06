@@ -9,6 +9,9 @@ from scrapy.utils.project import get_project_settings
 import os
 from raw import processors
 from raw.models import ScrapeJob
+from django.conf import settings
+from django.db.backends import BaseDatabaseWrapper
+from django.db.backends.util import CursorWrapper
 
 logger = logging.getLogger('legcowatch')
 
@@ -52,14 +55,14 @@ def do_scrape(spider_name):
     :return: the full path of the jsonlines output file to which results are stored
     """
     # create and configure the spider
-    settings = get_project_settings()
+    crawl_settings = get_project_settings()
     # configure the output
     # Technically don't need this unless we actually do the scrape, but need to put
     # up here before the crawler is instantiated so the FEED_URI override is active
     output_name = generate_scrape_name(spider_name)
-    output_path = os.path.join(settings.get('DATA_DIR_BASE'), 'scrapes', output_name)
-    settings.overrides['FEED_URI'] = output_path
-    crawler = Crawler(settings)
+    output_path = os.path.join(crawl_settings.get('DATA_DIR_BASE'), 'scrapes', output_name)
+    crawl_settings.overrides['FEED_URI'] = output_path
+    crawler = Crawler(crawl_settings)
     crawler.configure()
     try:
         spider = crawler.spiders.create(spider_name)
@@ -119,7 +122,21 @@ def process_scrape(spider_name, force=False):
         return
 
     items_file = job.raw_response
+
+    # Disable SQL logging
+    if settings.DEBUG:
+        original = BaseDatabaseWrapper.make_debug_cursor
+        BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
+
+    # Get the processor and run it
     processor = processors.get_processor_for_spider(spider_name)
     logger.info('Processing file {} from ScrapeJob {}'.format(items_file, job.id))
     processor(items_file, job).process()
+
+    if settings.DEBUG:
+        BaseDatabaseWrapper.make_debug_cursor = original
+
+    # Log that the job was processed just now
+    job.last_fetched = datetime.now()
+    job.save()
     return
