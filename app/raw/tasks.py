@@ -9,10 +9,6 @@ from scrapy.utils.project import get_project_settings
 import os
 from raw import processors
 from raw.models import ScrapeJob
-from django.conf import settings as djsettings
-
-from raw.scraper.spiders.legco_library import LibraryAgendaSpider
-from raw.scraper.spiders.members import LibraryMemberSpider
 
 logger = logging.getLogger('legcowatch')
 
@@ -91,6 +87,7 @@ def do_scrape(spider_name):
         # and set up the callback for updating it
         complete_cb = complete_job(job.id)
 
+        # Connect the signals and logging, then start it up
         crawler.signals.connect(reactor.stop, signal=signals.spider_closed)
         crawler.signals.connect(complete_cb, signal=signals.spider_closed)
         log.start(loglevel=log.INFO, logstdout=True)
@@ -123,5 +120,6 @@ def process_scrape(spider_name, force=False):
 
     items_file = job.raw_response
     processor = processors.get_processor_for_spider(spider_name)
+    logger.info('Processing file {} from ScrapeJob {}'.format(items_file, job.id))
     processor(items_file, job).process()
     return

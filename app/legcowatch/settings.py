@@ -146,5 +146,7 @@ LOGGING = {
 
 CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
 
+SCRAPY_FILES_PATH = '/legco-data/files'
+
 # Import settings local to this machine
 from .local import *

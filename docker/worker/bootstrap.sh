@@ -5,6 +5,7 @@ export C_FORCE_ROOT="true"
 
 echo "Pulling latest code and syncing database"
     # If no command passed in, then pull code, migrate, and run the uwsgi server
+git reset --hard HEAD
 git pull --force
 
 if [ $# -eq 0 ]
