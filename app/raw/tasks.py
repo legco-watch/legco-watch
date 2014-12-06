@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 from celery import shared_task
 from twisted.internet import reactor
@@ -41,7 +41,10 @@ def is_spider_scraping(spider_name):
     :return: False if no ScrapeJob is found, otherwise returns the ScrapeJob instance
     """
     try:
-        pending_job = ScrapeJob.objects.pending_jobs().filter(spider=spider_name).latest('scheduled')
+        cutoff = datetime.now() - timedelta(hours=1)
+        pending_job = ScrapeJob.objects.pending_jobs()\
+            .filter(spider=spider_name).filter(scheduled__gt=cutoff)\
+            .latest('scheduled')
     except ScrapeJob.DoesNotExist as e:
         return False
     return pending_job
