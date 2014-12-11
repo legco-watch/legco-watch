@@ -47,8 +47,10 @@ class OverrideManager(models.Manager):
 class Override(models.Model):
     # The lowercase string name of the model we're referencing, model._meta.model_name
     ref_model = models.CharField(max_length=100, null=False)
-    # The id of the object we are overriding
-    ref_id = models.IntegerField(null=False)
+    # The uid of the object we are overriding
+    # Don't refer to id, because we want to be able to still look up
+    # The reference if it is recreated and gets a new auto id
+    ref_uid = models.CharField(max_length=100, unique=True)
     # Where the serialized override data is stored
     data = models.TextField(blank=True, null=False, default='')
     created = models.DateTimeField(auto_now_add=True)
@@ -116,3 +118,7 @@ class ParsedPerson(TimestampMixin, BaseParsedModel):
 
     def __unicode__(self):
         return u"{} {}".format(unicode(self.name_e), unicode(self.name_c))
+
+
+class ParsedMembership(TimestampMixin, BaseParsedModel):
+    pass
