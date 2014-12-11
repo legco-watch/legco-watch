@@ -74,6 +74,7 @@ class RawCouncilAgenda(RawModel):
 
     class Meta:
         ordering = ['-uid']
+        app_label = 'raw'
 
     def __unicode__(self):
         return unicode(self.uid)
@@ -226,6 +227,7 @@ class RawCouncilQuestion(RawModel):
 
     class Meta:
         ordering = ['-raw_date']
+        app_label = 'raw'
 
     def __unicode__(self):
         if self.asker_id is None:

@@ -2,6 +2,7 @@ import logging
 from django.db import models
 from django.db.models import get_model
 from constants import GENDER_CHOICES
+from .raw import RawMember
 
 
 logger = logging.getLogger('legcowatch')
@@ -14,9 +15,7 @@ class TimestampMixin(object):
 
 class BaseParsedModel(models.Model):
     uid = models.CharField(max_length=100, unique=True)
-    deactivate = models.BooleanField(default=0)
-    # Store the override directly on the model
-    override = models.TextField(blank=True, default='')
+    deactivate = models.BooleanField(default=False)
 
     class Meta:
         abstract = True
@@ -81,9 +80,23 @@ class Override(models.Model):
 
 
 class PersonManager(models.Manager):
+    def create_from_raw(self, raw_obj):
+        try:
+            obj = self.get(uid=raw_obj.uid)
+        except self.model.DoesNotExist as e:
+            obj = self.model()
+        # Copy items over
+        for field in [xx.name for xx in obj._meta.fields]:
+            setattr(obj, field, getattr(raw_obj, field, None))
+        obj.deactivate = False
+        return obj
+
     def populate(self):
-        # Populate this table from the raw models
-        pass
+        raw_items = RawMember.objects.all()
+        for item in raw_items:
+            # Get or create, but without commit
+            obj = self.create_from_raw(item)
+            obj.save()
 
 
 class ParsedPerson(TimestampMixin, BaseParsedModel):
