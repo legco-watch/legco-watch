@@ -1,5 +1,6 @@
+from django.forms import ModelForm
 from django.http import HttpResponse
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, FormView
 from django.views.generic.detail import BaseDetailView
 from raw import models
 from raw.models import RawCouncilAgenda, RawMember, RawCommittee

@@ -293,6 +293,8 @@ class RawMember(RawModel):
 
     UID_PREFIX = 'member'
 
+    not_overridable = ['service_e', 'service_c', 'photo_file']
+
     def __unicode__(self):
         return u"{} {}".format(unicode(self.name_e), unicode(self.name_c))
 
