@@ -1,9 +1,26 @@
 import logging
 from django.db import models
 from django.db.models import get_model
+from constants import GENDER_CHOICES
 
 
 logger = logging.getLogger('legcowatch')
+
+
+class TimestampMixin(object):
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+
+class BaseParsedModel(models.Model):
+    uid = models.CharField(max_length=100, unique=True)
+    deactivate = models.BooleanField(default=0)
+    # Store the override directly on the model
+    override = models.TextField(blank=True, default='')
+
+    class Meta:
+        abstract = True
+        app_label = 'raw'
 
 
 class OverrideManager(models.Manager):
@@ -63,3 +80,26 @@ class Override(models.Model):
         return instance
 
 
+class PersonManager(models.Manager):
+    def populate(self):
+        # Populate this table from the raw models
+        pass
+
+
+class ParsedPerson(TimestampMixin, BaseParsedModel):
+    name_e = models.CharField(max_length=100)
+    name_c = models.CharField(max_length=100)
+    title_e = models.CharField(max_length=100)
+    title_c = models.CharField(max_length=100)
+    honours_e = models.CharField(max_length=50, blank=True)
+    honours_c = models.CharField(max_length=50, blank=True)
+    gender = models.IntegerField(choices=GENDER_CHOICES)
+    year_of_birth = models.IntegerField(null=True, blank=True)
+    place_of_birth = models.CharField(max_length=50, blank=True)
+    homepage = models.TextField(blank=True)
+    photo_file = models.TextField(blank=True)
+
+    objects = PersonManager()
+
+    def __unicode__(self):
+        return u"{} {}".format(unicode(self.name_e), unicode(self.name_c))
