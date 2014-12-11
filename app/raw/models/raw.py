@@ -1,12 +1,12 @@
 import logging
-from django.db import models
-from django.db.models import Count, get_model
-from django.utils.encoding import force_unicode
 from datetime import date
+from django.db import models
+from django.db.models import Count
+from django.utils.encoding import force_unicode
 import re
-from raw import utils
-from raw.docs.agenda import CouncilAgenda
-from raw.names import MemberName, NameMatcher
+from .. import utils
+from ..docs.agenda import CouncilAgenda
+from ..names import NameMatcher, MemberName
 
 
 LANG_CN = 1
@@ -22,118 +22,8 @@ GENDER_CHOICES = (
     (GENDER_F, 'Female')
 )
 
+
 logger = logging.getLogger('legcowatch')
-
-
-class ScrapeJobManager(models.Manager):
-    def pending_jobs(self):
-        """
-        Returns the jobs that are still at the scraper
-        """
-        return self.filter(completed=None)
-
-    def complete_jobs(self):
-        """
-        Jobs that have been completed
-        """
-        return self.exclude(completed=None)
-
-    def latest_complete_job(self, spider):
-        """
-        Latest complete job for a single spider
-        """
-        return self.filter(spider=spider).exclude(completed=None).latest('completed')
-
-    def unprocessed_jobs(self):
-        """
-        Returns jobs that have been completed by the scraper, but have not yet been loaded
-        into the raw models.  There may be more than one job per spider
-        """
-        return self.exclude(completed=None).filter(last_fetched=None).order_by('-completed')
-
-    def latest_unprocessed_job(self, spider):
-        """
-        Gets the latest unprocessed job for a single spider
-        """
-        return self.filter(spider=spider).exclude(completed=None).filter(last_fetched=None).latest('completed')
-
-    def orphaned_jobs(self):
-        """
-        Returns jobs that are somehow malformed.  This includes jobs:
-          - That are marked as completed but do not have a corresponding items file on disk
-        """
-        pass
-
-
-class ScrapeJob(models.Model):
-    """
-    Details for keeping track of a scrape job
-    """
-    spider = models.CharField(max_length=100)
-    scheduled = models.DateTimeField()
-    job_id = models.CharField(max_length=100)
-    raw_response = models.TextField()
-    completed = models.DateTimeField(null=True, blank=True)
-    last_fetched = models.DateTimeField(null=True, blank=True)
-
-    objects = ScrapeJobManager()
-
-    def __unicode__(self):
-        return u"{}: {}".format(self.spider, self.job_id)
-
-
-class OverrideManager(models.Manager):
-    def get_from_reference(self, reference):
-        # Tries to retrieve the override for a specific model instance
-        model = reference._meta.model_name
-        ref_id = reference.id
-        try:
-            return self.get(ref_model=model, ref_id=ref_id)
-        except self.model.DoesNotExist as e:
-            return None
-
-    def get_for_class(self, class_name):
-        # Retrieves all of the overrides for a specific model
-        return self.filter(ref_model=class_name.lower())
-
-    def create_from(self, reference):
-        # Creates an uncommitted override for the reference
-        model = reference._meta.model_name
-        ref_id = reference.id
-        instance = self.model(ref_model=model, ref_id=ref_id)
-        return instance
-
-
-class Override(models.Model):
-    # The lowercase string name of the model we're referencing, model._meta.model_name
-    ref_model = models.CharField(max_length=100, null=False)
-    # The id of the object we are overriding
-    ref_id = models.IntegerField(null=False)
-    # Where the serialized override data is stored
-    data = models.TextField(blank=True, null=False, default='')
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
-
-    objects = OverrideManager()
-
-    def __unicode__(self):
-        return u'{} {}'.format(self.ref_model, self.ref_id)
-
-    def _get_model(self):
-        # Gets the model class from the string name
-        # We assume all of the models are in the Raw app
-        res = get_model('raw', self.ref_model)
-        return res
-
-    def get_reference(self):
-        # Gets the reference object
-        model = self._get_model()
-        try:
-            instance = model.objects.get(id=self.ref_id)
-        except model.DoesNotExist as e:
-            logger.warn('Instance of {} with id {} does not exist'.format(self.ref_model, self.ref_id))
-            return None
-        return instance
 
 
 class RawModelManager(models.Manager):
@@ -174,6 +64,7 @@ class RawModel(models.Model):
 
     class Meta:
         abstract = True
+        app_label = 'raw'
 
 
 class RawCouncilAgenda(RawModel):
