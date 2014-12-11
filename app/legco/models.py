@@ -44,7 +44,7 @@ class Constituency(TimestampedModel):
 class Membership(TimestampedModel):
     """
     Essentially an elected seat within a LegCo session.
-    Should have start date and end date, to account for the possiblity
+    Should have start date and end date, to account for the possibility
     of a membership that ends in a certain date
     """
     pass
