@@ -120,10 +120,23 @@ class ParsedModelInstanceList(ListView):
 
 
 class ParsedModelDetailView(FormView):
-    # Dynamically generate the page for all of the fields in the model
     form_class = OverrideForm
     template_name = 'raw/parsedmodel_detail.html'
 
+    def get(self, request, *args, **kwargs):
+        # Check if an override exists.  If it does, load it and use its data to populate the form
+        # Get the form
+        pass
+
+    def post(self, request, *args, **kwargs):
+        pass
+
+    def get_model(self):
+        model_name = self.kwargs['model']
+        mdl = get_model('raw', model_name)
+        return mdl
+
     def get_context_data(self, **kwargs):
         context = super(ParsedModelDetailView, self).get_context_data(**kwargs)
+        context['model'] = self.get_model().get(uid=self.kwargs['uid'])
         return context

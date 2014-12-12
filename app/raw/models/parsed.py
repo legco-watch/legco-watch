@@ -21,6 +21,19 @@ class BaseParsedModel(models.Model):
         abstract = True
         app_label = 'raw'
 
+    def get_overridable_fields(self):
+        # First we get the fields for the model
+        # if the model has `not_overridable`, then we exclude it from the list
+        exclude = getattr(self, 'not_overridable', [])
+        # By default, we want to exclude things like the uid
+        exclude.extend(['created', 'modified', 'uid', 'id'])
+        # Now iterate over the model fields to get the field names we want
+        fields = []
+        for field in self._meta.concrete_fields:
+            if field.name not in exclude:
+                fields.append(field)
+        return fields
+
 
 class OverrideManager(models.Manager):
     def get_from_reference(self, reference):
@@ -116,7 +129,7 @@ class ParsedPerson(TimestampMixin, BaseParsedModel):
 
     objects = PersonManager()
 
-    not_overridabe = ['photo_file']
+    not_overridable = ['photo_file']
 
     def __unicode__(self):
         return u"{} {}".format(unicode(self.name_e), unicode(self.name_c))
