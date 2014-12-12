@@ -1,6 +1,6 @@
 from django.forms import ModelForm
 from django.http import HttpResponse
-from django.views.generic import ListView, DetailView, FormView
+from django.views.generic import ListView, DetailView, FormView, TemplateView
 from django.views.generic.detail import BaseDetailView
 from raw import models
 from raw.models import RawCouncilAgenda, RawMember, RawCommittee
@@ -76,3 +76,19 @@ class RawCommitteeListView(ListView):
 class RawCommitteeDetailView(DetailView):
     model = RawCommittee
     template_name = 'raw/committee_detail.html'
+
+
+class ParsedModelListView(TemplateView):
+    template_name = 'raw/parsedmodel_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ParsedModelListView, self).get_context_data(**kwargs)
+        # Dynamically generate the list of models we're interested in
+        parsed_models = [xx for xx in models.parsed if isinstance(xx, models.BaseParsedModel)]
+        context['models'] = (
+        )
+
+
+class ParsedModelDetailView(TemplateView):
+    # Dynamically generate the page for all of the fields in the model
+    template_name = 'raw/parsedmodel_detail.html'

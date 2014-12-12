@@ -23,6 +23,9 @@ urlpatterns = patterns('',
     url(r'^raw/committees/(?P<pk>[0-9]+)/?$', raw.views.RawCommitteeDetailView.as_view(), name='raw_committee'),
     url(r'^error_report/?$', common.views.ErrorReportFormView.as_view(), name='error_report'),
 
+    url(r'^parsed/?$', raw.views.ParsedModelListView.as_view(), name='parsed_model_list'),
+    url(r'^parsed/(?P<model>[a-zA-Z]+)/?$', raw.views.ParsedModelDetailView.as_view, name='parsed_model_detail'),
+
     url(r'^admin/', include(admin.site.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 )
