@@ -116,6 +116,8 @@ class ParsedPerson(TimestampMixin, BaseParsedModel):
 
     objects = PersonManager()
 
+    not_overridabe = ['photo_file']
+
     def __unicode__(self):
         return u"{} {}".format(unicode(self.name_e), unicode(self.name_c))
 

@@ -1,8 +1,12 @@
+import inspect
+from django.db.models import get_model
 from django.forms import ModelForm
 from django.http import HttpResponse
 from django.views.generic import ListView, DetailView, FormView, TemplateView
 from django.views.generic.detail import BaseDetailView
+from django.views.generic.edit import FormMixin
 from raw import models
+from raw.forms import OverrideForm
 from raw.models import RawCouncilAgenda, RawMember, RawCommittee
 from raw.names import NameMatcher, MemberName
 
@@ -84,11 +88,42 @@ class ParsedModelListView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(ParsedModelListView, self).get_context_data(**kwargs)
         # Dynamically generate the list of models we're interested in
-        parsed_models = [xx for xx in models.parsed if isinstance(xx, models.BaseParsedModel)]
-        context['models'] = (
+        parsed_models = [xx[1] for xx in inspect.getmembers(models.parsed, inspect.isclass)
+                         if issubclass(xx[1], models.BaseParsedModel) and not xx[1] == models.BaseParsedModel]
+        context['models'] = sorted(
+            [{'name': xx._meta.verbose_name.capitalize(), 'path': xx._meta.model_name} for xx in parsed_models],
+            key=lambda x: x['path']
         )
+        return context
 
 
-class ParsedModelDetailView(TemplateView):
+class ParsedModelInstanceList(ListView):
+    template_name = 'raw/parsedmodel_instance_list.html'
+    paginate_by = 25
+
+    def get_model(self):
+        model_name = self.kwargs['model']
+        mdl = get_model('raw', model_name)
+        return mdl
+
+    def get_queryset(self):
+        # Get the model and all the items
+        mdl = self.get_model()
+        return mdl.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super(ParsedModelInstanceList, self).get_context_data(**kwargs)
+        context['model'] = self.get_model()
+        context['model_name'] = context['model']._meta.verbose_name.capitalize()
+        context['path'] = self.kwargs['model']
+        return context
+
+
+class ParsedModelDetailView(FormView):
     # Dynamically generate the page for all of the fields in the model
+    form_class = OverrideForm
     template_name = 'raw/parsedmodel_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ParsedModelDetailView, self).get_context_data(**kwargs)
+        return context

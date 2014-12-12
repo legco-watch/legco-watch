@@ -1,5 +1,11 @@
 {% extends 'base.html' %}
 
 {% block content %}
+  <h1>Parsed models</h1>
+  <ul>
+  {% for model in models %}
+    <li><a href="{% url 'parsed_model_instances' model=model.path %}">{{ model.name }}</a></li>
+  {% endfor %}
+  </ul>
 
 {% endblock content %}
