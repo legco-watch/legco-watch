@@ -126,29 +126,14 @@ class ParsedModelDetailView(TemplateView):
         super(ParsedModelDetailView, self).__init__(*args, **kwargs)
         self._model_instance = None
 
-    def get_initial(self):
-        pass
-
-    def get_form_kwargs(self):
-        kwargs = {
-            'initial': self.get_initial(),
-            'prefix': 'override',
-        }
-
-        if self.request.method in ('POST', 'PUT'):
-            kwargs.update({
-                'data': self.request.POST,
-                'files': self.request.FILES,
-            })
-        return kwargs
-
     def get(self, request, *args, **kwargs):
         # Check if an override exists.  If it does, load it and use its data to populate the form
         # Get the form
         override = self.get_override()
         model_instance = self.get_model_instance()
         if override is None:
-            form = OverrideForm.from_model(model_instance, {'prefix' :'override'})
+            # No override exists, show a blank form
+            form = OverrideForm.from_model(model_instance)
             return self.render_to_response(self.get_context_data(form=form))
         else:
             pass
@@ -174,14 +159,18 @@ class ParsedModelDetailView(TemplateView):
         instance = self.get_model_instance()
         return Override.objects.get_from_reference(instance)
 
-    def get_fields_from_model(self, model):
+    def get_fields_from_model(self, context):
+        # Get the rows of the table, which displays the field name, the base value, and the override form field
+        model = context['model']
+        form = context['form']
         res = []
         for field in model._meta.fields:
-            res.append((field.name, getattr(model, field.name)))
+            form_field = form[field.name] if field.name in form.fields else ''
+            res.append((field.name, getattr(model, field.name), form_field))
         return res
 
     def get_context_data(self, **kwargs):
         context = super(ParsedModelDetailView, self).get_context_data(**kwargs)
         context['model'] = self.get_model_instance()
-        context['fields'] = self.get_fields_from_model(context['model'])
+        context['fields'] = self.get_fields_from_model(context)
         return context
