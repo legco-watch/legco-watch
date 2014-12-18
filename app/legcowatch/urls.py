@@ -25,7 +25,7 @@ urlpatterns = patterns('',
 
     url(r'^parsed/?$', raw.views.ParsedModelListView.as_view(), name='parsed_model_list'),
     url(r'^parsed/(?P<model>[a-zA-Z]+)/?$', raw.views.ParsedModelInstanceList.as_view(), name='parsed_model_instances'),
-    url(r'^parsed/(?P<model>[a-zA-Z]+)/(?P<uid>[a-zA-Z0-9\-_]+)/?$', raw.views.ParsedModelDetailView.as_view(), name='parsed_model_detail'),
+    url(r'^parsed/(?P<model>[a-zA-Z]+)/(?P<uid>[a-zA-Z0-9\-_\.]+)/?$', raw.views.ParsedModelDetailView.as_view(), name='parsed_model_detail'),
 
     url(r'^admin/', include(admin.site.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
