@@ -1,6 +1,9 @@
+from datetime import datetime
+import json
 import logging
 from django.db import models
 from django.db.models import get_model
+import re
 from constants import GENDER_CHOICES
 from .raw import RawMember
 
@@ -135,5 +138,64 @@ class ParsedPerson(TimestampMixin, BaseParsedModel):
         return u"{} {}".format(unicode(self.name_e), unicode(self.name_c))
 
 
+class MembershipManager(models.Manager):
+    def create_from_raw(self, raw_obj):
+        # Create all the memberships from a RawMember.  So could result in multiple new objects
+        try:
+            obj = self.get(uid=raw_obj.uid)
+        except self.model.DoesNotExist as e:
+            obj = self.model()
+        # Copy items over
+        for field in [xx.name for xx in obj._meta.fields]:
+            setattr(obj, field, getattr(raw_obj, field, None))
+        obj.deactivate = False
+        return obj
+
+    def populate(self):
+        pass
+
+
 class ParsedMembership(TimestampMixin, BaseParsedModel):
-    pass
+    person = models.ForeignKey(ParsedPerson, related_name='memberships')
+    start_date = models.DateField(null=False)
+    end_date = models.DateField(null=True)
+    method_obtained = models.CharField(max_length=255)
+    position = models.CharField(max_length=255)
+    note = models.CharField(max_length=255, default='')
+
+    objects = PersonManager()
+
+    not_overridable = ['person']
+
+
+class MembershipParser(object):
+    # Container for parsing membership data in RawMember.service_e and service_c
+    DATE_RE_ENG = r'(?P<start>\d+ \w+ \d+) - (?P<end>\d+ \w+ \d+)?'
+    DATE_FORMAT_ENG = '%d %B %Y'
+    DATE_RE_CN = r''
+
+    def __init__(self, membership_obj, lang='E'):
+        self._raw = membership_obj
+        self.start_date, self.end_date = self.parse_dates(membership_obj[0])
+        self.end_date = None
+        # Appointed or Elected
+        self.method_obtained = None
+        # Ex Officio - Chief Secretary, Geographical Constituency - Kowloon East
+        self.position = None
+        # Retired, replaced, resigned, etc.
+        self.note = None
+
+    def parse_date(self, date_str):
+        if date_str is None:
+            return None
+        return datetime.strptime(date_str, self.DATE_FORMAT_ENG).date()
+
+    def parse_dates(self, json_obj):
+        # First element of the json object is the string
+        date_string = json_obj
+        matched_dates = re.match(self.DATE_RE_ENG, date_string)
+        if matched_dates is None:
+            return None, None
+
+        matches = matched_dates.groups()
+        return self.parse_date(matches[0]), self.parse_date(matches[1])

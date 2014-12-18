@@ -134,12 +134,12 @@ class ParsedModelDetailView(TemplateView):
         model_instance = self.get_model_instance()
         if override is None:
             # No override exists, show a blank form
-            form = OverrideForm.from_model(model_instance)
-            return self.render_to_response(self.get_context_data(form=form))
+            form_kwargs = None
         else:
             # An override exists, so we load it up and use the data as the initial data
-            form = OverrideForm.from_model(model_instance, {'initial': json.loads(override.data)})
-            return self.render_to_response(self.get_context_data(form=form))
+            form_kwargs = {'initial': json.loads(override.data)}
+        form = OverrideForm.from_model(model_instance, form_kwargs)
+        return self.render_to_response(self.get_context_data(form=form))
 
     def get_form_data(self, form):
         # We actually don't care about the form validation, we just want to serialize the form data,
@@ -159,11 +159,11 @@ class ParsedModelDetailView(TemplateView):
         # If we have new data in the form, then save the override
         if len(override_data) > 0:
             override = self.get_override()
+            # Create an override object if it doesn't exist
             if override is None:
                 override = Override.objects.create_from(model_instance)
             override.data = json.dumps(override_data)
             override.save()
-
         return self.render_to_response(self.get_context_data(form=form))
 
     def get_model_class(self):
