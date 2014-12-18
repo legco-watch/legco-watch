@@ -137,8 +137,9 @@ class ParsedModelDetailView(TemplateView):
             form = OverrideForm.from_model(model_instance)
             return self.render_to_response(self.get_context_data(form=form))
         else:
-            pass
-            # return self.render_to_response(self.get_context_data(form=form))
+            # An override exists, so we load it up and use the data as the initial data
+            form = OverrideForm.from_model(model_instance, {'initial': json.loads(override.data)})
+            return self.render_to_response(self.get_context_data(form=form))
 
     def get_form_data(self, form):
         # We actually don't care about the form validation, we just want to serialize the form data,
@@ -152,7 +153,6 @@ class ParsedModelDetailView(TemplateView):
         return data_dict
 
     def post(self, request, *args, **kwargs):
-        import ipdb; ipdb.set_trace()
         model_instance = self.get_model_instance()
         form = OverrideForm.from_model(model_instance, {'data': request.POST})
         override_data = self.get_form_data(form)
