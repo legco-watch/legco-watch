@@ -39,9 +39,9 @@ class OverrideManager(models.Manager):
     def get_from_reference(self, reference):
         # Tries to retrieve the override for a specific model instance
         model = reference._meta.model_name
-        ref_id = reference.id
+        ref_uid = reference.uid
         try:
-            return self.get(ref_model=model, ref_id=ref_id)
+            return self.get(ref_model=model, ref_uid=ref_uid)
         except self.model.DoesNotExist as e:
             return None
 

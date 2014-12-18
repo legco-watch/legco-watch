@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <table>
+  <table class="table table-striped">
     <thead>
     <tr>
       <td>Field</td>
@@ -10,7 +10,13 @@
     </tr>
     </thead>
     <tbody>
-
+    {% for field in fields %}
+      <tr>
+      <td>{{ field.0 }}</td>
+      <td>{{ field.1 }}</td>
+      <td></td>
+      </tr>
+    {% endfor %}
     </tbody>
   </table>
 

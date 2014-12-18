@@ -7,7 +7,7 @@ from django.views.generic.detail import BaseDetailView
 from django.views.generic.edit import FormMixin
 from raw import models
 from raw.forms import OverrideForm
-from raw.models import RawCouncilAgenda, RawMember, RawCommittee
+from raw.models import RawCouncilAgenda, RawMember, RawCommittee, Override
 from raw.names import NameMatcher, MemberName
 
 
@@ -119,24 +119,69 @@ class ParsedModelInstanceList(ListView):
         return context
 
 
-class ParsedModelDetailView(FormView):
-    form_class = OverrideForm
+class ParsedModelDetailView(TemplateView):
     template_name = 'raw/parsedmodel_detail.html'
+
+    def __init__(self, *args, **kwargs):
+        super(ParsedModelDetailView, self).__init__(*args, **kwargs)
+        self._model_instance = None
+
+    def get_initial(self):
+        pass
+
+    def get_form_kwargs(self):
+        kwargs = {
+            'initial': self.get_initial(),
+            'prefix': 'override',
+        }
+
+        if self.request.method in ('POST', 'PUT'):
+            kwargs.update({
+                'data': self.request.POST,
+                'files': self.request.FILES,
+            })
+        return kwargs
 
     def get(self, request, *args, **kwargs):
         # Check if an override exists.  If it does, load it and use its data to populate the form
         # Get the form
-        pass
+        override = self.get_override()
+        model_instance = self.get_model_instance()
+        if override is None:
+            form = OverrideForm.from_model(model_instance, {'prefix' :'override'})
+            return self.render_to_response(self.get_context_data(form=form))
+        else:
+            pass
+            # return self.render_to_response(self.get_context_data(form=form))
 
     def post(self, request, *args, **kwargs):
         pass
 
-    def get_model(self):
+    def get_model_class(self):
+        # Gets the model class that we're currently viewing
         model_name = self.kwargs['model']
         mdl = get_model('raw', model_name)
         return mdl
 
+    def get_model_instance(self):
+        # Gets the instance of the model class that we're viewing
+        if self._model_instance is None:
+            self._model_instance = self.get_model_class().objects.get(uid=self.kwargs['uid'])
+        return self._model_instance
+
+    def get_override(self):
+        # Tries to get the Override instance for the model
+        instance = self.get_model_instance()
+        return Override.objects.get_from_reference(instance)
+
+    def get_fields_from_model(self, model):
+        res = []
+        for field in model._meta.fields:
+            res.append((field.name, getattr(model, field.name)))
+        return res
+
     def get_context_data(self, **kwargs):
         context = super(ParsedModelDetailView, self).get_context_data(**kwargs)
-        context['model'] = self.get_model().get(uid=self.kwargs['uid'])
+        context['model'] = self.get_model_instance()
+        context['fields'] = self.get_fields_from_model(context['model'])
         return context
