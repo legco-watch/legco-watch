@@ -152,7 +152,9 @@ class MembershipManager(models.Manager):
         return obj
 
     def populate(self):
-        pass
+        raw_items = RawMember.objects.all()
+        for item in raw_items:
+            parsed = MembershipParser(item.service_e)
 
 
 class ParsedMembership(TimestampMixin, BaseParsedModel):
@@ -170,32 +172,57 @@ class ParsedMembership(TimestampMixin, BaseParsedModel):
 
 class MembershipParser(object):
     # Container for parsing membership data in RawMember.service_e and service_c
-    DATE_RE_ENG = r'(?P<start>\d+ \w+ \d+) - (?P<end>\d+ \w+ \d+)?'
-    DATE_FORMAT_ENG = '%d %B %Y'
-    DATE_RE_CN = r''
+    # We only care about the English, and we'll use that as the basis for translation into Chinese
+    DATE_RE = r'(?P<start>\d+ \w+ \d+) - (?P<end>\d+ \w+ \d+)?'
+    DETAIL_RE = r'^(?P<method>\w+) \((?P<position>[a-zA-Z\- ]+)\)$'
+    DATE_FORMAT = '%d %B %Y'
 
     def __init__(self, membership_obj, lang='E'):
         self._raw = membership_obj
         self.start_date, self.end_date = self.parse_dates(membership_obj[0])
-        self.end_date = None
+        method, position = self.parse_position_method(membership_obj[1])
         # Appointed or Elected
-        self.method_obtained = None
+        self.method_obtained = method
         # Ex Officio - Chief Secretary, Geographical Constituency - Kowloon East
-        self.position = None
+        self.position = position
         # Retired, replaced, resigned, etc.
-        self.note = None
+        if len(membership_obj) > 2:
+            self.note = self.parse_note(membership_obj[2])
+        else:
+            self.note = None
 
     def parse_date(self, date_str):
         if date_str is None:
             return None
-        return datetime.strptime(date_str, self.DATE_FORMAT_ENG).date()
+        try:
+            return datetime.strptime(date_str, self.DATE_FORMAT).date()
+        except ValueError:
+            return None
 
-    def parse_dates(self, json_obj):
+    def parse_dates(self, date_string):
         # First element of the json object is the string
-        date_string = json_obj
-        matched_dates = re.match(self.DATE_RE_ENG, date_string)
+        matched_dates = re.match(self.DATE_RE, date_string)
         if matched_dates is None:
             return None, None
 
         matches = matched_dates.groups()
         return self.parse_date(matches[0]), self.parse_date(matches[1])
+
+    def parse_position_method(self, position_string):
+        matched = re.match(self.DETAIL_RE, position_string)
+        if matched is None:
+            return None, None
+
+        groups = matched.groups()
+        return groups[0], groups[1]
+
+    def parse_note(self, note_string):
+        res = note_string.replace('(', '').replace(')', '')
+        return res
+
+
+def foo():
+    from raw import models
+    import json, itertools
+    services = [json.loads(xx.service_e) for xx in models.RawMember.objects.all()]
+    services = list(itertools.chain.from_iterable(services))
