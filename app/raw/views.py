@@ -1,4 +1,5 @@
 import inspect
+import json
 from django.db.models import get_model
 from django.forms import ModelForm
 from django.http import HttpResponse
@@ -139,8 +140,31 @@ class ParsedModelDetailView(TemplateView):
             pass
             # return self.render_to_response(self.get_context_data(form=form))
 
+    def get_form_data(self, form):
+        # We actually don't care about the form validation, we just want to serialize the form data,
+        # Strip out anything we don't want, like the CSRF token, and save it to the Overrides database
+        data_dict = form.data.dict()
+        # Strip empty fields and excluded keys
+        excluded_keys = ('csrfmiddlewaretoken', )
+        for k, v in data_dict.items():
+            if k in excluded_keys or v == u'' or v is None:
+                del data_dict[k]
+        return data_dict
+
     def post(self, request, *args, **kwargs):
-        pass
+        import ipdb; ipdb.set_trace()
+        model_instance = self.get_model_instance()
+        form = OverrideForm.from_model(model_instance, {'data': request.POST})
+        override_data = self.get_form_data(form)
+        # If we have new data in the form, then save the override
+        if len(override_data) > 0:
+            override = self.get_override()
+            if override is None:
+                override = Override.objects.create_from(model_instance)
+            override.data = json.dumps(override_data)
+            override.save()
+
+        return self.render_to_response(self.get_context_data(form=form))
 
     def get_model_class(self):
         # Gets the model class that we're currently viewing

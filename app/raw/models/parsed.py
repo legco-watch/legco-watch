@@ -52,8 +52,8 @@ class OverrideManager(models.Manager):
     def create_from(self, reference):
         # Creates an uncommitted override for the reference
         model = reference._meta.model_name
-        ref_id = reference.id
-        instance = self.model(ref_model=model, ref_id=ref_id)
+        ref_uid = reference.uid
+        instance = self.model(ref_model=model, ref_uid=ref_uid)
         return instance
 
 
@@ -75,7 +75,7 @@ class Override(models.Model):
         app_label = 'raw'
 
     def __unicode__(self):
-        return u'{} {}'.format(self.ref_model, self.ref_id)
+        return u'{} {}'.format(self.ref_model, self.ref_uid)
 
     def _get_model(self):
         # Gets the model class from the string name
@@ -87,9 +87,9 @@ class Override(models.Model):
         # Gets the reference object
         model = self._get_model()
         try:
-            instance = model.objects.get(id=self.ref_id)
+            instance = model.objects.get(id=self.ref_uid)
         except model.DoesNotExist as e:
-            logger.warn('Instance of {} with id {} does not exist'.format(self.ref_model, self.ref_id))
+            logger.warn('Instance of {} with id {} does not exist'.format(self.ref_model, self.ref_uid))
             return None
         return instance
 
