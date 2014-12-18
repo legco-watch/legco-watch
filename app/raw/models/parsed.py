@@ -3,6 +3,7 @@ import json
 import logging
 from django.db import models
 from django.db.models import get_model
+from django.utils.text import slugify
 import re
 from constants import GENDER_CHOICES
 from .raw import RawMember
@@ -17,7 +18,9 @@ class TimestampMixin(object):
 
 
 class BaseParsedModel(models.Model):
-    uid = models.CharField(max_length=100, unique=True)
+    # We don't constrain UIDs to be unique, because we may have duplicates in the raw data that we want
+    # to deactivate here
+    uid = models.CharField(max_length=255)
     deactivate = models.BooleanField(default=False)
 
     class Meta:
@@ -139,25 +142,47 @@ class ParsedPerson(TimestampMixin, BaseParsedModel):
 
 
 class MembershipManager(models.Manager):
-    def create_from_raw(self, raw_obj):
+    def create_from_raw(self, person):
         # Create all the memberships from a RawMember.  So could result in multiple new objects
-        try:
-            obj = self.get(uid=raw_obj.uid)
-        except self.model.DoesNotExist as e:
-            obj = self.model()
-        # Copy items over
-        for field in [xx.name for xx in obj._meta.fields]:
-            setattr(obj, field, getattr(raw_obj, field, None))
-        obj.deactivate = False
-        return obj
+        service_objects = json.loads(person.service_e)
+        for service in service_objects:
+            parsed = MembershipParser(service)
+            uid = ParsedMembership.make_uid(person, parsed)
+            # Get or create
+            try:
+                obj = self.get(uid=uid)
+            except self.model.DoesNotExist as e:
+                obj = self.model()
+
+            # Copy data over
+            fields_to_copy = ['start_date', 'end_date', 'method_obtained', 'position', 'note']
+            for field in fields_to_copy:
+                # don't fill in nulls so defaults work
+                val = getattr(parsed, field, None)
+                if val is not None:
+                    setattr(obj, field, val)
+            obj.deactivate = False
+            # Need a ParsedPerson
+            parsed_person = ParsedPerson.objects.get(uid=person.uid)
+            obj.person = parsed_person
+            obj.uid = uid
+            yield obj
 
     def populate(self):
         raw_items = RawMember.objects.all()
         for item in raw_items:
-            parsed = MembershipParser(item.service_e)
+            for membership in self.create_from_raw(item):
+                membership.save()
 
 
 class ParsedMembership(TimestampMixin, BaseParsedModel):
+    """
+    Model for each position and term that a person holds.
+
+    The UID for this should be something like '{member_uid}.m{start_date}.{position_slug}', however it is conceivable
+    that a person may begin to hold multiple offices at the same time.  Currently, this is the case
+    for only one record, which appears to be erroneous, but that doesn't mean it can't happen in the future
+    """
     person = models.ForeignKey(ParsedPerson, related_name='memberships')
     start_date = models.DateField(null=False)
     end_date = models.DateField(null=True)
@@ -165,16 +190,25 @@ class ParsedMembership(TimestampMixin, BaseParsedModel):
     position = models.CharField(max_length=255)
     note = models.CharField(max_length=255, default='')
 
-    objects = PersonManager()
+    objects = MembershipManager()
 
     not_overridable = ['person']
+
+    @staticmethod
+    def make_uid(person_obj, membership_parser):
+        member_uid = person_obj.uid
+        # Can't use strftime because some years < 1900
+        # YYYYMMDD
+        start_date = membership_parser.start_date.isoformat().replace('-', '')
+        slug = slugify(membership_parser.position)
+        return '{}.{}.{}'.format(member_uid, start_date, slug)
 
 
 class MembershipParser(object):
     # Container for parsing membership data in RawMember.service_e and service_c
     # We only care about the English, and we'll use that as the basis for translation into Chinese
     DATE_RE = r'(?P<start>\d+ \w+ \d+) - (?P<end>\d+ \w+ \d+)?'
-    DETAIL_RE = r'^(?P<method>\w+) \((?P<position>[a-zA-Z\- ]+)\)$'
+    DETAIL_RE = r'^(?P<method>\w+) \((?P<position>.+)\)$$'
     DATE_FORMAT = '%d %B %Y'
 
     def __init__(self, membership_obj, lang='E'):
@@ -219,10 +253,3 @@ class MembershipParser(object):
     def parse_note(self, note_string):
         res = note_string.replace('(', '').replace(')', '')
         return res
-
-
-def foo():
-    from raw import models
-    import json, itertools
-    services = [json.loads(xx.service_e) for xx in models.RawMember.objects.all()]
-    services = list(itertools.chain.from_iterable(services))
