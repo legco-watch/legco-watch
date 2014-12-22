@@ -51,6 +51,12 @@ class OverrideManager(models.Manager):
         except self.model.DoesNotExist as e:
             return None
 
+    def get_or_create_from_reference(self, reference):
+        res = self.get_from_reference(reference)
+        if res is None:
+            res = self.create_from(reference)
+        return res
+
     def get_for_class(self, class_name):
         # Retrieves all of the overrides for a specific model
         return self.filter(ref_model=class_name.lower())
@@ -70,7 +76,7 @@ class Override(models.Model):
     # Don't refer to id, because we want to be able to still look up
     # The reference if it is recreated and gets a new auto id
     ref_uid = models.CharField(max_length=100, unique=True)
-    # Where the serialized override data is stored
+    # Where the serialized override data is stored.  'deactivate' is a special key in this
     data = models.TextField(blank=True, null=False, default='')
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
@@ -98,6 +104,22 @@ class Override(models.Model):
             logger.warn('Instance of {} with id {} does not exist'.format(self.ref_model, self.ref_uid))
             return None
         return instance
+
+    def get_payload(self):
+        # Returns the unserialized data payload
+        if self.data == u'':
+            return {}
+        return json.loads(self.data)
+
+    def merge_payload(self, data_to_merge):
+        # Takes a dict and merges it the current payload
+        current = self.get_payload()
+        current.update(data_to_merge)
+        self.data = json.dumps(current)
+
+    def is_deactivated(self):
+        payload = self.get_payload()
+        return payload.get('deactivate', False)
 
 
 class PersonManager(models.Manager):

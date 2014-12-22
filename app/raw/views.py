@@ -3,6 +3,7 @@ import json
 from django.db.models import get_model
 from django.forms import ModelForm
 from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.views.generic import ListView, DetailView, FormView, TemplateView
 from django.views.generic.detail import BaseDetailView
 from django.views.generic.edit import FormMixin
@@ -119,6 +120,37 @@ class ParsedModelInstanceList(ListView):
         context['path'] = self.kwargs['model']
         return context
 
+    def post(self, request, *args, **kwargs):
+        # Post allows deactivation of multiple instances
+        # Check if we got a 'deactivate' key in the post
+        # We also get the id of all instances that were in the form, so that we can see which
+        # instances we need to re-activate
+        ids_to_deactivate = request.POST.getlist('deactivate')
+        ids_to_reactivate = set(request.POST.getlist('overrides')) - set(ids_to_deactivate)
+        if len(ids_to_deactivate) > 0:
+            # Get the models that we want to deactivate.  ORM will coerce to ints for us
+            mdl = self.get_model()
+            instances_to_deactivate = mdl.objects.filter(id__in=ids_to_deactivate)
+            deactivate = {'deactivate': True}
+            for instance in instances_to_deactivate:
+                override = Override.objects.get_or_create_from_reference(instance)
+                override.merge_payload(deactivate)
+                override.save()
+
+        if len(ids_to_reactivate) > 0:
+            # Re-activate any existing overrides
+            mdl = self.get_model()
+            instances_to_reactivate = mdl.objects.filter(id__in=ids_to_reactivate)
+            reactivate = {'deactivate': False}
+            for instance in instances_to_reactivate:
+                override = Override.objects.get_from_reference(instance)
+                if override is None:
+                    continue
+                override.merge_payload(reactivate)
+                override.save()
+
+        return redirect(request.META['HTTP_REFERER'])
+
 
 class ParsedModelDetailView(TemplateView):
     template_name = 'raw/parsedmodel_detail.html'
@@ -194,13 +226,27 @@ class ParsedModelDetailView(TemplateView):
         return res
 
     def get_relations(self):
-        # Returns a list of dictionaries with keys
+        # Gets related models for display on the detail page
         model = self.get_model_instance()
         relations = model._meta.get_all_related_objects()
         res = []
         for relation in relations:
             name = relation.get_accessor_name()
-            res.append({'name': name.capitalize(), 'model_name': relation.var_name, 'objects': getattr(model, name)})
+            objs = getattr(model, name)
+            # We also need to find out which instances of this relation are already deactivated
+            # So we get the uids, get all the overrides for them, and then deserialize the payload to check
+            uids = [xx.uid for xx in objs.all()]
+            overrides = {xx.ref_uid: xx for xx in Override.objects.filter(ref_uid__in=uids)}
+            objects = []
+            for obj in objs.all():
+                uid = obj.uid
+                override = overrides.get(uid, None)
+                if override is not None:
+                    is_deactivated = override.get_payload().get('deactivate', False)
+                else:
+                    is_deactivated = False
+                objects.append((obj, is_deactivated))
+            res.append({'name': name.capitalize(), 'model_name': relation.var_name, 'objects': objects})
         return res
 
     def get_context_data(self, **kwargs):

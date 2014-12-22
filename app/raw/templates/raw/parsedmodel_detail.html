@@ -22,7 +22,7 @@
       <tr>
         <td></td>
         <td></td>
-        <td><input type="submit" value="Save" /></td>
+        <td><input class="btn btn-primary" type="submit" value="Save" /></td>
       </tr>
       </tbody>
     </table>
@@ -30,24 +30,31 @@
 
   {% for relation in relations %}
     <h3>{{ relation.name }}</h3>
-    <table class="table table-striped">
-      <thead>
-      <tr>
-        <th>Related model</th>
-        <th>UID</th>
-        <th>Deactivate?</th>
-      </tr>
-      </thead>
-      <tbody>
-      {% for object in relation.objects.all %}
+    <form method="post" action="{% url 'parsed_model_instances' model=relation.model_name %}">
+      {% csrf_token %}
+      <table class="table table-striped">
+        <thead>
         <tr>
-          <td><a href="{% url 'parsed_model_detail' model=relation.model_name uid=object.uid %}">{{ object }}</a></td>
-          <td>{{ object.uid }}</td>
-          <td></td>
+          <th>Related model</th>
+          <th>UID</th>
+          <th>Deactivate?</th>
         </tr>
-      {% endfor %}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+        {% for object in relation.objects %}
+          <tr>
+            <td><a href="{% url 'parsed_model_detail' model=relation.model_name uid=object.0.uid %}">{{ object.0 }}</a></td>
+            <td>{{ object.0.uid }}</td>
+            <td>
+              <input type="checkbox" name="deactivate" value="{{ object.0.id }}"{% if object.1 %} checked{% endif %} />
+              <input type="hidden" name="overrides" value="{{ object.0.id }}" />
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <input class="btn btn-primary" type="submit" value="Save deactivations" />
+    </form>
   {% endfor %}
 
 {% endblock content %}
