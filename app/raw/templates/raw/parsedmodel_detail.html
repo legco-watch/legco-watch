@@ -28,4 +28,26 @@
     </table>
   </form>
 
+  {% for relation in relations %}
+    <h3>{{ relation.name }}</h3>
+    <table class="table table-striped">
+      <thead>
+      <tr>
+        <th>Related model</th>
+        <th>UID</th>
+        <th>Deactivate?</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for object in relation.objects.all %}
+        <tr>
+          <td><a href="{% url 'parsed_model_detail' model=relation.model_name uid=object.uid %}">{{ object }}</a></td>
+          <td>{{ object.uid }}</td>
+          <td></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% endfor %}
+
 {% endblock content %}

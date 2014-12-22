@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, date
 import json
 import logging
 from django.db import models
-from django.db.models import get_model
+from django.db.models import get_model, Q
 from django.utils.text import slugify
 import re
 from constants import GENDER_CHOICES
@@ -142,6 +142,14 @@ class ParsedPerson(TimestampMixin, BaseParsedModel):
 
 
 class MembershipManager(models.Manager):
+    def get_active_on_date(self, query_date):
+        return self.filter(start_date__lt=query_date, end_date__gt=query_date)
+
+    def get_current(self):
+        # Finds memberships where end date is None
+        today = date.today()
+        return self.filter(Q(start_date__lt=today), Q(end_date__gt=today) | Q(end_date=None))
+
     def create_from_raw(self, person):
         # Create all the memberships from a RawMember.  So could result in multiple new objects
         service_objects = json.loads(person.service_e)
@@ -193,6 +201,13 @@ class ParsedMembership(TimestampMixin, BaseParsedModel):
     objects = MembershipManager()
 
     not_overridable = ['person']
+
+    class Meta:
+        ordering = ['-start_date']
+        app_label = 'raw'
+
+    def __unicode__(self):
+        return '{} to {}'.format(self.start_date, self.end_date)
 
     @staticmethod
     def make_uid(person_obj, membership_parser):

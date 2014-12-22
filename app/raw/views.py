@@ -193,8 +193,20 @@ class ParsedModelDetailView(TemplateView):
             res.append((field.name, getattr(model, field.name), form_field))
         return res
 
+    def get_relations(self):
+        # Returns a list of dictionaries with keys
+        model = self.get_model_instance()
+        relations = model._meta.get_all_related_objects()
+        res = []
+        for relation in relations:
+            name = relation.get_accessor_name()
+            res.append({'name': name.capitalize(), 'model_name': relation.var_name, 'objects': getattr(model, name)})
+        return res
+
     def get_context_data(self, **kwargs):
         context = super(ParsedModelDetailView, self).get_context_data(**kwargs)
         context['model'] = self.get_model_instance()
         context['fields'] = self.get_fields_from_model(context)
+        # Get any related child models, and set those up to be displayed
+        context['relations'] = self.get_relations()
         return context
