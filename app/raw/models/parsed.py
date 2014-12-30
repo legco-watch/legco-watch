@@ -128,9 +128,18 @@ class PersonManager(models.Manager):
             obj = self.get(uid=raw_obj.uid)
         except self.model.DoesNotExist as e:
             obj = self.model()
-        # Copy items over
+        # Copy items over, but a few fields require special handling
+        excluded = ['education_e', 'education_c', 'occupation_e', 'occupation_c']
         for field in [xx.name for xx in obj._meta.fields]:
-            setattr(obj, field, getattr(raw_obj, field, None))
+            if field not in excluded:
+                setattr(obj, field, getattr(raw_obj, field, None))
+        # Concatenate the education and occupation fields
+        for field in excluded:
+            raw_val = getattr(raw_obj, field)
+            if raw_val is None or raw_val == u'':
+                continue
+            json_val = json.loads(raw_val)
+            setattr(obj, field, ', '.join(json_val))
         obj.deactivate = False
         return obj
 
@@ -147,13 +156,17 @@ class ParsedPerson(TimestampMixin, BaseParsedModel):
     name_c = models.CharField(max_length=100)
     title_e = models.CharField(max_length=100)
     title_c = models.CharField(max_length=100)
-    honours_e = models.CharField(max_length=50, blank=True)
-    honours_c = models.CharField(max_length=50, blank=True)
+    honours_e = models.CharField(max_length=50, blank=True, default='')
+    honours_c = models.CharField(max_length=50, blank=True, default='')
+    education_e = models.TextField(blank=True, default='')
+    education_c = models.TextField(blank=True, default='')
+    occupation_e = models.TextField(blank=True, default='')
+    occupation_c = models.TextField(blank=True, default='')
     gender = models.IntegerField(choices=GENDER_CHOICES)
     year_of_birth = models.IntegerField(null=True, blank=True)
-    place_of_birth = models.CharField(max_length=50, blank=True)
-    homepage = models.TextField(blank=True)
-    photo_file = models.TextField(blank=True)
+    place_of_birth = models.CharField(max_length=50, blank=True, default='')
+    homepage = models.TextField(blank=True, default='')
+    photo_file = models.TextField(blank=True, default='')
 
     objects = PersonManager()
 
