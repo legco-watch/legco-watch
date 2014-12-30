@@ -6,7 +6,7 @@ from django.db.models import get_model, Q
 from django.utils.text import slugify
 import re
 from constants import GENDER_CHOICES
-from .raw import RawMember
+from .raw import RawMember, RawCommittee
 
 
 logger = logging.getLogger('legcowatch')
@@ -17,11 +17,35 @@ class TimestampMixin(object):
     modified = models.DateTimeField(auto_now=True)
 
 
+class BaseParsedManager(models.Manager):
+    def create_from_raw(self, raw_obj):
+        # copy fields directly without any processing
+        try:
+            obj = self.get(uid=raw_obj.uid)
+        except self.model.DoesNotExist as e:
+            obj = self.model()
+        for field in [xx.name for xx in obj._meta.fields]:
+            setattr(obj, field, getattr(raw_obj, field, None))
+        obj.deactivate = False
+        return obj
+
+    def populate(self):
+        raw_items = self.model.RAW_MODEL.objects.all()
+        for item in raw_items:
+            # Get or create, but without commit
+            obj = self.create_from_raw(item)
+            obj.save()
+
+
 class BaseParsedModel(models.Model):
     # We don't constrain UIDs to be unique, because we may have duplicates in the raw data that we want
     # to deactivate here
     uid = models.CharField(max_length=255)
     deactivate = models.BooleanField(default=False)
+
+    # link to the raw model object we're mapping to
+    RAW_MODEL = None
+    objects = BaseParsedManager()
 
     class Meta:
         abstract = True
@@ -143,13 +167,6 @@ class PersonManager(models.Manager):
         obj.deactivate = False
         return obj
 
-    def populate(self):
-        raw_items = RawMember.objects.all()
-        for item in raw_items:
-            # Get or create, but without commit
-            obj = self.create_from_raw(item)
-            obj.save()
-
 
 class ParsedPerson(TimestampMixin, BaseParsedModel):
     name_e = models.CharField(max_length=100)
@@ -171,6 +188,8 @@ class ParsedPerson(TimestampMixin, BaseParsedModel):
     objects = PersonManager()
 
     not_overridable = ['photo_file']
+
+    RAW_MODEL = RawMember
 
     def __unicode__(self):
         return u"{} {}".format(unicode(self.name_e), unicode(self.name_c))
@@ -236,6 +255,7 @@ class ParsedMembership(TimestampMixin, BaseParsedModel):
     objects = MembershipManager()
 
     not_overridable = ['person']
+    RAW_MODEL = RawMember
 
     class Meta:
         ordering = ['-start_date']
@@ -303,3 +323,20 @@ class MembershipParser(object):
     def parse_note(self, note_string):
         res = note_string.replace('(', '').replace(')', '')
         return res
+
+
+class ParsedCommittee(TimestampMixin, BaseParsedModel):
+    code = models.CharField(max_length=100, blank=True)
+    name_e = models.TextField()
+    name_c = models.TextField()
+    url_e = models.TextField(blank=True, default='')
+    url_c = models.TextField(blank=True, default='')
+
+    RAW_MODEL = RawCommittee
+
+    class Meta:
+        ordering = ['name_e']
+        app_label = 'raw'
+
+    def __unicode__(self):
+        return u'{}: {} {}'.format(self.code, self.name_e, self.name_c)
