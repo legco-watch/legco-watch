@@ -51,6 +51,7 @@ class CouncilAgenda(object):
     )
 
     def __init__(self, uid, source, *args, **kwargs):
+        logger.info(u'** Parsing agenda {}'.format(uid))
         self.uid = uid
         if uid[-1] == 'e':
             self.english = True
@@ -350,7 +351,8 @@ class CouncilAgenda(object):
             # For chinese bills, the headers are outside of the tables and enclosed in <p> tags.
             # So check if the the tag is a p tag, and if it matches a header text
             this_element = self.bills[i]
-            if this_element.tag == 'p':
+            # Hack check for IndexError, probably from malformed document
+            if this_element.tag == 'p' and i+1 < len(self.bills):
                 text = this_element.text_content().strip()
                 if text.startswith(FIRST_READING_PATTERN_C):
                     logger.debug(u'Found first reading bills table headered: {}'.format(text))
