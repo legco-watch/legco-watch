@@ -242,7 +242,7 @@ class ParsedMembership(TimestampMixin, BaseParsedModel):
         app_label = 'raw'
 
     def __unicode__(self):
-        return '{} to {}'.format(self.start_date, self.end_date)
+        return '{}: {} - {}'.format(self.position, self.start_date, self.end_date)
 
     @staticmethod
     def make_uid(person_obj, membership_parser):
