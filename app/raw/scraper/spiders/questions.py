@@ -59,7 +59,7 @@ class QuestionMixin(object):
             match = re.search(matcher, elem.text_content()[:50])
             if match is not None:
                 this_date = match.groupdict()['date']
-                self.log(u'Found table for date {}'.format(this_date), level=log.INFO)
+                self.log(u'Found table for date {}'.format(this_date))
                 count_sessions += 1
                 questions_table = elem.getnext()
                 for row in questions_table.xpath('./tr'):
