@@ -1,12 +1,16 @@
+from copy import copy
 from datetime import datetime, date
 import json
 import logging
-from django.db import models
+from django.conf import settings
+from django.db import models, IntegrityError
+from django.db.backends import BaseDatabaseWrapper
+from django.db.backends.util import CursorWrapper
 from django.db.models import get_model, Q
 from django.utils.text import slugify
 import re
 from constants import GENDER_CHOICES
-from .raw import RawMember, RawCommittee
+from .raw import RawMember, RawCommittee, RawCommitteeMembership
 
 
 logger = logging.getLogger('legcowatch')
@@ -19,22 +23,38 @@ class TimestampMixin(object):
 
 class BaseParsedManager(models.Manager):
     def create_from_raw(self, raw_obj):
+        if getattr(self, 'excluded', None) is not None:
+            excluded = copy(self.excluded)
+        else:
+            excluded = []
         # copy fields directly without any processing
         try:
             obj = self.get(uid=raw_obj.uid)
         except self.model.DoesNotExist as e:
             obj = self.model()
         for field in [xx.name for xx in obj._meta.fields]:
-            setattr(obj, field, getattr(raw_obj, field, None))
+            if field not in excluded:
+                setattr(obj, field, getattr(raw_obj, field, None))
         obj.deactivate = False
         return obj
 
     def populate(self):
+        if settings.DEBUG:
+            original = BaseDatabaseWrapper.make_debug_cursor
+            BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
+
         raw_items = self.model.RAW_MODEL.objects.all()
         for item in raw_items:
             # Get or create, but without commit
             obj = self.create_from_raw(item)
-            obj.save()
+            try:
+                obj.save()
+            except IntegrityError as e:
+                logger.warning(u'Could not create from {}'.format(item))
+                logger.warning(e)
+
+        if settings.DEBUG:
+            BaseDatabaseWrapper.make_debug_cursor = original
 
 
 class BaseParsedModel(models.Model):
@@ -185,6 +205,8 @@ class ParsedPerson(TimestampMixin, BaseParsedModel):
     homepage = models.TextField(blank=True, default='')
     photo_file = models.TextField(blank=True, default='')
 
+    committees = models.ManyToManyField('ParsedCommittee', through='ParsedCommitteeMembership')
+
     objects = PersonManager()
 
     not_overridable = ['photo_file']
@@ -331,6 +353,7 @@ class ParsedCommittee(TimestampMixin, BaseParsedModel):
     name_c = models.TextField()
     url_e = models.TextField(blank=True, default='')
     url_c = models.TextField(blank=True, default='')
+    members = models.ManyToManyField(ParsedPerson, through='ParsedCommitteeMembership')
 
     RAW_MODEL = RawCommittee
 
@@ -340,3 +363,51 @@ class ParsedCommittee(TimestampMixin, BaseParsedModel):
 
     def __unicode__(self):
         return u'{}: {} {}'.format(self.code, self.name_e, self.name_c)
+
+
+class CommitteeMembershipManager(BaseParsedManager):
+    excluded = ['person', 'committee']
+
+    def get_active_on_date(self, query_date):
+        return self.filter(start_date__lt=query_date, end_date__gt=query_date)
+
+    def get_current(self):
+        # Finds memberships where end date is None
+        today = date.today()
+        return self.filter(Q(start_date__lt=today), Q(end_date__gt=today) | Q(end_date=None))
+
+    def create_from_raw(self, raw_obj):
+        obj = super(CommitteeMembershipManager, self).create_from_raw(raw_obj)
+        # String up the person and the committee
+        raw_committee = raw_obj.committee
+        if raw_committee is not None:
+            committee = ParsedCommittee.objects.get(uid=raw_committee.uid)
+            obj.committee = committee
+
+        if raw_obj.member is not None:
+            raw_member = raw_obj.member.get_raw_member()
+            if raw_member is not None:
+                person = ParsedPerson.objects.get(uid=raw_member.uid)
+                obj.person = person
+        return obj
+
+
+class ParsedCommitteeMembership(TimestampMixin, BaseParsedModel):
+    """
+    Many to many table linking ParsedPerson and ParsedCommittee.
+    """
+    committee = models.ForeignKey(ParsedCommittee, related_name='memberships')
+    person = models.ForeignKey(ParsedPerson, related_name='committee_memberships')
+    post_e = models.CharField(max_length=100, default='')
+    post_c = models.CharField(max_length=100, blank=True, default='')
+    start_date = models.DateTimeField(null=False)
+    end_date = models.DateTimeField(null=True)
+
+    objects = CommitteeMembershipManager()
+    RAW_MODEL = RawCommitteeMembership
+
+    class Meta:
+        app_label = 'raw'
+
+    def __unicode__(self):
+        return u'{} - {} - {}'.format(self.post_e, self.start_date, self.end_date)
