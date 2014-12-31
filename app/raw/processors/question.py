@@ -95,7 +95,11 @@ class QuestionProcessor(BaseProcessor):
         match = re.search(number_re, item['number_and_type'], re.UNICODE)
         if match is None:
             raise RuntimeError(u'Could not parse number and type of question from {}'.format(item['number_and_type']))
+        is_urgent = u'UQ' in item['number_and_type']
         matches = match.groupdict()
         number = matches['number']
         lang = item['language'].lower()
-        return u'question-{}-{}-{}'.format(date, number, lang)
+        if not is_urgent:
+            return u'question-{}-{}-{}'.format(date, number, lang)
+        else:
+            return u'question-{}-u{}-{}'.format(date, number, lang)

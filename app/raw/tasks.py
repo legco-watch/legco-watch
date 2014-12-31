@@ -18,7 +18,7 @@ logger = logging.getLogger('legcowatch')
 
 def generate_scrape_name(spider_name):
     # Assume we don't need second resolution
-    timestamp = datetime.now().strftime('%y%m%d%H%m')
+    timestamp = datetime.now().strftime('%y%m%d%H%M')
     return '{}{}.jsonl'.format(spider_name, timestamp)
 
 
@@ -81,7 +81,7 @@ def do_scrape(spider_name):
         job_id = do_scrape.request.id
         if job_id is None:
             # Case if called directly without using Celery, put in a dummy job id
-            timestamp = datetime.now().strftime('%y%m%d%H%m')
+            timestamp = datetime.now().strftime('%y%m%d%H%M')
             job_id = 'MANUAL_RUN{}'.format(timestamp)
         job = ScrapeJob.objects.create(
             spider=spider_name,
@@ -108,7 +108,7 @@ def do_scrape(spider_name):
 
 
 @shared_task
-def process_scrape(spider_name, force=False):
+def process_scrape(spider_name):
     """
     Process the results of a scrape for a spider.  Will read the JSONLines file and make the appropriate
     Raw objects in the database
@@ -116,10 +116,7 @@ def process_scrape(spider_name, force=False):
     :return:
     """
     try:
-        if force:
-            job = ScrapeJob.objects.latest_complete_job(spider_name)
-        else:
-            job = ScrapeJob.objects.latest_unprocessed_job(spider_name)
+        job = ScrapeJob.objects.latest_complete_job(spider_name)
     except ScrapeJob.DoesNotExist:
         logger.warn("No jobs found for spider {}".format(spider_name))
         return

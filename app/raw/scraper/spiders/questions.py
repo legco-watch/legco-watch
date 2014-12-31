@@ -77,6 +77,7 @@ class QuestionSpider(QuestionMixin, Spider):
     name = 'council_question'
     start_urls = [
         # English
+        'http://www.legco.gov.hk/yr14-15/english/counmtg/question/ques1415.htm',
         'http://www.legco.gov.hk/yr13-14/english/counmtg/question/ques1314.htm',
         'http://www.legco.gov.hk/yr12-13/english/counmtg/question/ques1213.htm',
         'http://www.legco.gov.hk/yr11-12/english/counmtg/question/ques1112.htm',
@@ -86,6 +87,7 @@ class QuestionSpider(QuestionMixin, Spider):
         'http://www.legco.gov.hk/yr07-08/english/counmtg/question/ques0708.htm',
         'http://www.legco.gov.hk/yr06-07/english/counmtg/question/ques0607.htm',
         # Chinese
+        'http://www.legco.gov.hk/yr14-15/chinese/counmtg/question/ques1415.htm',
         'http://www.legco.gov.hk/yr13-14/chinese/counmtg/question/ques1314.htm',
         'http://www.legco.gov.hk/yr12-13/chinese/counmtg/question/ques1213.htm',
         'http://www.legco.gov.hk/yr11-12/chinese/counmtg/question/ques1112.htm',
@@ -94,7 +96,6 @@ class QuestionSpider(QuestionMixin, Spider):
         'http://www.legco.gov.hk/yr08-09/chinese/counmtg/question/ques0809.htm',
         'http://www.legco.gov.hk/yr07-08/chinese/counmtg/question/ques0708.htm',
         'http://www.legco.gov.hk/yr06-07/chinese/counmtg/question/ques0607.htm',
-
     ]
 
     def make_question(self, language, response, row, this_date):
