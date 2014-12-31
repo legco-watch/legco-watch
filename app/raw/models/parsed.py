@@ -10,7 +10,7 @@ from django.db.models import get_model, Q
 from django.utils.text import slugify
 import re
 from constants import GENDER_CHOICES
-from .raw import RawMember, RawCommittee, RawCommitteeMembership
+from .raw import RawMember, RawCommittee, RawCommitteeMembership, RawCouncilAgenda
 
 
 logger = logging.getLogger('legcowatch')
@@ -38,11 +38,17 @@ class BaseParsedManager(models.Manager):
         obj.deactivate = False
         return obj
 
-    def populate(self):
+    def _deactivate_db_debug(self):
         if settings.DEBUG:
-            original = BaseDatabaseWrapper.make_debug_cursor
+            self.original = BaseDatabaseWrapper.make_debug_cursor
             BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
 
+    def _reactivate_db_debug(self):
+        if settings.DEBUG and getattr(self, 'original') is not None:
+            BaseDatabaseWrapper.make_debug_cursor = self.original
+
+    def populate(self):
+        self._deactivate_db_debug()
         raw_items = self.model.RAW_MODEL.objects.all()
         for item in raw_items:
             # Get or create, but without commit
@@ -52,9 +58,7 @@ class BaseParsedManager(models.Manager):
             except IntegrityError as e:
                 logger.warning(u'Could not create from {}'.format(item))
                 logger.warning(e)
-
-        if settings.DEBUG:
-            BaseDatabaseWrapper.make_debug_cursor = original
+        self._reactivate_db_debug()
 
 
 class BaseParsedModel(models.Model):
@@ -411,3 +415,49 @@ class ParsedCommitteeMembership(TimestampMixin, BaseParsedModel):
 
     def __unicode__(self):
         return u'{} - {} - {}'.format(self.post_e, self.start_date, self.end_date)
+
+
+class ParsedCouncilMeeting(TimestampMixin, BaseParsedModel):
+    """
+    Meetings can span multiple days, but have only one agenda for all of the business that will occur on that day
+    """
+    # Usual time of start is 11am
+    start_date = models.DateTimeField(null=False)
+    end_date = models.DateTimeField(null=True)
+
+    RAW_MODEL = RawCouncilAgenda
+
+    class Meta:
+        app_label = 'raw'
+
+    def __unicode__(self):
+        if self.end_date is None:
+            return u'Meeting on {}'.format(self.start_date.date())
+        else:
+            return u'Meeting on {} to {}'.format(self.start_date.date(), self.end_date.date())
+
+
+class ParsedQuestion(TimestampMixin, BaseParsedModel):
+    """
+    Questions asked during LegCo meetings
+    """
+    ORAL = 1
+    WRITTEN = 2
+    QTYPES = (
+        (ORAL, 'Oral'),
+        (WRITTEN, 'Written')
+    )
+    meeting = models.ForeignKey(ParsedCouncilMeeting, related_name='questions')
+    number = models.IntegerField()
+    urgent = models.BooleanField(default=False)
+    question_type = models.IntegerField(choices=QTYPES)
+    asker = models.ForeignKey(ParsedPerson, related_name='questions')
+    # A secretary of the government
+    replier = models.CharField(max_length=255)
+    # Actual content of the question
+    subject_e = models.TextField(default='')
+    subject_c = models.TextField(default='')
+    body_e = models.TextField(default='')
+    body_c = models.TextField(default='')
+    reply_e = models.TextField(default='')
+    reply_c = models.TextField(default='')
