@@ -10,7 +10,6 @@ from ..names import NameMatcher, MemberName
 from constants import *
 
 
-
 logger = logging.getLogger('legcowatch')
 
 
@@ -113,6 +112,12 @@ class RawCouncilAgenda(RawModel):
         """
         with open('raw/tests/fixtures/{}.html'.format(self.uid), 'wb') as f:
             f.write(self.get_source().encode('utf-8'))
+
+    @property
+    def start_date(self):
+        splits = self.uid.split(u'-')
+        date_string = splits[1]
+        return date(int(date_string[0:4]), int(date_string[4:6]), int(date_string[6:8]))
 
 
 class RawCouncilVoteResult(RawModel):

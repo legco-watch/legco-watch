@@ -1,5 +1,5 @@
 from copy import copy
-from datetime import datetime, date
+from datetime import datetime, date, time
 import json
 import logging
 from django.conf import settings
@@ -50,14 +50,17 @@ class BaseParsedManager(models.Manager):
     def populate(self):
         self._deactivate_db_debug()
         raw_items = self.model.RAW_MODEL.objects.all()
+        count = 0
         for item in raw_items:
             # Get or create, but without commit
             obj = self.create_from_raw(item)
             try:
                 obj.save()
+                count += 1
             except IntegrityError as e:
                 logger.warning(u'Could not create from {}'.format(item))
                 logger.warning(e)
+        logger.info('Populated {} objects'.format(count))
         self._reactivate_db_debug()
 
 
@@ -417,6 +420,24 @@ class ParsedCommitteeMembership(TimestampMixin, BaseParsedModel):
         return u'{} - {} - {}'.format(self.post_e, self.start_date, self.end_date)
 
 
+class CouncilMeetingManager(BaseParsedManager):
+    excluded = ['start_date', 'end_date']
+
+    def create_from_raw(self, raw_obj):
+        # Need to snip off the language on the agenda UID
+        new_uid = raw_obj.uid[0:-2]
+        try:
+            obj = self.get(uid=new_uid)
+        except self.model.DoesNotExist as e:
+            obj = self.model()
+
+        obj.uid = new_uid
+        start_date = raw_obj.start_date
+        obj.start_date = datetime.combine(start_date, time(11, 0))
+        obj.deactivate = False
+        return obj
+
+
 class ParsedCouncilMeeting(TimestampMixin, BaseParsedModel):
     """
     Meetings can span multiple days, but have only one agenda for all of the business that will occur on that day
@@ -425,6 +446,7 @@ class ParsedCouncilMeeting(TimestampMixin, BaseParsedModel):
     start_date = models.DateTimeField(null=False)
     end_date = models.DateTimeField(null=True)
 
+    objects = CouncilMeetingManager()
     RAW_MODEL = RawCouncilAgenda
 
     class Meta:
