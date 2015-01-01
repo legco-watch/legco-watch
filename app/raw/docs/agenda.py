@@ -62,6 +62,7 @@ class CouncilAgenda(object):
         self.tree = None
         self.tabled_papers = None
         self.questions = None
+        self.question_map = None
         self.motions = None
         self.bills = None
         self.members_bills = None
@@ -298,6 +299,22 @@ class CouncilAgenda(object):
         parsed_questions.append(ag)
         self.questions = parsed_questions
         logger.info(u"Parsed {} questions".format(len(self.questions)))
+        self._build_question_map()
+
+    def _build_question_map(self):
+        # Map the question numbers to question objects.
+        # Since sometimes we may get urgent questions that have their own numbering system,
+        # the value in the map maybe a list
+        self.question_map = {}
+        for question in self.questions:
+            if question.number not in self.question_map:
+                self.question_map[question.number] = question
+            else:
+                val = self.question_map[question.number]
+                if isinstance(val, list):
+                    val.append(question)
+                else:
+                    self.question_map[question.number] = [val, question]
 
     def _parse_bills(self):
         """

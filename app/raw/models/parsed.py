@@ -497,6 +497,12 @@ class QuestionManager(BaseParsedManager):
                 parser = agenda.get_parser()
                 parser_cache[agenda.uid] = parser
 
+            # Now try to find the question in the parser
+            # CouncilAgenda's can't yet tell if a question is urgent or not, so we check against the asker
+
+            # Create the ParsedQuestion object
+            q_uid = ParsedQuestion.generate_uid(meeting, question.number, question.is_urgent)
+
             # Prune the parser cache so we don't keep all of the CouncilAgendas in memory
             if len(parser_cache) > 10:
                 parser_cache.popitem(last=False)
@@ -526,6 +532,8 @@ class ParsedQuestion(TimestampMixin, BaseParsedModel):
     body_c = models.TextField(default='')
     reply_e = models.TextField(default='')
     reply_c = models.TextField(default='')
+
+    objects = QuestionManager()
 
     class Meta:
         app_label = 'raw'

@@ -1,3 +1,4 @@
+# coding=utf-8
 import logging
 from datetime import date
 from django.db import models
@@ -253,6 +254,14 @@ class RawCouncilQuestion(RawModel):
     @property
     def is_urgent(self):
         return u'UQ.' in self.number_and_type
+
+    @property
+    def is_oral(self):
+        return u'oral' in self.number_and_type.lower() or u'口頭' in self.number_and_type
+
+    @property
+    def is_written(self):
+        return not self.is_oral
 
     @property
     def number(self):
