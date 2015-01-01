@@ -12,6 +12,7 @@ from django.utils.text import slugify
 import re
 from constants import GENDER_CHOICES, LANG_EN
 from .raw import RawMember, RawCommittee, RawCommitteeMembership, RawCouncilAgenda, RawCouncilQuestion
+from ..names import MemberName, NameMatcher
 
 
 logger = logging.getLogger('legcowatch')
@@ -223,6 +224,19 @@ class ParsedPerson(TimestampMixin, BaseParsedModel):
 
     def __unicode__(self):
         return u"{} {}".format(unicode(self.name_e), unicode(self.name_c))
+
+    def get_name_object(self, english=True):
+        if english:
+            return MemberName(self.name_e)
+        else:
+            return MemberName(self.name_c)
+
+    @classmethod
+    def get_matcher(cls, english=True):
+        all_members = cls.objects.all()
+        names = [(xx.get_name_object(english), xx) for xx in all_members]
+        matcher = NameMatcher(names)
+        return matcher
 
 
 class MembershipManager(models.Manager):
@@ -482,12 +496,14 @@ class QuestionManager(BaseParsedManager):
         """
         parser_cache = OrderedDict()
         all_questions = RawCouncilQuestion.objects.order_by('raw_date').all()
-        for question in all_questions:
+        name_matcher_e = ParsedPerson.get_matcher()
+        name_matcher_c = ParsedPerson.get_matcher(False)
+        for raw_question in all_questions:
             # Get the agenda
-            agenda = question.get_agenda()
+            agenda = raw_question.get_agenda()
             meeting = ParsedCouncilMeeting.objects.get_from_raw(agenda)
             if agenda is None or meeting is None:
-                logger.warn('Could not find meeting ({}) or agenda ({}).'.format(meeting, agenda))
+                logger.warn(u'Could not find meeting ({}) or agenda ({}).'.format(meeting, agenda))
                 continue
 
             # Get the parser and cache it
@@ -499,9 +515,45 @@ class QuestionManager(BaseParsedManager):
 
             # Now try to find the question in the parser
             # CouncilAgenda's can't yet tell if a question is urgent or not, so we check against the asker
+            agenda_question = raw_question.get_matching_question_from_parser(parser)
+
+            # if we couldn't find it, then log it
+            if agenda_question is None:
+                logger.warn(u'Could not find corresponding Agenda question for {}'.format(raw_question))
+
+            # Check that the names on the askers match, then get the ParsedPerson object that we'll attach to the question
+            is_english = raw_question.language == LANG_EN
+            agenda_name = None
+            raw_name = None
+            if raw_question.asker is not None:
+                raw_name = raw_question.asker.get_name_object(is_english)
+            if agenda_question is not None and agenda_question.asker is not None:
+                agenda_name = MemberName(agenda_question.asker)
+
+            asker = None
+            if raw_name is not None:
+                if agenda_name is not None:
+                    if agenda_name != raw_name:
+                        logger.warn(u"Askers don't match on question {}.  Agenda: {} Raw: {}".format(raw_question, agenda_name, raw_name))
+                # Either way, we use the raw_question's asker
+                asker = ParsedPerson.objects.get(uid=raw_question.asker.uid)
+            else:
+                if agenda_name is not None:
+                    # Try to find a name match based on the agenda name
+                    matcher = name_matcher_e if is_english else name_matcher_c
+                    match = matcher.match(agenda_name)
+                    if match is not None:
+                        asker = match[1]
+                else:
+                    asker = None
+
+            # Can't find an asker, abort
+            if asker is None:
+                logger.warn(u'Could not find an asker for the question {}'.format(raw_question))
+                continue
 
             # Create the ParsedQuestion object
-            q_uid = ParsedQuestion.generate_uid(meeting, question.number, question.is_urgent)
+            q_uid = ParsedQuestion.generate_uid(meeting, raw_question.number, raw_question.is_urgent)
 
             # Prune the parser cache so we don't keep all of the CouncilAgendas in memory
             if len(parser_cache) > 10:

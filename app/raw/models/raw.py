@@ -239,9 +239,9 @@ class RawCouncilQuestion(RawModel):
 
     def __unicode__(self):
         if self.asker_id is None:
-            return u'{} on {}'.format(force_unicode(self.raw_asker), force_unicode(self.raw_date))
+            return u'{}: {} on {}'.format(self.uid, force_unicode(self.raw_asker), force_unicode(self.raw_date))
         else:
-            return u'{} on {}'.format(force_unicode(self.asker), force_unicode(self.raw_date))
+            return u'{}: {} on {}'.format(self.uid, force_unicode(self.asker), force_unicode(self.raw_date))
 
     @property
     def date(self):
@@ -283,6 +283,24 @@ class RawCouncilQuestion(RawModel):
         except RawCouncilAgenda.DoesNotExist:
             logger.warn('Could not find agenda for question {}'.format(self.uid))
             return None
+
+    def get_matching_question_from_parser(self, parser):
+        q_number = str(self.number)
+        agenda_question = None
+        if q_number in parser.question_map:
+            val = parser.question_map[q_number]
+            if not isinstance(val, list):
+                agenda_question = val
+            else:
+                # List of questions found (usually indicating urgent questions)
+                # Try to find the right one by matching the name
+                raw_name = MemberName(self.raw_asker)
+                for this_question in val:
+                    agenda_name = MemberName(this_question.asker)
+                    if raw_name == agenda_name:
+                        agenda_question = this_question
+                        break
+        return agenda_question
 
 
 class RawScheduleMember(RawModel):
