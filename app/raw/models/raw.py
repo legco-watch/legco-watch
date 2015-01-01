@@ -71,6 +71,8 @@ class RawCouncilAgenda(RawModel):
     # Don't use FilePathField or FileField, since those are more for user input via forms
     local_filename = models.CharField(max_length=255, blank=True)
 
+    UID_PREFIX = u'council_agenda'
+
     class Meta:
         ordering = ['-uid']
         app_label = 'raw'
@@ -247,6 +249,31 @@ class RawCouncilQuestion(RawModel):
             return None
         groups = match.groupdict()
         return date(int(groups['year']), int(groups['mon']), int(groups['day']))
+
+    @property
+    def is_urgent(self):
+        return u'UQ.' in self.number_and_type
+
+    @property
+    def number(self):
+        match = re.search(ur'\d+', self.number_and_type)
+        if match is not None:
+            return int(match.group())
+        else:
+            return None
+
+    def get_agenda(self):
+        # Try to find the RawCouncilAgenda in which this question appears
+        lang = u'e' if self.language == LANG_EN else u'c'
+        split_date = self.raw_date.split('.')
+        agenda_date = u'{}{}{}'.format(split_date[2], split_date[1].zfill(2), split_date[0].zfill(2))
+        agenda_uid = u'{}-{}-{}'.format(RawCouncilAgenda.UID_PREFIX, agenda_date, lang)
+        try:
+            agenda = RawCouncilAgenda.objects.get(uid=agenda_uid)
+            return agenda
+        except RawCouncilAgenda.DoesNotExist:
+            logger.warn('Could not find agenda for question {}'.format(self.uid))
+            return None
 
 
 class RawScheduleMember(RawModel):

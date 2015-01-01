@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from copy import copy
 from datetime import datetime, date, time
 import json
@@ -9,8 +10,8 @@ from django.db.backends.util import CursorWrapper
 from django.db.models import get_model, Q
 from django.utils.text import slugify
 import re
-from constants import GENDER_CHOICES
-from .raw import RawMember, RawCommittee, RawCommitteeMembership, RawCouncilAgenda
+from constants import GENDER_CHOICES, LANG_EN
+from .raw import RawMember, RawCommittee, RawCommitteeMembership, RawCouncilAgenda, RawCouncilQuestion
 
 
 logger = logging.getLogger('legcowatch')
@@ -437,6 +438,14 @@ class CouncilMeetingManager(BaseParsedManager):
         obj.deactivate = False
         return obj
 
+    def get_from_raw(self, raw_obj):
+        # Get a ParsedCouncilMeeting from a RawCouncilAgenda
+        new_uid = u'cmeeting-{:%Y%m%d}'.format(raw_obj.start_date)
+        try:
+            return self.get(uid=new_uid)
+        except self.model.DoesNotExist as e:
+            return None
+
 
 class ParsedCouncilMeeting(TimestampMixin, BaseParsedModel):
     """
@@ -459,6 +468,40 @@ class ParsedCouncilMeeting(TimestampMixin, BaseParsedModel):
             return u'Meeting on {} to {}'.format(self.start_date.date(), self.end_date.date())
 
 
+class QuestionManager(BaseParsedManager):
+    def create_from_raw(self, raw_obj):
+        pass
+
+    def populate(self):
+        """
+        Create ParsedQuestions.  Strategy is to start with all RawCouncilQuestions, get the basic information from there,
+        then cross reference against the CouncilAgenda for that date.
+
+        Since CouncilAgenda parsing is not perfect, will probably result in a lot of missing cross references.  In these
+        cases, we just don't populate the question's body.
+        """
+        parser_cache = OrderedDict()
+        all_questions = RawCouncilQuestion.objects.order_by('raw_date').all()
+        for question in all_questions:
+            # Get the agenda
+            agenda = question.get_agenda()
+            meeting = ParsedCouncilMeeting.objects.get_from_raw(agenda)
+            if agenda is None or meeting is None:
+                logger.warn('Could not find meeting ({}) or agenda ({}).'.format(meeting, agenda))
+                continue
+
+            # Get the parser and cache it
+            if agenda.uid in parser_cache:
+                parser = parser_cache[agenda.uid]
+            else:
+                parser = agenda.get_parser()
+                parser_cache[agenda.uid] = parser
+
+            # Prune the parser cache so we don't keep all of the CouncilAgendas in memory
+            if len(parser_cache) > 10:
+                parser_cache.popitem(last=False)
+
+
 class ParsedQuestion(TimestampMixin, BaseParsedModel):
     """
     Questions asked during LegCo meetings
@@ -474,7 +517,7 @@ class ParsedQuestion(TimestampMixin, BaseParsedModel):
     urgent = models.BooleanField(default=False)
     question_type = models.IntegerField(choices=QTYPES)
     asker = models.ForeignKey(ParsedPerson, related_name='questions')
-    # A secretary of the government
+    # A secretary of the government.  Only keep the English
     replier = models.CharField(max_length=255)
     # Actual content of the question
     subject_e = models.TextField(default='')
@@ -483,3 +526,10 @@ class ParsedQuestion(TimestampMixin, BaseParsedModel):
     body_c = models.TextField(default='')
     reply_e = models.TextField(default='')
     reply_c = models.TextField(default='')
+
+    class Meta:
+        app_label = 'raw'
+
+    @classmethod
+    def generate_uid(cls, meeting, number, is_urgent):
+        return u'{}-{}q{}'.format(meeting.uid, u'u' if is_urgent else u'', number)
