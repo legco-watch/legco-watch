@@ -96,6 +96,9 @@ class MemberName(object):
 
         return False
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def _parse_english_name(self, name):
         """
         Given an english full name, try to parse it into its constituent parts

@@ -8,11 +8,13 @@ from django.db import models, IntegrityError
 from django.db.backends import BaseDatabaseWrapper
 from django.db.backends.util import CursorWrapper
 from django.db.models import get_model, Q
+from django.utils.encoding import force_unicode
 from django.utils.text import slugify
 import re
 from constants import GENDER_CHOICES, LANG_EN
 from .raw import RawMember, RawCommittee, RawCommitteeMembership, RawCouncilAgenda, RawCouncilQuestion
 from ..names import MemberName, NameMatcher
+from ..docs.agenda import logger as agenda_logger
 
 
 logger = logging.getLogger('legcowatch')
@@ -486,7 +488,7 @@ class QuestionManager(BaseParsedManager):
     def create_from_raw(self, raw_obj):
         pass
 
-    def populate(self):
+    def populate(self, dry_run=False):
         """
         Create ParsedQuestions.  Strategy is to start with all RawCouncilQuestions, get the basic information from there,
         then cross reference against the CouncilAgenda for that date.
@@ -494,16 +496,27 @@ class QuestionManager(BaseParsedManager):
         Since CouncilAgenda parsing is not perfect, will probably result in a lot of missing cross references.  In these
         cases, we just don't populate the question's body.
         """
+        self._deactivate_db_debug()
+        # Deactivate the agenda logging
+        agenda_logger.deactivate = True
         parser_cache = OrderedDict()
         all_questions = RawCouncilQuestion.objects.order_by('raw_date').all()
         name_matcher_e = ParsedPerson.get_matcher()
         name_matcher_c = ParsedPerson.get_matcher(False)
+        count = 0
+        skipped = 0
         for raw_question in all_questions:
             # Get the agenda
             agenda = raw_question.get_agenda()
+            if agenda is None:
+                logger.warn(u'Could not find agenda ({}).'.format(agenda))
+                skipped += 1
+                continue
+
             meeting = ParsedCouncilMeeting.objects.get_from_raw(agenda)
-            if agenda is None or meeting is None:
-                logger.warn(u'Could not find meeting ({}) or agenda ({}).'.format(meeting, agenda))
+            if meeting is None:
+                logger.warn(u'Could not find meeting ({}).'.format(meeting, agenda))
+                skipped += 1
                 continue
 
             # Get the parser and cache it
@@ -515,7 +528,10 @@ class QuestionManager(BaseParsedManager):
 
             # Now try to find the question in the parser
             # CouncilAgenda's can't yet tell if a question is urgent or not, so we check against the asker
-            agenda_question = raw_question.get_matching_question_from_parser(parser)
+            if parser is not None:
+                agenda_question = raw_question.get_matching_question_from_parser(parser)
+            else:
+                agenda_question = None
 
             # if we couldn't find it, then log it
             if agenda_question is None:
@@ -534,7 +550,8 @@ class QuestionManager(BaseParsedManager):
             if raw_name is not None:
                 if agenda_name is not None:
                     if agenda_name != raw_name:
-                        logger.warn(u"Askers don't match on question {}.  Agenda: {} Raw: {}".format(raw_question, agenda_name, raw_name))
+                        logger.warn(u"Askers don't match on question {}.  Agenda: {} Raw: {}".format(
+                            force_unicode(raw_question), force_unicode(agenda_name), force_unicode(raw_name)))
                 # Either way, we use the raw_question's asker
                 asker = ParsedPerson.objects.get(uid=raw_question.asker.uid)
             else:
@@ -547,17 +564,49 @@ class QuestionManager(BaseParsedManager):
                 else:
                     asker = None
 
-            # Can't find an asker, abort
+            # Can't find an asker, abort the creation
             if asker is None:
                 logger.warn(u'Could not find an asker for the question {}'.format(raw_question))
+                skipped += 1
                 continue
 
-            # Create the ParsedQuestion object
+            # Check some other fields to see if they match, for diagnostic purposes
+            if agenda_question is not None:
+                raw_question.validate_question(agenda_question)
+
+            # Create the ParsedQuestion object and populate the fields
             q_uid = ParsedQuestion.generate_uid(meeting, raw_question.number, raw_question.is_urgent)
+            try:
+                obj = self.get(uid=q_uid)
+            except self.model.DoesNotExist as e:
+                obj = self.model(uid=q_uid)
+
+            obj.meeting = meeting
+            obj.number = raw_question.number
+            obj.urgent = raw_question.is_urgent
+            obj.question_type = ParsedQuestion.ORAL if raw_question.is_oral else ParsedQuestion.WRITTEN
+            obj.asker = asker
+            if is_english:
+                if agenda_question is not None:
+                    # Only keep the English replier
+                    obj.replier = agenda_question.replier
+                    obj.body_e = agenda_question.body
+                obj.subject_e = raw_question.subject
+            else:
+                if agenda_question is not None:
+                    obj.body_c = agenda_question.body
+                obj.subject_c = raw_question.subject
+            count += 1
+            if not dry_run:
+                obj.save()
 
             # Prune the parser cache so we don't keep all of the CouncilAgendas in memory
             if len(parser_cache) > 10:
                 parser_cache.popitem(last=False)
+
+        logger.info(u'{} questions created, {} skipped'.format(count, skipped))
+        agenda_logger.deactivate = False
+        self._reactivate_db_debug()
 
 
 class ParsedQuestion(TimestampMixin, BaseParsedModel):

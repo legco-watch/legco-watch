@@ -22,7 +22,7 @@ BILL_AMENDMENT_PATTERN_C = u'全體委員會審議階段修正案'
 FIRST_READING_PATTERN_C = u'首讀'
 
 COMMITTEE_STAGE_PATTERN_C = u'全體委員會審議階段'
-logger = logging.getLogger('legcowatch')
+logger = logging.getLogger('legcowatch-docs')
 QUESTION_PATTERN_E = ur'^\*?([0-9]+)\..*?Hon\s(.*?)\sto ask:'
 QUESTION_PATTERN_C = ur'^\*?([0-9]+)\.\s*(.*?)議員問:'
 LEGISLATION_E = u'Subsidiary Legislation'
@@ -51,7 +51,7 @@ class CouncilAgenda(object):
     )
 
     def __init__(self, uid, source, *args, **kwargs):
-        logger.info(u'** Parsing agenda {}'.format(uid))
+        logger.debug(u'** Parsing agenda {}'.format(uid))
         self.uid = uid
         if uid[-1] == 'e':
             self.english = True
@@ -134,7 +134,7 @@ class CouncilAgenda(object):
             if text and re.search(pattern, text):
                 section_name = self._identify_section(text)
                 if section_name is not None:
-                    logger.info(u'Identified header {} as {}'.format(text, section_name))
+                    logger.debug(u'Identified header {} as {}'.format(text, section_name))
                     current_section = section_name
                 else:
                     logger.warn(u"Could not identify section from header {}".format(text))
@@ -166,7 +166,7 @@ class CouncilAgenda(object):
         # Actually we only want to filter out paragraphs that are children of table cell elements
         # Since some older documents don't use tables for the list of legislation (particularly other papers)
         # self.tabled_papers = [xx for xx in self.tabled_papers if xx.tag == u'table']
-        logger.info(u'Parsing tabled papers from {} elements'.format(len(self.tabled_papers)))
+        logger.debug(u'Parsing tabled papers from {} elements'.format(len(self.tabled_papers)))
         legislation_header = LEGISLATION_E if self.english else LEGISLATION_C
         other_papers_header = OTHER_PAPERS_E if self.english else OTHER_PAPERS_C
         parsed_papers = []
@@ -272,7 +272,7 @@ class CouncilAgenda(object):
         if self.questions is None:
             return
 
-        logger.info(u"Parsing questions from {} elements".format(len(self.questions)))
+        logger.debug(u"Parsing questions from {} elements".format(len(self.questions)))
         parsed_questions = []
         pattern = QUESTION_PATTERN_E if self.english else QUESTION_PATTERN_C
         parts = []
@@ -298,7 +298,7 @@ class CouncilAgenda(object):
         ag = AgendaQuestion(parts, english=self.english)
         parsed_questions.append(ag)
         self.questions = parsed_questions
-        logger.info(u"Parsed {} questions".format(len(self.questions)))
+        logger.debug(u"Parsed {} questions".format(len(self.questions)))
         self._build_question_map()
 
     def _build_question_map(self):
@@ -362,7 +362,7 @@ class CouncilAgenda(object):
             self._parse_chinese_bills()
 
     def _parse_chinese_bills(self):
-        logger.info(u"Parsing bills from {} elements".format(len(self.bills)))
+        logger.debug(u"Parsing bills from {} elements".format(len(self.bills)))
         parsed_bills = []
         for i in range(len(self.bills)):
             # For chinese bills, the headers are outside of the tables and enclosed in <p> tags.
@@ -434,7 +434,7 @@ class CouncilAgenda(object):
         self.bills = parsed_bills
 
     def _parse_english_bills(self):
-        logger.info(u"Parsing bills from {} elements".format(len(self.bills)))
+        logger.debug(u"Parsing bills from {} elements".format(len(self.bills)))
         parsed_bills = []
         for b in self.bills:
             if b.tag != 'table':
@@ -732,7 +732,7 @@ from raw import utils
 agendas = get_all_agendas()
 headers = []
 for ag in agendas:
-    logging.info(ag)
+    logging.debug(ag)
     if ag[1] == "DOCX":
         src = utils.docx_to_html(ag[2])
     elif ag[1] == "DOC":

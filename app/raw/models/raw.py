@@ -6,7 +6,7 @@ from django.db.models import Count
 from django.utils.encoding import force_unicode
 import re
 from .. import utils
-from ..docs.agenda import CouncilAgenda
+from ..docs.agenda import CouncilAgenda, AgendaQuestion
 from ..names import NameMatcher, MemberName
 from constants import *
 
@@ -100,7 +100,12 @@ class RawCouncilAgenda(RawModel):
         Returns the parser for this RawCouncilAgenda object
         """
         src = self.get_source()
-        return CouncilAgenda(self.uid, src)
+        try:
+            return CouncilAgenda(self.uid, src)
+        except BaseException as e:
+            logger.warn(u'Could not parse agenda for {}'.format(self.uid))
+            logger.warn(e)
+            return None
 
     @classmethod
     def get_from_parser(cls, parser):
@@ -281,13 +286,13 @@ class RawCouncilQuestion(RawModel):
             agenda = RawCouncilAgenda.objects.get(uid=agenda_uid)
             return agenda
         except RawCouncilAgenda.DoesNotExist:
-            logger.warn('Could not find agenda for question {}'.format(self.uid))
+            logger.warn(u'Could not find agenda for question {}'.format(self.uid))
             return None
 
     def get_matching_question_from_parser(self, parser):
         q_number = str(self.number)
         agenda_question = None
-        if q_number in parser.question_map:
+        if parser.question_map is not None and q_number in parser.question_map:
             val = parser.question_map[q_number]
             if not isinstance(val, list):
                 agenda_question = val
@@ -301,6 +306,18 @@ class RawCouncilQuestion(RawModel):
                         agenda_question = this_question
                         break
         return agenda_question
+
+    def validate_question(self, agenda_question):
+        # Check numbers
+        try:
+            agenda_number = int(agenda_question.number)
+            if self.number != agenda_number:
+                logger.warn(u"{} Question numbers don't match: {} vs {}".format(self.uid, self.number, agenda_number))
+        except ValueError:
+            logger.warn("u{} Question numbers don't match: {} vs {}".format(self.uid, self.number, agenda_number))
+        # Check type
+        if self.is_oral and agenda_question.type != AgendaQuestion.QTYPE_ORAL:
+            logger.warn("u{} Question types don't match: {} vs {}".format(self.uid, u'Oral' if self.is_oral else u'Written', u'Oral' if agenda_question.type == AgendaQuestion.QTYPE_ORAL else u'Written'))
 
 
 class RawScheduleMember(RawModel):
