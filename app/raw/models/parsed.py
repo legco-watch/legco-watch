@@ -425,7 +425,7 @@ class CouncilMeetingManager(BaseParsedManager):
 
     def create_from_raw(self, raw_obj):
         # Need to snip off the language on the agenda UID
-        new_uid = raw_obj.uid[0:-2]
+        new_uid = u'cmeeting-{:%Y%m%d}'.format(raw_obj.start_date)
         try:
             obj = self.get(uid=new_uid)
         except self.model.DoesNotExist as e:

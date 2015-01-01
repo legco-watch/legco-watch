@@ -79,6 +79,7 @@ TEMPLATE_DIRS = (
 
 LANGUAGE_CODE = 'en-us'
 
+# Timezone is turned on and set to UTC, but we just treat UTC as if it's HK time.
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
