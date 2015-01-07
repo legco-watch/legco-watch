@@ -286,7 +286,7 @@ class RawCouncilQuestion(RawModel):
             agenda = RawCouncilAgenda.objects.get(uid=agenda_uid)
             return agenda
         except RawCouncilAgenda.DoesNotExist:
-            logger.warn(u'Could not find agenda for question {}'.format(self.uid))
+            logger.warn(u'Could not find agenda with uid {} for question {}'.format(agenda_uid, self.uid))
             return None
 
     def get_matching_question_from_parser(self, parser):

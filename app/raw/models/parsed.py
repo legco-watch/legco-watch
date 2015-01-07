@@ -422,7 +422,7 @@ class ParsedCommitteeMembership(TimestampMixin, BaseParsedModel):
     """
     committee = models.ForeignKey(ParsedCommittee, related_name='memberships')
     person = models.ForeignKey(ParsedPerson, related_name='committee_memberships')
-    post_e = models.CharField(max_length=100, default='')
+    post_e = models.CharField(max_length=100, blank=True, default='')
     post_c = models.CharField(max_length=100, blank=True, default='')
     start_date = models.DateTimeField(null=False)
     end_date = models.DateTimeField(null=True)
@@ -589,7 +589,7 @@ class QuestionManager(BaseParsedManager):
             if is_english:
                 if agenda_question is not None:
                     # Only keep the English replier
-                    obj.replier = agenda_question.replier
+                    obj.replier = agenda_question.replier or u''
                     obj.body_e = agenda_question.body
                 obj.subject_e = raw_question.subject
             else:
@@ -625,7 +625,7 @@ class ParsedQuestion(TimestampMixin, BaseParsedModel):
     question_type = models.IntegerField(choices=QTYPES)
     asker = models.ForeignKey(ParsedPerson, related_name='questions')
     # A secretary of the government.  Only keep the English
-    replier = models.CharField(max_length=255)
+    replier = models.TextField(default='')
     # Actual content of the question
     subject_e = models.TextField(default='')
     subject_c = models.TextField(default='')
@@ -638,6 +638,10 @@ class ParsedQuestion(TimestampMixin, BaseParsedModel):
 
     class Meta:
         app_label = 'raw'
+        ordering = ['number']
+
+    def __unicode__(self):
+        return u'Q{} - {}'.format(self.number, self.subject_e)
 
     @classmethod
     def generate_uid(cls, meeting, number, is_urgent):
