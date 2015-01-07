@@ -505,6 +505,7 @@ class QuestionManager(BaseParsedManager):
         name_matcher_c = ParsedPerson.get_matcher(False)
         count = 0
         skipped = 0
+        incomplete = 0
         for raw_question in all_questions:
             # Get the agenda
             agenda = raw_question.get_agenda()
@@ -536,6 +537,7 @@ class QuestionManager(BaseParsedManager):
             # if we couldn't find it, then log it
             if agenda_question is None:
                 logger.warn(u'Could not find corresponding Agenda question for {}'.format(raw_question))
+                incomplete += 1
 
             # Check that the names on the askers match, then get the ParsedPerson object that we'll attach to the question
             is_english = raw_question.language == LANG_EN
@@ -604,7 +606,7 @@ class QuestionManager(BaseParsedManager):
             if len(parser_cache) > 10:
                 parser_cache.popitem(last=False)
 
-        logger.info(u'{} questions created, {} skipped'.format(count, skipped))
+        logger.info(u'{} questions created, {} skipped, {} without body text'.format(count, skipped, incomplete))
         agenda_logger.deactivate = False
         self._reactivate_db_debug()
 
