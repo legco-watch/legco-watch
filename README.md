@@ -71,6 +71,11 @@ In addition to the processors, there is a parser for Agenda documents that creat
 used to extract data out of the Docs.  This is in `app/raw/docs/agenda.py`.  It's far from perfect, but it'll get you
 most of the data.
 
+There is a bit of useful code in `app/raw/names.py` that helps disambiguate member names.  In different parts of the LegCo
+documents, members can be referred to by their Chinese name, their English, name, with or without their title, or any
+number of variants.  This code tries to build some utility classes that lets you match two people even if their names
+appear a bit differently.  It's pretty naive, but it covers a lot of the cases in the LegCo docs.
+
 There is also the ability to override the results of a parse with user inputs.  This model is in `raw.models.parsed.Override`.
 
 ## Viewing the results
